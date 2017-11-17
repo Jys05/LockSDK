@@ -16,6 +16,8 @@ public class Constant {
 
     public static final String READ_MAC_UUID = "8bdffca4-cf83-458a-89da-1c0714c2deb3";       //功能：获取手机的Mac码
 
+    public static final String OPEN_LOCATION_PERSIMISSON = "请打开定位权限，保证款箱搜索正常";
+
     public static final class CODE {
         public static final String CODE_SUCCESS = "0000";           //操作成功：扫描开始、扫描到设备、连接成功
 
@@ -23,7 +25,9 @@ public class Constant {
 
         public static final String CODE_CONNECT_FAIL = "0002";          //连接错误
 
-        public static final String CODE_GET_LOCK_ID_FAIL = "0003";          //获取款箱锁具ID错误
+        public static final String CODE_SCANNER_FAIL = "0003";          //扫描错误
+
+        public static final String CODE_GET_LOCK_ID_FAIL = "0004";          //获取款箱锁具ID错误
 
 
     }
@@ -33,7 +37,7 @@ public class Constant {
 
         public static final String MSG_SCANNERED = "扫描结果";
 
-        public static final String MSG_SCANNER_TIME_OUT = "扫描超时";
+        public static final String MSG_SCANNER_FAIL = "扫描失败";
 
         public static final String MSG_CONNECT_TIME_OUT = "连接超时";
 

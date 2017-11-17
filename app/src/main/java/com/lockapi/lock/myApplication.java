@@ -15,7 +15,5 @@ public class myApplication extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
-        LockFactory.getInstance(this);
-        ViseBle.getInstance().init(this);
     }
 }

@@ -1,28 +1,124 @@
 package com.lockapi.lock;
 
-import android.bluetooth.BluetoothAdapter;
-import android.bluetooth.BluetoothDevice;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.util.Log;
+import android.view.View;
+import android.widget.TextView;
+import android.widget.Toast;
 
+import com.library.base.util.ToastUtil;
+import com.library.base.util.recyclerview.BaseAdapterHelper;
+import com.library.base.util.recyclerview.OnItemClickListener;
+import com.library.base.util.recyclerview.QuickAdapter;
 import com.locksdk.LockAPI;
+import com.locksdk.LockFactory;
 import com.locksdk.Result;
+import com.locksdk.listener.ConnectListener;
 import com.locksdk.listener.ScannerListener;
 import com.vise.baseble.ViseBle;
-import com.vise.baseble.callback.scan.IScanCallback;
-import com.vise.baseble.callback.scan.ScanCallback;
 import com.vise.baseble.model.BluetoothLeDevice;
-import com.vise.baseble.model.BluetoothLeDeviceStore;
 
 import java.util.List;
 
+import butterknife.ButterKnife;
+import butterknife.InjectView;
+
+import static com.locksdk.LockAuthValidateUtil.sendLoginCode;
+
 public class MainActivity extends AppCompatActivity {
+
+    @InjectView(R.id.recyclerview)
+    RecyclerView mRecyclerview;
+
+    private QuickAdapter<BluetoothLeDevice> mQuickAdapter;
+    private LockAPI mLockAPI;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        ButterKnife.inject(this);
+        mQuickAdapter = new QuickAdapter<BluetoothLeDevice>(this, R.layout.item_device) {
+            @Override
+            protected void convert(BaseAdapterHelper baseAdapterHelper, BluetoothLeDevice bluetoothLeDevice) {
+                baseAdapterHelper.setText(R.id.tv_deviceName, bluetoothLeDevice.getName());
+            }
+        };
+        mRecyclerview.setLayoutManager(new LinearLayoutManager(this));
+        mRecyclerview.setAdapter(mQuickAdapter);
+        mQuickAdapter.setOnItemClickListener(new OnItemClickListener() {
+            @Override
+            public void onItemClick(View view, int i) {
+                Log.e("======>" , ((TextView)view).getText().toString());
+                Toast.makeText(MainActivity.this, mLockAPI.getLockIdByBoxName(((TextView)view).getText().toString()).getData(), Toast.LENGTH_SHORT).show();
+                BluetoothLeDevice bluetoothLeDevice = mQuickAdapter.getItem(i);
+                if (!ViseBle.getInstance().isConnect(bluetoothLeDevice)) {
+                    Log.e("======>", "没有连接，装备连接");
+                    mLockAPI.openConnection(bluetoothLeDevice, 5000, mConnectListener);
+                } else {
+                    Log.e("======>", "已连接，准备断开连接");
+                    mLockAPI.closeConnection(null);
+                }
+            }
 
+            @Override
+            public void onItemLongClick(View view, int i) {
+
+            }
+        });
+        mLockAPI = LockFactory.getInstance(this);
+        scannerDevice();
     }
+
+    //获取款箱列表
+    private void scannerDevice() {
+        mLockAPI.getBoxList(new ScannerListener() {
+            @Override
+            public void onStartScanner(String code, String mag) {
+                Log.e("======>", "扫描开始");
+            }
+
+            @Override
+            public void onBoxFoundScanning(Result<List<BluetoothLeDevice>> boxs_Name) {
+                List<BluetoothLeDevice> deviceLists = boxs_Name.getData();
+                mQuickAdapter.replaceAll(deviceLists);
+            }
+
+            @Override
+            public void onScannerFail(String code, String mag) {
+
+            }
+        });
+    }
+
+
+    private ConnectListener mConnectListener = new ConnectListener() {
+        @Override
+        public void onWaiting(String uuid) {
+            Log.e("======>", "连接开始");
+        }
+
+        @Override
+        public void onSuccess(BluetoothLeDevice device, String boxName) {
+            Log.e("======>", "连接成功");
+        }
+
+        @Override
+        public void onFail(String uuid, String msg) {
+
+        }
+
+        @Override
+        public void onTimeout(String uuid, long timeout) {
+            Log.e("======>", "onTimeout");
+        }
+
+        @Override
+        public void onClose(String uuid, String boxName) {
+            Log.e("======>", "断开连接");
+        }
+    };
 }

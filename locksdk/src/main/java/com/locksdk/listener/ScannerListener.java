@@ -7,13 +7,14 @@ import java.util.List;
 
 /**
  * Created by Sujiayong on 2017/11/14.
+ * 扫描监听
  */
 
 public interface ScannerListener {
 
-    void onScannering(String code , String mag);
+    void onStartScanner(String code , String mag);
 
-    void onBoxFound(Result<List<String>> boxs_Name);
+    void onBoxFoundScanning(Result<List<BluetoothLeDevice>> boxs_Name);
 
     void onScannerFail(String code , String mag);
 
