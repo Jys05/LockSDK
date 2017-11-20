@@ -36,7 +36,7 @@ public class ActiveLockUtil {
         String boxName = param.get("boxName");
         String paramData = trTime + lockId + dpKey + dpCommKey + dpCommKeyVer + dpKeyVer + dpKeyChkCode + dpCommChkCode + boxName;
         Log.i("=====>", paramData);
-        String test = "01234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789";
+        String test = "0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789";       //10
 //        List<byte[]> dealtData = DealDataUtil.dealData(paramData.getBytes());       //处理后的数据，但是每个包好没有根据文档中添加，80,00，总字节长度
         List<byte[]> dealtData = DealDataUtil.dealData(LockSDKHexUtil.hexStringToByte(test, true));       //处理后的数据，但是每个包好没有根据文档中添加，80,00，总字节长度
         data = new ArrayList<>();
