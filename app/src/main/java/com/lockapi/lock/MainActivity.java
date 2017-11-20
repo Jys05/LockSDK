@@ -9,24 +9,28 @@ import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.library.base.util.ToastUtil;
 import com.library.base.util.recyclerview.BaseAdapterHelper;
 import com.library.base.util.recyclerview.OnItemClickListener;
 import com.library.base.util.recyclerview.QuickAdapter;
+import com.locksdk.ActiveLockUtil;
+import com.locksdk.DealDataUtil;
 import com.locksdk.LockAPI;
 import com.locksdk.LockFactory;
 import com.locksdk.Result;
 import com.locksdk.listener.ConnectListener;
 import com.locksdk.listener.ScannerListener;
+import com.locksdk.util.LockSDKHexUtil;
 import com.vise.baseble.ViseBle;
 import com.vise.baseble.model.BluetoothLeDevice;
+import com.vise.baseble.utils.HexUtil;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
 
-import static com.locksdk.LockAuthValidateUtil.sendLoginCode;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -41,6 +45,28 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         ButterKnife.inject(this);
+        byte[] b = new byte[1];
+//        b[0] = (byte) (0x80 + 1);
+        b[0] = (byte) 222;
+        Log.i("=====>", (0x80 + 1) + "——" + HexUtil.encodeHexStr(b));
+        String test = "12345678900987654321ABCDEFFEDCBA0123456789012345678901234567";
+        Log.i("======>1", LockSDKHexUtil.hexStringToByte(test, true).length + "");
+        List<byte[]> data = DealDataUtil.dealData(LockSDKHexUtil.hexStringToByte(test, true));
+        for (int i = 0; i < data.size(); i++) {
+            Log.i(i + "====size==>", data.get(i).length
+                    + "：" + HexUtil.encodeHexStr(data.get(i), false));
+        }
+        Map<String, String> param = new HashMap<>();
+        param.put("trTime", "trTime");
+        param.put("lockId", "lockId");
+        param.put("dpKey", "dpKey");
+        param.put("dpCommKey", "dpCommKey");
+        param.put("dpCommKeyVer", "dpCommKeyVer");
+        param.put("dpKeyVer", "dpKeyVer");
+        param.put("dpKeyChkCode", "dpKeyChkCode");
+        param.put("dpCommChkCode", "dpCommChkCode");
+        param.put("boxName", "boxName");
+        ActiveLockUtil.activeLock(param);
         mQuickAdapter = new QuickAdapter<BluetoothLeDevice>(this, R.layout.item_device) {
             @Override
             protected void convert(BaseAdapterHelper baseAdapterHelper, BluetoothLeDevice bluetoothLeDevice) {
@@ -52,8 +78,8 @@ public class MainActivity extends AppCompatActivity {
         mQuickAdapter.setOnItemClickListener(new OnItemClickListener() {
             @Override
             public void onItemClick(View view, int i) {
-                Log.e("======>" , ((TextView)view).getText().toString());
-                Toast.makeText(MainActivity.this, mLockAPI.getLockIdByBoxName(((TextView)view).getText().toString()).getData(), Toast.LENGTH_SHORT).show();
+                Log.e("======>", ((TextView) view).getText().toString());
+                Toast.makeText(MainActivity.this, mLockAPI.getLockIdByBoxName(((TextView) view).getText().toString()).getData(), Toast.LENGTH_SHORT).show();
                 BluetoothLeDevice bluetoothLeDevice = mQuickAdapter.getItem(i);
                 if (!ViseBle.getInstance().isConnect(bluetoothLeDevice)) {
                     Log.e("======>", "没有连接，装备连接");

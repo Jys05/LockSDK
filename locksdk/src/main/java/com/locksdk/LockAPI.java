@@ -1,20 +1,16 @@
 package com.locksdk;
 
-import android.Manifest;
-import android.app.Activity;
 import android.content.Context;
-import android.content.pm.PackageManager;
 import android.os.Build;
-import android.support.v4.content.ContextCompat;
-import android.util.Log;
 import android.widget.Toast;
 
+import com.locksdk.bean.ActiveLockAttr;
+import com.locksdk.bean.RandomAttr;
 import com.locksdk.listener.ApplyPermissionListener;
 import com.locksdk.listener.ConnectListener;
+import com.locksdk.listener.LockStatusListener;
 import com.locksdk.listener.ScannerListener;
 import com.vise.baseble.model.BluetoothLeDevice;
-import com.vise.xsnow.permission.OnPermissionCallback;
-import com.vise.xsnow.permission.PermissionManager;
 
 import java.util.List;
 
@@ -31,6 +27,7 @@ public class LockAPI {
     private static final String TAG = "LockAPI";
     private static LockAPI instance;
     private Context mContext;
+    private LockStatusListener mLockStatusListener;
 
     private LockAPI() {
 
@@ -97,8 +94,24 @@ public class LockAPI {
         LockApiBleUtil.getInstance().closeConnection();
     }
 
-    public Result<String> activeLock(){
-        return LockAuthValidateUtil.activeLock();
+    public Result<ActiveLockAttr> activeLock(String publicKey, String validateKey) {
+        LockActiveUtil.activeLock(publicKey, validateKey);
+        return LockActiveUtil.getActiveLockAttrResult();
+    }
+
+    public LockAPI registerLockStatusListener(LockStatusListener lockStatusListener) {
+        this.mLockStatusListener = lockStatusListener;
+        return this;
+    }
+
+    public Result<String> openLock(String accountName, byte[] communicationKey) {
+        LockActiveUtil.openLock(accountName, communicationKey);
+        return LockActiveUtil.getOpenLockResult();
+    }
+
+
+    public Result<RandomAttr> getRandom(String boxName) {
+        return LockActiveUtil.getRandomAttrResult(boxName);
     }
 
 

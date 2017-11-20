@@ -11,5 +11,5 @@ import com.locksdk.bean.WriteCallbackData;
 public interface NoficeDataListener {
     void onNoficeSuccess(NoficeCallbackData data);
 
-    void onNoficeFail();
+    void onNoficeFail(NoficeCallbackData data);
 }

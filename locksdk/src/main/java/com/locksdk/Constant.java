@@ -29,7 +29,11 @@ public class Constant {
 
         public static final String CODE_GET_LOCK_ID_FAIL = "0004";          //获取款箱锁具ID错误
 
+        public static final String CODEACTIVE_FAIL = "0005";          //激活过程有误
 
+        public static final String GET_RANDOM_FAIL = "0006";          //获取随机数有误
+
+        public static final String OPEN_LOCK_FAIL = "0007";          //开锁有误
     }
 
     public static final class MSG {
@@ -47,7 +51,24 @@ public class Constant {
 
         public static final String MSG_GET_LOCK_ID_FAIL = "获取款箱锁具ID错误";
 
-
         public static final String MSG_GET_LOCK_ID_SUCCESS = "获取款箱锁具ID成功";
+
+        public static final String MSG_GET_RANDOM_SUCCESS = "获取随机数成功";
+
+        public static final String MSG_GET_RANDOM_FAIL = "校验款箱和连接的不一致";
+
+        public static final String MSG_ACTIVE_SUCCESS = "激活锁具成功";
+
+        public static final String MSG_DPKEY_FAIL = "对秘钥处理错误";
+
+        public static final String MSG_WRITE_NOFICE_FAIL = "数据传输错误";
+
+        public static final String MSG_ENCODE_FAIL = "数据加密有误";
+
+        public static final String MSG_OPEN_LOCk_FAIL = "开锁时数据加密失败";
+
+        public static final String MSG_OPEN_LOCk_FAIL2 = "开锁时用户名传入为空";
+
+
     }
 }

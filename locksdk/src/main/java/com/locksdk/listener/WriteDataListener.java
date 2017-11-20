@@ -10,5 +10,5 @@ import com.locksdk.bean.WriteCallbackData;
 public interface WriteDataListener {
     void onWirteSuccess(WriteCallbackData data);
 
-    void onWriteFail();
+    void onWriteFail(WriteCallbackData data);       //错误时，数据为null
 }
