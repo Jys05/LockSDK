@@ -35,10 +35,7 @@ public class ActiveLockUtil {
         String dpCommChkCode = param.get("dpCommChkCode");
         String boxName = param.get("boxName");
         String paramData = trTime + lockId + dpKey + dpCommKey + dpCommKeyVer + dpKeyVer + dpKeyChkCode + dpCommChkCode + boxName;
-        Log.i("=====>", paramData);
-        String test = "0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789";       //10
-//        List<byte[]> dealtData = DealDataUtil.dealData(paramData.getBytes());       //处理后的数据，但是每个包好没有根据文档中添加，80,00，总字节长度
-        List<byte[]> dealtData = DealDataUtil.dealData(LockSDKHexUtil.hexStringToByte(test, true));       //处理后的数据，但是每个包好没有根据文档中添加，80,00，总字节长度
+        List<byte[]> dealtData = DealDataUtil.dealData(paramData.getBytes());       //处理后的数据，但是每个包好没有根据文档中添加，80,00，总字节长度
         data = new ArrayList<>();
         if (dealtData.size() > 1) {
             for (int i = 0; i < dealtData.size(); i++) {
@@ -46,7 +43,7 @@ public class ActiveLockUtil {
                 dataByte[0] = (byte) (0x80 + i);
                 if (i == 0) {
                     dataByte[1] = 0x00;
-                    dataByte[2] = (byte) LockSDKHexUtil.hexStringToByte(test, true).length;
+                    dataByte[2] = (byte) paramData.getBytes().length;
                     System.arraycopy(dealtData.get(i), 0, dataByte, 3, dealtData.get(i).length);
                 } else if (i == dealtData.size()-1) {
                     dataByte[0] = (byte) (0x00 + i);
@@ -59,7 +56,7 @@ public class ActiveLockUtil {
         }
         for (int i = 0; i < data.size(); i++) {
             Log.i(i + "======>", data.get(i).length
-                    + "：" + HexUtil.encodeHexStr(data.get(i), false));
+                    + "：" + HexUtil.encodeHexStr(data.get(i), true));
         }
         position = dealtData.size();
         //首次写入数据，写入data的第一个，剩下的在监听中完成

@@ -49,23 +49,23 @@ public class MainActivity extends AppCompatActivity {
 //        b[0] = (byte) (0x80 + 1);
         b[0] = (byte) 222;
         Log.i("=====>", (0x80 + 1) + "——" + HexUtil.encodeHexStr(b));
-        String test = "12345678900987654321ABCDEFFEDCBA0123456789012345678901234567";
-        Log.i("======>1", LockSDKHexUtil.hexStringToByte(test, true).length + "");
-        List<byte[]> data = DealDataUtil.dealData(LockSDKHexUtil.hexStringToByte(test, true));
-        for (int i = 0; i < data.size(); i++) {
-            Log.i(i + "====size==>", data.get(i).length
-                    + "：" + HexUtil.encodeHexStr(data.get(i), false));
-        }
+//        String test = "12345678900987654321ABCDEFFEDCBA0123456789012345678901234567";
+//        Log.i("======>1", LockSDKHexUtil.hexStringToByte(test, true).length + "");
+//        List<byte[]> data = DealDataUtil.dealData(LockSDKHexUtil.hexStringToByte(test, true));
+//        for (int i = 0; i < data.size(); i++) {
+//            Log.i(i + "====size==>", data.get(i).length
+//                    + "：" + HexUtil.encodeHexStr(data.get(i), false));
+//        }
         Map<String, String> param = new HashMap<>();
-        param.put("trTime", "trTime");
-        param.put("lockId", "lockId");
-        param.put("dpKey", "dpKey");
-        param.put("dpCommKey", "dpCommKey");
-        param.put("dpCommKeyVer", "dpCommKeyVer");
-        param.put("dpKeyVer", "dpKeyVer");
-        param.put("dpKeyChkCode", "dpKeyChkCode");
-        param.put("dpCommChkCode", "dpCommChkCode");
-        param.put("boxName", "boxName");
+        param.put("trTime", "A1A2A3A4A5A6A7A8A9A0B1B2B3B4");
+        param.put("lockId", "A1A2A3A4A5A6A7A8A9A0B1B2B3B4B3B4B5B6B7B8B9B0C1C2C3C4");
+        param.put("dpKey", "A1A2A3A4A5A6A7A8A9A0B1B2B3B4B5B6");
+        param.put("dpCommKey", "A1A2A3A4A5A6A7A8A9A0B1B2B3B4B5B6");
+        param.put("dpCommKeyVer", "A1A2A3A4A5A6A7A8A9A0B1B2B3B4B3B4B5B6B7B8B9B0C1C2C3C4C5C6C7C8C9C0D1D2D3D4D5D6");
+        param.put("dpKeyVer", "A1A2A3A4A5A6A7A8A9A0B1B2B3B4B3B4B5B6B7B8B9B0C1C2C3C4C5C6C7C8C9C0D1D2D3D4D5D6");
+        param.put("dpKeyChkCode", "A1A2A3A4A5A6A7A8A9A0B1B2B3B4B3B4B5B6B7B8B9B0C1C2C3C4C5C6C7C8C9C0D1D2D3D4");
+        param.put("dpCommChkCode", "A1A2A3A4A5A6A7A8A9A0B1B2B3B4B3B4B5B6B7B8B9B0C1C2C3C4C5C6C7C8C9C0D1D2D3D4");
+        param.put("boxName", "A1A2");
         ActiveLockUtil.activeLock(param);
         mQuickAdapter = new QuickAdapter<BluetoothLeDevice>(this, R.layout.item_device) {
             @Override
