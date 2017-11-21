@@ -3,6 +3,7 @@ package com.locksdk;
 import android.util.Log;
 
 import com.locksdk.bean.WriteCallbackData;
+import com.locksdk.listener.ActiveLockListener;
 import com.locksdk.listener.WriteDataListener;
 import com.locksdk.util.LockSDKHexUtil;
 import com.locksdk.util.WriteAndNoficeUtil;
@@ -23,8 +24,10 @@ public class ActiveLockUtil {
     private static List<byte[]> data;
     private static int finalI;
     private static int position;
+    private static ActiveLockListener activeLockListener;
 
-    public static void activeLock(Map<String, String> param) {
+    public static void activeLock(Map<String, String> param, ActiveLockListener lockListener) {
+        activeLockListener = lockListener;
         String trTime = param.get("trTime");
         String lockId = param.get("lockId");
         String dpKey = param.get("dpKey");
@@ -35,7 +38,9 @@ public class ActiveLockUtil {
         String dpCommChkCode = param.get("dpCommChkCode");
         String boxName = param.get("boxName");
         String paramData = trTime + lockId + dpKey + dpCommKey + dpCommKeyVer + dpKeyVer + dpKeyChkCode + dpCommChkCode + boxName;
-        List<byte[]> dealtData = DealDataUtil.dealData(paramData.getBytes());       //处理后的数据，但是每个包好没有根据文档中添加，80,00，总字节长度
+//        List<byte[]> dealtData = DealDataUtil.dealData(paramData.getBytes());       //处理后的数据，但是每个包好没有根据文档中添加，80,00，总字节长度
+        List<byte[]> dealtData = DealDataUtil.dealData(LockSDKHexUtil.hexStringToByte(paramData, true));       //处理后的数据，但是每个包好没有根据文档中添加，80,00，总字节长度
+        Log.i("======", LockSDKHexUtil.hexStringToByte(paramData, true).length + "");
         data = new ArrayList<>();
         if (dealtData.size() > 1) {
             for (int i = 0; i < dealtData.size(); i++) {
@@ -43,9 +48,10 @@ public class ActiveLockUtil {
                 dataByte[0] = (byte) (0x80 + i);
                 if (i == 0) {
                     dataByte[1] = 0x00;
-                    dataByte[2] = (byte) paramData.getBytes().length;
+//                    dataByte[2] = (byte) paramData.getBytes().length;
+                    dataByte[2] = (byte) LockSDKHexUtil.hexStringToByte(paramData, true).length;
                     System.arraycopy(dealtData.get(i), 0, dataByte, 3, dealtData.get(i).length);
-                } else if (i == dealtData.size()-1) {
+                } else if (i == dealtData.size() - 1) {
                     dataByte[0] = (byte) (0x00 + i);
                     System.arraycopy(dealtData.get(i), 0, dataByte, 1, dealtData.get(i).length);
                 } else {
@@ -59,6 +65,7 @@ public class ActiveLockUtil {
                     + "：" + HexUtil.encodeHexStr(data.get(i), true));
         }
         position = dealtData.size();
+        Log.i("一共", position + "");
         //首次写入数据，写入data的第一个，剩下的在监听中完成
         WriteAndNoficeUtil.writeFunctionCode(0, dealtData.get(0), writeDataListener);
     }
@@ -70,6 +77,8 @@ public class ActiveLockUtil {
             position--;
             if (position > 0) {
                 WriteAndNoficeUtil.writeFunctionCode(0, data.get(data.size() - position), writeDataListener);
+                Log.i(position + "第写", "成功");
+
             }
         }
 
