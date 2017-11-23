@@ -29,12 +29,12 @@ public class OpenLockUtil {
 
     public static void opnenLock(Map<String, String> param, OpenLockListener lockListener) {
         openLockListener = lockListener;
-//        String trTime = param.get("trTime");
+        String trTime = param.get("trTime");
         String boxName = param.get("boxName");
         String userId = param.get("userId");
         String dynamicPwd = param.get("dynamicPwd");
-        String time = DateUtil.format(DateUtil.yyyyMMddHHmmss_not, System.currentTimeMillis());
-        byte[] btTime = BCDCodeUtil.str2Bcd(time);
+//        String time = DateUtil.format(DateUtil.yyyyMMddHHmmss_not, System.currentTimeMillis());
+        byte[] btTime = BCDCodeUtil.str2Bcd(trTime);
         byte[] btBoxName = DealtByteUtil.dataAdd0(boxName.getBytes(), 16);
         byte[] btDynamicPwd = DealtByteUtil.dataAdd0(dynamicPwd.getBytes(), 6);
         byte[] btUserId = DealtByteUtil.dataAdd0(userId.getBytes(), 16);

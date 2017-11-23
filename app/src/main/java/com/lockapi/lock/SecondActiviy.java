@@ -13,16 +13,20 @@ import android.widget.Toast;
 import com.library.base.util.ToastUtil;
 import com.locksdk.Constant;
 import com.locksdk.LockAPI;
+import com.locksdk.LockApiBleUtil;
 import com.locksdk.LockFactory;
 import com.locksdk.Result;
 import com.locksdk.bean.LockStatus;
 import com.locksdk.bean.RandomAttr;
 import com.locksdk.listener.ActiveLockListener;
+import com.locksdk.listener.GetLockIdListener;
 import com.locksdk.listener.GetRandomListener;
 import com.locksdk.listener.LockStatusListener;
 import com.locksdk.listener.OpenLockListener;
 import com.locksdk.listener.QueryLogsListener;
 import com.locksdk.util.DateUtil;
+import com.locksdk.util.WriteAndNoficeUtil;
+import com.vise.baseble.utils.HexUtil;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -51,6 +55,7 @@ public class SecondActiviy extends AppCompatActivity {
         mBoxName = bundle.getString("boxName");
         mBoxAddress = bundle.getString("boxMac");
         mLockAPI = LockFactory.getInstance(this);
+
     }
 
     @Override
@@ -67,26 +72,28 @@ public class SecondActiviy extends AppCompatActivity {
 
     //获取锁具ID
     public void onGetLockIdByBoxNameClick(View view) {
-//        if (!TextUtils.isEmpty(mBoxName)) {
-        Result<String> result = mLockAPI.getLockIdByBoxName(mBoxName);
-        Toast.makeText(this, result.getData(), Toast.LENGTH_SHORT).show();
-//        } else {
-//            Toast.makeText(this, mBoxAddress, Toast.LENGTH_SHORT).show();
-//        }
+        mLockAPI.getLockIdByBoxName(mBoxName, new GetLockIdListener() {
+            @Override
+            public void onGetLockIDListener(String lockId) {
+                mHandler.sendEmptyMessage(0x00);
+                mMsg = "锁具ID：" + lockId;
+            }
+        });
+
     }
 
     //激活
     public void onActiviteLockClick(View view) {
         Map<String, String> param = new HashMap<>();
         param.put("trTime", DateUtil.format(DateUtil.yyyyMMddHHmmss_not, System.currentTimeMillis()));
-        param.put("lockId", mBoxAddress.replace(":", ""));
+        param.put("lockId",LockApiBleUtil.getInstance().getLockIDStr());
         param.put("dpKey", "0000");
         param.put("dpCommKey", "0000");
         param.put("dpCommKeyVer", "0000");
         param.put("dpKeyVer", "0000");
         param.put("dpKeyChkCode", "0000");
         param.put("dpCommChkCode", "0000");
-        param.put("boxName", "0000");
+        param.put("boxName", "KX001");
         mLockAPI.activeLock(param, new ActiveLockListener() {
             @Override
             public void activeLockCallback(Result<String> result) {
@@ -121,15 +128,15 @@ public class SecondActiviy extends AppCompatActivity {
                 mHandler.sendEmptyMessage(0x00);
                 mMsg = "款箱名：" + boxName
                         + "\n锁具ID：" + lockId
-                        + "\n锁具状态：" + " ";
+                        + "\n锁具状态：" + "81";
             }
-        }).queryLockStatus("sabd");
+        }).queryLockStatus(mBoxAddress.replace(":", ""));
     }
 
     //查询日志
     public void onQueryLogsClick(View view) {
         Map<String, String> param = new HashMap<>();
-        param.put("lockId", mBoxAddress);
+        param.put("lockId",LockApiBleUtil.getInstance().getLockIDStr());
         param.put("startSeq", "00");
         param.put("endSeq", "01");
         mLockAPI.queryLogs(param, new QueryLogsListener() {
@@ -145,17 +152,18 @@ public class SecondActiviy extends AppCompatActivity {
     //开锁
     public void onOpenLockClick(View view) {
         Map<String, String> param = new HashMap<>();
-        param.put("trTime", "trTime");
-        param.put("boxName", "boxName");
+        param.put("trTime", DateUtil.format(DateUtil.yyyyMMddHHmmss_not , System.currentTimeMillis()));
+        param.put("boxName", mBoxName);
         param.put("userId", "userId");
         param.put("dynamicPwd", "dynamicPwd");
-        mLockAPI.openLock(null, new OpenLockListener() {
+        mLockAPI.openLock(param, new OpenLockListener() {
             @Override
             public void openLockCallback(Result<String> open) {
 //TODO : 2017/11/23
             }
         });
     }
+
 
     private void initView() {
         tv_Result = (TextView) findViewById(R.id.tv_Result);
@@ -164,7 +172,7 @@ public class SecondActiviy extends AppCompatActivity {
     private Handler mHandler = new Handler(new Handler.Callback() {
         @Override
         public boolean handleMessage(Message message) {
-            Toast.makeText(SecondActiviy.this, "获取成功", Toast.LENGTH_SHORT).show();
+//            Toast.makeText(SecondActiviy.this, "获取成功", Toast.LENGTH_SHORT).show();
             tv_Result.setText(mMsg + " ");
             return false;
         }

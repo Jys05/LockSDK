@@ -10,6 +10,7 @@ import com.locksdk.bean.RandomAttr;
 import com.locksdk.listener.ActiveLockListener;
 import com.locksdk.listener.ApplyPermissionListener;
 import com.locksdk.listener.ConnectListener;
+import com.locksdk.listener.GetLockIdListener;
 import com.locksdk.listener.GetRandomListener;
 import com.locksdk.listener.LockStatusListener;
 import com.locksdk.listener.NoficeDataListener;
@@ -138,8 +139,8 @@ public class LockAPI {
     }
 
     //获取锁具ID
-    public Result<String> getLockIdByBoxName(String boxName) {
-        return LockApiBleUtil.getInstance().getLockIdByBoxName(boxName);
+    public void getLockIdByBoxName(String boxName, GetLockIdListener lockIdListener) {
+        LockApiBleUtil.getInstance().getLockIdByBoxName(boxName, lockIdListener);
     }
 
     //查询锁状态
@@ -199,20 +200,24 @@ public class LockAPI {
                 System.arraycopy(data, 16, btRandom, 0, btRandom.length);
                 randomAttr.setRandom(new String(btRandom));
 
+                //TODO : 2017/11/23 数值固定
                 byte[] btCloseCode = new byte[10];
-                System.arraycopy(data, 24, btCloseCode, 0, btCloseCode.length);
-                Log.e(TAG ,HexUtil.encodeHexStr(btCloseCode));
-                randomAttr.setCloseCode(new String(btCloseCode));
+//                System.arraycopy(data, 24, btCloseCode, 0, btCloseCode.length);
+//                Log.e(TAG ,HexUtil.encodeHexStr(btCloseCode));
+//                randomAttr.setCloseCode(new String(btCloseCode));
+                randomAttr.setCloseCode("12345");
 
                 byte[] btDpCommKeyVer = new byte[36];
-                System.arraycopy(data, 34, btDpCommKeyVer, 0, btDpCommKeyVer.length);
-                Log.e(TAG ,HexUtil.encodeHexStr(btCloseCode));
-                randomAttr.setDpCommKeyVer(new String(btDpCommKeyVer));
+//                System.arraycopy(data, 34, btDpCommKeyVer, 0, btDpCommKeyVer.length);
+//                Log.e(TAG ,HexUtil.encodeHexStr(btCloseCode));
+//                randomAttr.setDpCommKeyVer(new String(btDpCommKeyVer));
+                randomAttr.setDpCommKeyVer("123123215432");
 
                 byte[] btDpKeyVer = new byte[36];
-                System.arraycopy(data, 70, btDpKeyVer, 0, btDpKeyVer.length);
-                Log.e(TAG ,HexUtil.encodeHexStr(btCloseCode));
-                randomAttr.setDpKeyVer(new String(btDpKeyVer));
+//                System.arraycopy(data, 70, btDpKeyVer, 0, btDpKeyVer.length);
+//                Log.e(TAG ,HexUtil.encodeHexStr(btCloseCode));
+//                randomAttr.setDpKeyVer(new String(btDpKeyVer));
+                randomAttr.setDpKeyVer("sadasds");
 
                 getRandomResult.setData(randomAttr);
                 mGetRandomListener.getRandomCallback(getRandomResult);

@@ -29,7 +29,9 @@ import android.widget.Toast;
 import com.locksdk.bean.NoficeCallbackData;
 import com.locksdk.listener.BleStateListener;
 import com.locksdk.listener.ConnectListener;
+import com.locksdk.listener.GetLockIdListener;
 import com.locksdk.listener.NoficeDataListener;
+import com.locksdk.listener.ReadListener;
 import com.locksdk.listener.ScannerListener;
 import com.locksdk.util.WriteAndNoficeUtil;
 import com.vise.baseble.ViseBle;
@@ -83,12 +85,32 @@ public class LockApiBleUtil {
     private ScanCallback mScanCallback;     //安卓版本在5.0以上的扫描回调
     private BluetoothAdapter.LeScanCallback mLeScanCallback;//安卓版本在4.4以上的扫描回调
     private boolean IsScannering = false;
+    private DeviceMirror mDeviceMirror;
+
+    public void setLockID(byte[] lockID) {
+        mLockID = lockID;
+    }
+
+    private byte[] mLockID;
+
+    public String getLockIDStr() {
+        return mLockIDStr;
+    }
+
+    public void setLockIDStr(String lockIDStr) {
+        mLockIDStr = lockIDStr;
+    }
+
+    private String mLockIDStr;
 
     public DeviceMirror getDeviceMirror() {
         return mDeviceMirror;
     }
 
-    private DeviceMirror mDeviceMirror;
+
+    public byte[] getLockID() {
+        return mLockID;
+    }
 
     private LockApiBleUtil() {
         mLockIdMap = new HashMap<>();
@@ -168,6 +190,7 @@ public class LockApiBleUtil {
     //按照不同的安卓版本:进行扫描设置，以及开始扫描
     private void startScannerSetting() {
         IsScannering = true;
+        isConnecting = false;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             sannerSettingForLollipop();
         } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
@@ -381,7 +404,14 @@ public class LockApiBleUtil {
                 mBluetoothGattService = mGatt.getService(UUID.fromString(Constant.SERVICE_UUID));
                 LockAPI lockAPI = LockFactory.getInstance(LockAPI.getInstance().getContext());
                 lockAPI.resigeterNotify();
-
+//                //TODO : 2017/11/23
+//                WriteAndNoficeUtil.getInstantce().read(new ReadListener() {
+//                    @Override
+//                    public void onReadListener(byte[] data) {
+//                        Log.e("====>" ,HexUtil.encodeHexStr(data));
+//                        mLockID = data;
+//                    }
+//                });
                 //调用连接成功接口
                 mConnectListener.onSuccess(mConnectedBoxDevice, mBoxName);
             }
@@ -411,31 +441,15 @@ public class LockApiBleUtil {
 
 
     /********************************** 获取款箱锁具ID ********************************/
-    public Result<String> getLockIdByBoxName(String boxName) {
-        Result<String> lockIdResult = new Result<>();
-        //TODO : 2017/11/23 由于可能款箱名为空，所以去掉是否为空判断
-//        if (!TextUtils.isEmpty(boxName)) {
-        if (mLockIdMap != null) {
-            Log.e("=====>", "1");
-            String lockId = mLockIdMap.get(boxName).replace(":", "");
-            lockIdResult.setCode(Constant.CODE.CODE_SUCCESS);
-            lockIdResult.setMsg(Constant.MSG.MSG_GET_LOCK_ID_SUCCESS);
-            lockIdResult.setData(lockId);
-            return lockIdResult;
-        } else {
-            Log.e("=====>", "2");
-            lockIdResult.setCode(Constant.CODE.CODE_GET_LOCK_ID_FAIL);
-            lockIdResult.setMsg(Constant.MSG.MSG_GET_LOCK_ID_FAIL);
-            lockIdResult.setData(null);
-            return lockIdResult;
-        }
-//        } else {
-//            Log.e("=====>", "3");
-//            lockIdResult.setCode(Constant.CODE.CODE_GET_LOCK_ID_FAIL);
-//            lockIdResult.setMsg(Constant.MSG.MSG_GET_LOCK_ID_FAIL);
-//            lockIdResult.setData(null);
-//            return lockIdResult;
-//        }
+    public void getLockIdByBoxName(String boxName, final GetLockIdListener lockIdListener) {
+        WriteAndNoficeUtil.getInstantce().read(new ReadListener() {
+            @Override
+            public void onReadListener(byte[] data) {
+                LockApiBleUtil.getInstance().setLockID(data);
+                LockApiBleUtil.getInstance().setLockIDStr(HexUtil.encodeHexStr(data));
+                lockIdListener.onGetLockIDListener(HexUtil.encodeHexStr(data));
+            }
+        });
     }
 
 

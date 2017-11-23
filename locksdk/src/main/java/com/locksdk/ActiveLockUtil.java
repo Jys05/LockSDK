@@ -1,6 +1,7 @@
 package com.locksdk;
 
 import android.os.Handler;
+import android.text.TextUtils;
 import android.util.Log;
 
 import com.locksdk.bean.NoficeCallbackData;
@@ -38,6 +39,7 @@ public class ActiveLockUtil {
         activeLockListener = lockListener;
         String trTime = param.get("trTime");        //时间戳
         String lockId = param.get("lockId");        //锁具ID
+        if (TextUtils.isEmpty(lockId)) return;
         String dpKey = param.get("dpKey");      //动态密码密钥
         String dpCommKey = param.get("dpCommKey");      //动态密码传输密钥
         String dpCommKeyVer = param.get("dpCommKeyVer");        //动态密码传输密钥版本
@@ -45,20 +47,22 @@ public class ActiveLockUtil {
         String dpKeyChkCode = param.get("dpKeyChkCode");        //动态密码密钥校验值
         String dpCommChkCode = param.get("dpCommChkCode");      //动态密码传输密钥校验值
         String boxName = param.get("boxName");      //款箱名称
-//        String time = DateUtil.format(DateUtil.yyyyMMddHHmmss_not, System.currentTimeMillis());
+        String time = DateUtil.format(DateUtil.yyyyMMddHHmmss_not, System.currentTimeMillis());
         byte[] btTime = BCDCodeUtil.str2Bcd(trTime);
+        //TODO : 2017/11/23 数据固定
+//        byte[] btLockId = LockApiBleUtil.getInstance().getLockID();
         byte[] btLockId = HexUtil.decodeHex(lockId.toCharArray());
-        byte[] btDpKey = HexUtil.decodeHex(dpKey.toCharArray());
-        byte[] btDpCommKey = HexUtil.decodeHex(dpCommKey.toCharArray());
-        byte[] btDpCommKeyVer = ASCIICodeUtil.dataAdd0(dpCommKeyVer.getBytes(), 36);
-        byte[] btDpKeyVer = ASCIICodeUtil.dataAdd0(dpKeyVer.getBytes(), 36);
-        byte[] btDpKeyChkCode = HexUtil.decodeHex(dpKeyChkCode.toCharArray());
-        byte[] btDpCommChkCode = HexUtil.decodeHex(dpCommChkCode.toCharArray());
-        byte[] btBoxName = ASCIICodeUtil.dataAdd0(boxName.getBytes(), 16);
+        byte[] btDpKey = DealtByteUtil.dataAdd0(HexUtil.decodeHex(dpKey.toCharArray()), 16);
+        byte[] btDpCommKey = DealtByteUtil.dataAdd0(HexUtil.decodeHex(dpCommKey.toCharArray()), 16);
+        byte[] btDpCommKeyVer = DealtByteUtil.dataAdd0(dpCommKeyVer.getBytes(), 36);
+        byte[] btDpKeyVer = DealtByteUtil.dataAdd0(dpKeyVer.getBytes(), 36);
+        byte[] btDpKeyChkCode = DealtByteUtil.dataAdd0(HexUtil.decodeHex(dpKeyChkCode.toCharArray()), 16);
+        byte[] btDpCommChkCode = DealtByteUtil.dataAdd0(HexUtil.decodeHex(dpCommChkCode.toCharArray()), 16);
+        byte[] btBoxName = DealtByteUtil.dataAdd0(boxName.getBytes(), 16);
         /*********************** 测试版 ****************************************/
 //        String time = DateUtil.format(DateUtil.yyyyMMddHHmmss_not, System.currentTimeMillis());
 //        byte[] btTime = BCDCodeUtil.str2Bcd(time);
-//        byte[] btLockId = DealtByteUtil.dataAdd0(LockSDKHexUtil.hexStringToByte("A1B2C3D4E5F6", true), 12);
+//        byte[] btLockId = DealtByteUtil.dataAdd0(LockSDKHexUtil.hexStringToByte("546C0E1B8068", true), 12);
 //        byte[] btDpKey = DealtByteUtil.dataAdd0(LockSDKHexUtil.hexStringToByte("A1B2C3D4E5F6", true), 16);
 //        byte[] btDpCommKey = DealtByteUtil.dataAdd0(LockSDKHexUtil.hexStringToByte("A1B2C3D4E5F6", true), 16);
 //        byte[] btDpCommKeyVer = DealtByteUtil.dataAdd0("KX001".getBytes(), 36);

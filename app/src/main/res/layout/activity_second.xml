@@ -47,6 +47,8 @@
         android:onClick="onOpenLockClick"
         android:text="开锁"/>
 
+
+
     <TextView
         android:id="@+id/tv_Result"
         android:layout_width="match_parent"

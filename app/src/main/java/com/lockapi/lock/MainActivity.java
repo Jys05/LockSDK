@@ -11,9 +11,11 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
 
+import com.library.base.util.DateUtil;
 import com.library.base.util.recyclerview.BaseAdapterHelper;
 import com.library.base.util.recyclerview.OnItemClickListener;
 import com.library.base.util.recyclerview.QuickAdapter;
+import com.locksdk.Constant;
 import com.locksdk.DealDataUtil;
 import com.locksdk.LockAPI;
 import com.locksdk.LockFactory;
@@ -21,6 +23,7 @@ import com.locksdk.Result;
 import com.locksdk.listener.ConnectListener;
 import com.locksdk.listener.ScannerListener;
 import com.locksdk.util.ASCIICodeUtil;
+import com.locksdk.util.BCDCodeUtil;
 import com.locksdk.util.DealtByteUtil;
 import com.locksdk.util.LockSDKHexUtil;
 import com.locksdk.util.Util;
@@ -30,6 +33,7 @@ import com.vise.baseble.utils.HexUtil;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
@@ -95,7 +99,7 @@ public class MainActivity extends AppCompatActivity {
             BluetoothLeDevice bluetoothLeDevice = mQuickAdapter.getItem(i);
             if (!ViseBle.getInstance().isConnect(bluetoothLeDevice)) {
                 Log.e("======>", "没有连接，装备连接" + bluetoothLeDevice.getName());
-                mLockAPI.openConnection(bluetoothLeDevice, 10000, mConnectListener);
+                mLockAPI.openConnection(bluetoothLeDevice, 5000, mConnectListener);
             } else {
                 Log.e("======>", "已连接，准备断开连接");
                 mLockAPI.closeConnection(null);

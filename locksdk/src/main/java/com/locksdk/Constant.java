@@ -16,6 +16,9 @@ public class Constant {
 
     public static final String READ_MAC_UUID = "8bdffca4-cf83-458a-89da-1c0714c2deb3";       //功能：获取手机的Mac码
 
+    public static final String READ_LOCK_ID_UUID = "00002a23-0000-1000-8000-00805f9b34fb";       //功能：获取手机的Mac码
+
+
     public static final String OPEN_LOCATION_PERSIMISSON = "请打开定位权限，保证款箱搜索正常";
 
     public static final class CODE {
