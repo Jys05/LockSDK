@@ -1,6 +1,7 @@
 package com.locksdk;
 
 import android.os.Handler;
+import android.text.TextUtils;
 import android.util.Log;
 
 import com.locksdk.bean.WriteCallbackData;
@@ -31,6 +32,13 @@ public class OpenLockUtil {
         openLockListener = lockListener;
         String trTime = param.get("trTime");
         String boxName = param.get("boxName");
+        if (TextUtils.isEmpty(boxName)) {
+            Result<String> result = new Result<>();
+            result.setCode("0001");
+            result.setData("款箱名为空");
+            lockListener.openLockCallback(result);
+            return;
+        }
         String userId = param.get("userId");
         String dynamicPwd = param.get("dynamicPwd");
 //        String time = DateUtil.format(DateUtil.yyyyMMddHHmmss_not, System.currentTimeMillis());

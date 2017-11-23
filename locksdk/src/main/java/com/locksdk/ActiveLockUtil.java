@@ -39,7 +39,13 @@ public class ActiveLockUtil {
         activeLockListener = lockListener;
         String trTime = param.get("trTime");        //时间戳
         String lockId = param.get("lockId");        //锁具ID
-        if (TextUtils.isEmpty(lockId)) return;
+        if (TextUtils.isEmpty(lockId)) {
+            Result<String> result = new Result<>();
+            result.setCode("0001");
+            result.setData("未获取锁具ID");
+            lockListener.activeLockCallback(result);
+            return;
+        }
         String dpKey = param.get("dpKey");      //动态密码密钥
         String dpCommKey = param.get("dpCommKey");      //动态密码传输密钥
         String dpCommKeyVer = param.get("dpCommKeyVer");        //动态密码传输密钥版本

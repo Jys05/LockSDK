@@ -290,6 +290,10 @@ public class WriteAndNoficeUtil {
             mNoficeCallbackData.setFinish(isFinish);
             if (isFinish) {
                 callBlck = DealDataUtil.callbackDataMap.get(DealDataUtil.ressonpCode);
+                // TODO: 2017/11/24 由于硬件的应答码错误，暂时修改为0x12 ：80002e12201711240302304b5831303100000000
+//                if(DealDataUtil.ressonpCode == (byte) 0x92){
+//                    callBlck = DealDataUtil.callbackDataMap.get(0x12);
+//                }
                 mNoficeCallbackData.setData(callBlck);
             }
             if (noficeDataListener == null) return;

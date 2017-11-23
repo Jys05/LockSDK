@@ -86,7 +86,7 @@ public class LockApiBleUtil {
     private BluetoothAdapter.LeScanCallback mLeScanCallback;//安卓版本在4.4以上的扫描回调
     private boolean IsScannering = false;
     private DeviceMirror mDeviceMirror;
-
+        //TOdo 之后需要整理
     public void setLockID(byte[] lockID) {
         mLockID = lockID;
     }
@@ -336,12 +336,8 @@ public class LockApiBleUtil {
             //注册蓝牙广播监听
             setOnBleReceiver(mBleStateListenerForConnect);
             //关闭蓝牙
-            if (ViseBle.getInstance().getBluetoothAdapter().isEnabled()) {
-                ViseBle.getInstance().getBluetoothAdapter().disable();
-            } else {
-                ViseBle.getInstance().getBluetoothAdapter().enable();
-            }
-
+            isConnecting = true;
+            setConnect();
         }
     }
 
@@ -425,7 +421,12 @@ public class LockApiBleUtil {
                 mConnectListener.onTimeout(Constant.CODE.CODE_TIME_OUT, 5000);
             } else {
                 if (mConnectListener != null) {
-                    mConnectListener.onFail(Constant.CODE.CODE_CONNECT_FAIL, Constant.MSG.MSG_CONNECT_FAIL);
+                    if (ViseBle.getInstance().getBluetoothAdapter().isEnabled()) {
+                        ViseBle.getInstance().getBluetoothAdapter().disable();
+                    } else {
+                        ViseBle.getInstance().getBluetoothAdapter().enable();
+                    }
+//                    mConnectListener.onFail(Constant.CODE.CODE_CONNECT_FAIL, Constant.MSG.MSG_CONNECT_FAIL);
                 }
             }
             Log.i(TAG, exception.getDescription());

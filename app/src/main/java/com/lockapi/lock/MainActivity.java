@@ -1,9 +1,13 @@
 package com.lockapi.lock;
 
+import android.Manifest;
+import android.app.Activity;
 import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -30,7 +34,11 @@ import com.locksdk.util.Util;
 import com.vise.baseble.ViseBle;
 import com.vise.baseble.model.BluetoothLeDevice;
 import com.vise.baseble.utils.HexUtil;
+import com.vise.xsnow.permission.OnPermissionCallback;
+import com.vise.xsnow.permission.PermissionManager;
+import com.vise.xsnow.permission.RxPermissions;
 
+import java.security.Permission;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -68,8 +76,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void onScannerClick(View view) {
-        mLockAPI.getBoxList(mScannerListener);
+        mLockAPI.getBoxList(this ,mScannerListener);
     }
+
 
     private ScannerListener mScannerListener = new ScannerListener() {
         @Override

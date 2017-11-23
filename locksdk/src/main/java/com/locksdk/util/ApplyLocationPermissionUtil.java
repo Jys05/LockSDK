@@ -7,6 +7,7 @@ import android.content.pm.PackageManager;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
 
+import com.locksdk.LockAPI;
 import com.locksdk.listener.ApplyPermissionListener;
 import com.vise.baseble.ViseBle;
 import com.vise.xsnow.permission.OnPermissionCallback;
@@ -21,13 +22,13 @@ public class ApplyLocationPermissionUtil {
 
     //由于在安卓版本为5.0以上，扫描需要定位权限
     public static void applyLocationPermission(final ApplyPermissionListener listener) {
-        if (ViseBle.getInstance().getContext() == null) {
-            Log.e("++++++>" , "ViseBle.getInstance().getContext()");
+        if (LockAPI.getInstance().getContext() == null) {
+            Log.e("++++++>", "ViseBle.getInstance().getContext()");
             return;
         }
-        Context context = ViseBle.getInstance().getContext();
+        Context context = LockAPI.getInstance().getContext();
         if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            if (!(context instanceof Activity)) return;
+            if (!(context instanceof Activity)) {  Log.e("+++2+++>", "ViseBle.getInstance().getContext()");return;}
             PermissionManager.instance().with((Activity) context).request(new OnPermissionCallback() {
                 @Override
                 public void onRequestAllow(String permissionName) {
