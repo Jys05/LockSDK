@@ -5,6 +5,8 @@ import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
+import android.bluetooth.BluetoothGattCallback;
+import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.le.ScanCallback;
@@ -24,9 +26,12 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.locksdk.bean.NoficeCallbackData;
 import com.locksdk.listener.BleStateListener;
 import com.locksdk.listener.ConnectListener;
+import com.locksdk.listener.NoficeDataListener;
 import com.locksdk.listener.ScannerListener;
+import com.locksdk.util.WriteAndNoficeUtil;
 import com.vise.baseble.ViseBle;
 import com.vise.baseble.callback.IConnectCallback;
 import com.vise.baseble.core.DeviceMirror;
@@ -35,6 +40,7 @@ import com.vise.baseble.exception.TimeoutException;
 import com.vise.baseble.model.BluetoothLeDevice;
 import com.vise.baseble.model.BluetoothLeDeviceStore;
 import com.vise.baseble.utils.BleUtil;
+import com.vise.baseble.utils.HexUtil;
 import com.vise.xsnow.permission.OnPermissionCallback;
 import com.vise.xsnow.permission.PermissionManager;
 
@@ -77,6 +83,12 @@ public class LockApiBleUtil {
     private ScanCallback mScanCallback;     //安卓版本在5.0以上的扫描回调
     private BluetoothAdapter.LeScanCallback mLeScanCallback;//安卓版本在4.4以上的扫描回调
     private boolean IsScannering = false;
+
+    public DeviceMirror getDeviceMirror() {
+        return mDeviceMirror;
+    }
+
+    private DeviceMirror mDeviceMirror;
 
     private LockApiBleUtil() {
         mLockIdMap = new HashMap<>();
@@ -175,6 +187,7 @@ public class LockApiBleUtil {
                         mBluetoothLeDeviceStore.addDevice(new BluetoothLeDevice(bluetoothDevice, result.getRssi()
                                 , result.getScanRecord().getBytes(), result.getTimestampNanos()));
                         if (!mLockIdMap.containsValue(bluetoothDevice.getAddress())) {
+                            Log.e(TAG, bluetoothDevice.getName() + "——" + bluetoothDevice.getAddress());
                             mLockIdMap.put(bluetoothDevice.getName(), bluetoothDevice.getAddress());
                         }
                         if (!mScanenrBoxNames.contains(bluetoothDevice.getName())) {
@@ -276,30 +289,7 @@ public class LockApiBleUtil {
 
     /**************************** 蓝牙连接、关闭连接 *************************************/
 
-//    /**
-//     * 开始连接
-//     * 先关闭蓝牙，后再连接（通过广播监听蓝牙状态的变化）
-//     *
-//     * @param timeOut  单位毫秒
-//     * @param listener
-//     */
-//    public void openConnection(final String boxName, long timeOut, final ConnectListener listener) {
-//        if (listener != null) {
-//            //蓝牙相关配置修改
-//            if (timeOut > 0) {
-//                ViseBle.config().setConnectTimeout((int) timeOut);//连接超时时间
-//            }
-//            mConnectListener = listener;
-//            mBoxName = boxName;
-//            //停止扫描
-//            stopScanner();
-//            //注册蓝牙广播监听
-//            Context context = ViseBle.getInstance().getContext();
-//            context.registerReceiver(mBroadcastReceiver, makeFilters());
-//            //关闭蓝牙
-//            ViseBle.getInstance().getBluetoothAdapter().disable();
-//        }
-//    }
+    private static boolean isConnecting = false;
 
     /**
      * 开始连接
@@ -314,6 +304,7 @@ public class LockApiBleUtil {
             if (timeOut > 0) {
                 ViseBle.config().setConnectTimeout((int) timeOut);//连接超时时间
             }
+            if (isConnecting) return;
             mConnectListener = listener;
             mBoxName = boxDevice.getName();
             mConnectBoxDevice = boxDevice;
@@ -322,13 +313,19 @@ public class LockApiBleUtil {
             //注册蓝牙广播监听
             setOnBleReceiver(mBleStateListenerForConnect);
             //关闭蓝牙
-            ViseBle.getInstance().getBluetoothAdapter().disable();
+            if (ViseBle.getInstance().getBluetoothAdapter().isEnabled()) {
+                ViseBle.getInstance().getBluetoothAdapter().disable();
+            } else {
+                ViseBle.getInstance().getBluetoothAdapter().enable();
+            }
+
         }
     }
 
     private BleStateListener mBleStateListenerForConnect = new BleStateListener() {
         @Override
         public void onState_ON() {
+            isConnecting = true;
             setConnect();
             //关闭蓝牙广播监听
             closeBleReceiver();
@@ -349,6 +346,7 @@ public class LockApiBleUtil {
         //断开连接，将连接成功的box的Mac地址，赋值为空
         mBoxMac = null;
         mBoxName = null;
+        isConnecting = false;
         if (mConnectedBoxDevice != null) {
             ViseBle.getInstance().disconnect(mConnectedBoxDevice);
             mConnectedBoxDevice = null;
@@ -369,27 +367,32 @@ public class LockApiBleUtil {
         }
     }
 
-
     private IConnectCallback mIConnectCallback = new IConnectCallback() {
         @Override
         public void onConnectSuccess(DeviceMirror deviceMirror) {
             if (mConnectListener != null) {
+                isConnecting = false;
                 //再次获取连接的款箱名、锁具ID(款箱Mac)
-                mBoxName = deviceMirror.getBluetoothLeDevice().getName();
-                mBoxMac = deviceMirror.getBluetoothLeDevice().getAddress();
+                mDeviceMirror = deviceMirror;
+                mBoxName = deviceMirror.getBluetoothLeDevice().getDevice().getName();
+                mBoxMac = deviceMirror.getBluetoothLeDevice().getDevice().getAddress();
                 mConnectedBoxDevice = deviceMirror.getBluetoothLeDevice();
                 mGatt = deviceMirror.getBluetoothGatt();
                 mBluetoothGattService = mGatt.getService(UUID.fromString(Constant.SERVICE_UUID));
+                LockAPI lockAPI = LockFactory.getInstance(LockAPI.getInstance().getContext());
+                lockAPI.resigeterNotify();
+
                 //调用连接成功接口
-                mConnectListener.onSuccess(mConnectedBoxDevice, deviceMirror.getBluetoothLeDevice().getName());
+                mConnectListener.onSuccess(mConnectedBoxDevice, mBoxName);
             }
         }
 
         @Override
         public void onConnectFailure(BleException exception) {
             mConnectBoxDevice = null;
+            isConnecting = false;
             if (exception instanceof TimeoutException) {
-                mConnectListener.onFail(Constant.CODE.CODE_TIME_OUT, Constant.MSG.MSG_CONNECT_TIME_OUT);
+                mConnectListener.onTimeout(Constant.CODE.CODE_TIME_OUT, 5000);
             } else {
                 if (mConnectListener != null) {
                     mConnectListener.onFail(Constant.CODE.CODE_CONNECT_FAIL, Constant.MSG.MSG_CONNECT_FAIL);
@@ -401,6 +404,7 @@ public class LockApiBleUtil {
         @Override
         public void onDisconnect(boolean isActive) {
             mConnectBoxDevice = null;
+            isConnecting = false;
             mConnectListener.onClose(Constant.SERVICE_UUID, mBoxName);
         }
     };
@@ -409,28 +413,29 @@ public class LockApiBleUtil {
     /********************************** 获取款箱锁具ID ********************************/
     public Result<String> getLockIdByBoxName(String boxName) {
         Result<String> lockIdResult = new Result<>();
-        if (!TextUtils.isEmpty(boxName)) {
-            if (mLockIdMap != null) {
-                Log.e("=====>" ,"1");
-                String lockId = mLockIdMap.get(boxName);
-                lockIdResult.setCode(Constant.CODE.CODE_SUCCESS);
-                lockIdResult.setMsg(Constant.MSG.MSG_GET_LOCK_ID_SUCCESS);
-                lockIdResult.setData(lockId);
-                return lockIdResult;
-            } else {
-                Log.e("=====>" ,"2");
-                lockIdResult.setCode(Constant.CODE.CODE_GET_LOCK_ID_FAIL);
-                lockIdResult.setMsg(Constant.MSG.MSG_GET_LOCK_ID_FAIL);
-                lockIdResult.setData(null);
-                return lockIdResult;
-            }
+        //TODO : 2017/11/23 由于可能款箱名为空，所以去掉是否为空判断
+//        if (!TextUtils.isEmpty(boxName)) {
+        if (mLockIdMap != null) {
+            Log.e("=====>", "1");
+            String lockId = mLockIdMap.get(boxName).replace(":", "");
+            lockIdResult.setCode(Constant.CODE.CODE_SUCCESS);
+            lockIdResult.setMsg(Constant.MSG.MSG_GET_LOCK_ID_SUCCESS);
+            lockIdResult.setData(lockId);
+            return lockIdResult;
         } else {
-            Log.e("=====>" ,"3");
+            Log.e("=====>", "2");
             lockIdResult.setCode(Constant.CODE.CODE_GET_LOCK_ID_FAIL);
             lockIdResult.setMsg(Constant.MSG.MSG_GET_LOCK_ID_FAIL);
             lockIdResult.setData(null);
             return lockIdResult;
         }
+//        } else {
+//            Log.e("=====>", "3");
+//            lockIdResult.setCode(Constant.CODE.CODE_GET_LOCK_ID_FAIL);
+//            lockIdResult.setMsg(Constant.MSG.MSG_GET_LOCK_ID_FAIL);
+//            lockIdResult.setData(null);
+//            return lockIdResult;
+//        }
     }
 
 

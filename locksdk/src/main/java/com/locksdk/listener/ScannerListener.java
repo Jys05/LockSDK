@@ -16,6 +16,6 @@ public interface ScannerListener {
 
     void onBoxFoundScanning(Result<List<BluetoothLeDevice>> boxs_Name);
 
-    void onScannerFail(String code , String mag);
+    void onScannerFail(String code , String msg);
 
 }

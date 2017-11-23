@@ -6,17 +6,17 @@ package com.locksdk.bean;
  */
 
 public class WriteCallbackData {
-    private int mFunctionCode;
+    private byte mFunctionCode;
     private byte[] data;
 
     public WriteCallbackData() {
     }
 
-    public int getFunctionCode() {
+    public byte getFunctionCode() {
         return mFunctionCode;
     }
 
-    public void setFunctionCode(int functionCode) {
+    public void setFunctionCode(byte functionCode) {
         mFunctionCode = functionCode;
     }
 

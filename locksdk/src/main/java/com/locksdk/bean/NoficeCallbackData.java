@@ -6,17 +6,18 @@ package com.locksdk.bean;
  */
 
 public class NoficeCallbackData {
-    private int mFunctionCode;
+    private byte mFunctionCode;
     private byte[] data;
+    private boolean isFinish;
 
     public NoficeCallbackData() {
     }
 
-    public int getFunctionCode() {
+    public byte getFunctionCode() {
         return mFunctionCode;
     }
 
-    public void setFunctionCode(int functionCode) {
+    public void setFunctionCode(byte functionCode) {
         mFunctionCode = functionCode;
     }
 
@@ -26,5 +27,13 @@ public class NoficeCallbackData {
 
     public void setData(byte[] data) {
         this.data = data;
+    }
+
+    public boolean isFinish() {
+        return isFinish;
+    }
+
+    public void setFinish(boolean finish) {
+        isFinish = finish;
     }
 }

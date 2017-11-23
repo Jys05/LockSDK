@@ -9,7 +9,7 @@ import com.locksdk.bean.WriteCallbackData;
  */
 
 public interface NoficeDataListener {
-    void onNoficeSuccess(NoficeCallbackData data);
+    void onNoficeSuccess(NoficeCallbackData callbackData);
 
-    void onNoficeFail(NoficeCallbackData data);
+    void onNoficeFail(NoficeCallbackData callbackData);
 }
