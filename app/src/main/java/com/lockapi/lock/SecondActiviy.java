@@ -5,6 +5,7 @@ import android.os.Handler;
 import android.os.Message;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
@@ -93,7 +94,11 @@ public class SecondActiviy extends AppCompatActivity {
         param.put("dpKeyVer", "0000");
         param.put("dpKeyChkCode", "0000");
         param.put("dpCommChkCode", "0000");
-        param.put("boxName", "KX001");
+        if(TextUtils.isEmpty(mBoxName)){
+            param.put("boxName", "KX001");
+        }else {
+            param.put("boxName", mBoxName);
+        }
         mLockAPI.activeLock(param, new ActiveLockListener() {
             @Override
             public void activeLockCallback(Result<String> result) {
@@ -153,7 +158,11 @@ public class SecondActiviy extends AppCompatActivity {
     public void onOpenLockClick(View view) {
         Map<String, String> param = new HashMap<>();
         param.put("trTime", DateUtil.format(DateUtil.yyyyMMddHHmmss_not , System.currentTimeMillis()));
-        param.put("boxName", "KX001");
+        if(TextUtils.isEmpty(mBoxName)){
+            param.put("boxName", "KX001");
+        }else {
+            param.put("boxName", mBoxName);
+        }
         param.put("userId", "userId");
         param.put("dynamicPwd", "123456");
         mLockAPI.openLock(param, new OpenLockListener() {
