@@ -26,7 +26,7 @@ import com.locksdk.listener.OpenLockListener;
 import com.locksdk.listener.QueryLogsListener;
 import com.locksdk.util.DateUtil;
 import com.locksdk.util.WriteAndNoficeUtil;
-import com.vise.baseble.utils.HexUtil;
+import com.locksdk.baseble.utils.HexUtil;
 
 import java.util.HashMap;
 import java.util.Map;

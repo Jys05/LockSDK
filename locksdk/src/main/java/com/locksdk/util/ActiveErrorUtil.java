@@ -1,7 +1,7 @@
 package com.locksdk.util;
 
 
-import com.vise.baseble.utils.HexUtil;
+import com.locksdk.baseble.utils.HexUtil;
 
 
 

@@ -11,7 +11,7 @@ import com.locksdk.listener.NoficeDataListener;
 import com.locksdk.listener.WriteDataListener;
 import com.locksdk.util.DealtByteUtil;
 import com.locksdk.util.WriteAndNoficeUtil;
-import com.vise.baseble.utils.HexUtil;
+import com.locksdk.baseble.utils.HexUtil;
 
 /**
  * Created by Sujiayong on 2017/11/21.

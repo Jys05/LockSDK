@@ -4,9 +4,8 @@ import android.nfc.Tag;
 import android.util.Log;
 
 import com.locksdk.util.Util;
-import com.vise.baseble.utils.HexUtil;
+import com.locksdk.baseble.utils.HexUtil;
 
-import org.greenrobot.greendao.query.Query;
 
 import java.util.ArrayList;
 import java.util.HashMap;

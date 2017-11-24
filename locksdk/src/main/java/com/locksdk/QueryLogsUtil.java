@@ -8,7 +8,7 @@ import com.locksdk.listener.QueryLogsListener;
 import com.locksdk.listener.WriteDataListener;
 import com.locksdk.util.LockSDKHexUtil;
 import com.locksdk.util.WriteAndNoficeUtil;
-import com.vise.baseble.utils.HexUtil;
+import com.locksdk.baseble.utils.HexUtil;
 
 import java.util.Map;
 

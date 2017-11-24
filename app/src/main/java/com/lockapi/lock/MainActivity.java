@@ -31,12 +31,9 @@ import com.locksdk.util.BCDCodeUtil;
 import com.locksdk.util.DealtByteUtil;
 import com.locksdk.util.LockSDKHexUtil;
 import com.locksdk.util.Util;
-import com.vise.baseble.ViseBle;
-import com.vise.baseble.model.BluetoothLeDevice;
-import com.vise.baseble.utils.HexUtil;
-import com.vise.xsnow.permission.OnPermissionCallback;
-import com.vise.xsnow.permission.PermissionManager;
-import com.vise.xsnow.permission.RxPermissions;
+import com.locksdk.baseble.ViseBle;
+import com.locksdk.baseble.model.BluetoothLeDevice;
+import com.locksdk.baseble.utils.HexUtil;
 
 import java.security.Permission;
 import java.util.ArrayList;

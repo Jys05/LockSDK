@@ -15,7 +15,7 @@ import com.locksdk.util.DateUtil;
 import com.locksdk.util.DealtByteUtil;
 import com.locksdk.util.LockSDKHexUtil;
 import com.locksdk.util.WriteAndNoficeUtil;
-import com.vise.baseble.utils.HexUtil;
+import com.locksdk.baseble.utils.HexUtil;
 
 import java.util.ArrayList;
 import java.util.List;

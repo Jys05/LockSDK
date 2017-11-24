@@ -23,9 +23,9 @@ import com.locksdk.listener.QueryLogsListener;
 import com.locksdk.listener.ScannerListener;
 import com.locksdk.util.DealtByteUtil;
 import com.locksdk.util.WriteAndNoficeUtil;
-import com.vise.baseble.ViseBle;
-import com.vise.baseble.model.BluetoothLeDevice;
-import com.vise.baseble.utils.HexUtil;
+import com.locksdk.baseble.ViseBle;
+import com.locksdk.baseble.model.BluetoothLeDevice;
+import com.locksdk.baseble.utils.HexUtil;
 
 import java.util.List;
 import java.util.Map;

@@ -9,9 +9,7 @@ import android.util.Log;
 
 import com.locksdk.LockAPI;
 import com.locksdk.listener.ApplyPermissionListener;
-import com.vise.baseble.ViseBle;
-import com.vise.xsnow.permission.OnPermissionCallback;
-import com.vise.xsnow.permission.PermissionManager;
+import com.locksdk.baseble.ViseBle;
 
 /**
  * Created by Sujiayong on 2017/11/17.
@@ -29,24 +27,24 @@ public class ApplyLocationPermissionUtil {
         Context context = LockAPI.getInstance().getContext();
         if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             if (!(context instanceof Activity)) {  Log.e("+++2+++>", "ViseBle.getInstance().getContext()");return;}
-            PermissionManager.instance().with((Activity) context).request(new OnPermissionCallback() {
-                @Override
-                public void onRequestAllow(String permissionName) {
-                    if (permissionName.equals(Manifest.permission.ACCESS_COARSE_LOCATION)) {
-                        listener.onAllow();
-                    }
-                }
-
-                @Override
-                public void onRequestRefuse(String permissionName) {
-                    listener.onRefuse();
-                }
-
-                @Override
-                public void onRequestNoAsk(String permissionName) {
-                    listener.onNoAsk();
-                }
-            }, Manifest.permission.ACCESS_COARSE_LOCATION);
+//            PermissionManager.instance().with((Activity) context).request(new OnPermissionCallback() {
+//                @Override
+//                public void onRequestAllow(String permissionName) {
+//                    if (permissionName.equals(Manifest.permission.ACCESS_COARSE_LOCATION)) {
+//                        listener.onAllow();
+//                    }
+//                }
+//
+//                @Override
+//                public void onRequestRefuse(String permissionName) {
+//                    listener.onRefuse();
+//                }
+//
+//                @Override
+//                public void onRequestNoAsk(String permissionName) {
+//                    listener.onNoAsk();
+//                }
+//            }, Manifest.permission.ACCESS_COARSE_LOCATION);
         } else {
             listener.onAllow();
         }

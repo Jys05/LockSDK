@@ -1,6 +1,6 @@
 package com.locksdk.listener;
 
-import com.vise.baseble.model.BluetoothLeDevice;
+import com.locksdk.baseble.model.BluetoothLeDevice;
 
 /**
  * Created by Sujiayong on 2017/11/14.
