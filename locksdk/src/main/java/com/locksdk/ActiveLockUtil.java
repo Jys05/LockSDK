@@ -1,23 +1,16 @@
 package com.locksdk;
 
-import android.os.Handler;
 import android.text.TextUtils;
-import android.util.Log;
 
-import com.locksdk.bean.NoficeCallbackData;
 import com.locksdk.bean.WriteCallbackData;
 import com.locksdk.listener.ActiveLockListener;
-import com.locksdk.listener.NoficeDataListener;
 import com.locksdk.listener.WriteDataListener;
-import com.locksdk.util.ASCIICodeUtil;
 import com.locksdk.util.BCDCodeUtil;
 import com.locksdk.util.DateUtil;
 import com.locksdk.util.DealtByteUtil;
-import com.locksdk.util.LockSDKHexUtil;
 import com.locksdk.util.WriteAndNoficeUtil;
 import com.locksdk.baseble.utils.HexUtil;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -65,28 +58,6 @@ public class ActiveLockUtil {
         byte[] btDpKeyChkCode = DealtByteUtil.dataAdd0(HexUtil.decodeHex(dpKeyChkCode.toCharArray()), 16);
         byte[] btDpCommChkCode = DealtByteUtil.dataAdd0(HexUtil.decodeHex(dpCommChkCode.toCharArray()), 16);
         byte[] btBoxName = DealtByteUtil.dataAdd0(boxName.getBytes(), 16);
-        /*********************** 测试版 ****************************************/
-//        String time = DateUtil.format(DateUtil.yyyyMMddHHmmss_not, System.currentTimeMillis());
-//        byte[] btTime = BCDCodeUtil.str2Bcd(time);
-//        byte[] btLockId = DealtByteUtil.dataAdd0(LockSDKHexUtil.hexStringToByte("546C0E1B8068", true), 12);
-//        byte[] btDpKey = DealtByteUtil.dataAdd0(LockSDKHexUtil.hexStringToByte("A1B2C3D4E5F6", true), 16);
-//        byte[] btDpCommKey = DealtByteUtil.dataAdd0(LockSDKHexUtil.hexStringToByte("A1B2C3D4E5F6", true), 16);
-//        byte[] btDpCommKeyVer = DealtByteUtil.dataAdd0("KX001".getBytes(), 36);
-//        byte[] btDpKeyVer = DealtByteUtil.dataAdd0("KX001".getBytes(), 36);
-//        byte[] btDpKeyChkCode = DealtByteUtil.dataAdd0(LockSDKHexUtil.hexStringToByte("A1B2C3D4E5F6", true), 16);
-//        byte[] btDpCommChkCode = DealtByteUtil.dataAdd0(LockSDKHexUtil.hexStringToByte("A1B2C3D4E5F6", true), 16);
-//        byte[] btBoxName = DealtByteUtil.dataAdd0("KX001".getBytes(), 16);
-//        Log.e(TAG, new String(btBoxName));
-//        Log.e(TAG, " btTime          ：" + btTime.length + "=====>" + HexUtil.encodeHexStr(btTime));
-//        Log.e(TAG, " btLockId        ：" + btLockId.length + "=====>" + HexUtil.encodeHexStr(btLockId));
-//        Log.e(TAG, " btDpKey         ：" + btDpKey.length + "=====>" + HexUtil.encodeHexStr(btDpKey));
-//        Log.e(TAG, " btDpCommKey     ：" + btDpCommKey.length + "=====>" + HexUtil.encodeHexStr(btDpCommKey));
-//        Log.e(TAG, " btDpCommKeyVer  ：" + btDpCommKeyVer.length + "=====>" + HexUtil.encodeHexStr(btDpCommKeyVer));
-//        Log.e(TAG, " btDpKeyVer      ：" + btDpKeyVer.length + "=====>" + HexUtil.encodeHexStr(btDpKeyVer));
-//        Log.e(TAG, " btDpKeyChkCode  ：" + btDpKeyChkCode.length + "=====>" + HexUtil.encodeHexStr(btDpKeyChkCode));
-//        Log.e(TAG, " btDpCommChkCode ：" + btDpCommChkCode.length + "=====>" + HexUtil.encodeHexStr(btDpCommChkCode));
-//        Log.e(TAG, " btBoxName       ：" + btBoxName.length + "=====>" + HexUtil.encodeHexStr(btBoxName));
-        /*********************** 测试版 ****************************************/
         byte[] data = new byte[1 + 7 + 12 + 16 + 16 + 36 + 36 + 16 + 16 + 16];
         data[0] = 0x10; //功能码
         System.arraycopy(btTime, 0, data, 1, btTime.length);
@@ -106,7 +77,6 @@ public class ActiveLockUtil {
     private static WriteDataListener writeDataListener = new WriteDataListener() {
         @Override
         public void onWirteSuccess(WriteCallbackData callbackData) {
-            Log.i(TAG + "======>", callbackData.getData().length + "---" + HexUtil.encodeHexStr(callbackData.getData()));
         }
 
         @Override
@@ -115,7 +85,6 @@ public class ActiveLockUtil {
         }
     };
 
-    private static Handler handler = new Handler();
 
     /****数据：***/
     //参数名称	  参数名	是否必填	长度

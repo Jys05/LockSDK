@@ -61,19 +61,19 @@ public class SecondActiviy extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
-        mLockAPI.closeConnection(Constant.SERVICE_UUID);
+        mLockAPI.closeConnection();
         super.onDestroy();
     }
 
     //关闭连接
     public void onCloseConnectClick(View view) {
-        mLockAPI.closeConnection(Constant.SERVICE_UUID);
+        mLockAPI.closeConnection();
         finish();
     }
 
     //获取锁具ID
     public void onGetLockIdByBoxNameClick(View view) {
-        mLockAPI.getLockIdByBoxName(mBoxName, new GetLockIdListener() {
+        mLockAPI.getLockIdByBoxName(new GetLockIdListener() {
             @Override
             public void onGetLockIDListener(String lockId) {
                 mMsg = "锁具ID：" + lockId;

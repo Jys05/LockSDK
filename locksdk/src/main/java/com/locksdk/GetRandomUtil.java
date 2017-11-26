@@ -37,16 +37,15 @@ public class GetRandomUtil {
     private static WriteDataListener writeDataListener = new WriteDataListener() {
         @Override
         public void onWirteSuccess(WriteCallbackData data) {
-            Log.i("=====>", "写入成功" + data.getFunctionCode() + "====" + data.getData().length + "====" + HexUtil.encodeHexStr(data.getData()));
-            Result<RandomAttr> randomAttrResult = new Result<>();
-            randomAttrResult.setMsg("=====");
-            randomAttrResult.setCode("=====");
-            getRandomListener.getRandomCallback(randomAttrResult);
+
         }
 
         @Override
         public void onWriteFail(WriteCallbackData data) {
-
+            Result<RandomAttr> randomAttrResult = new Result<>();
+            randomAttrResult.setMsg(Constant.CODE.GET_RANDOM_FAIL);
+            randomAttrResult.setCode(Constant.MSG.MSG_WRITE_FAIL);
+            getRandomListener.getRandomCallback(randomAttrResult);
         }
     };
 }

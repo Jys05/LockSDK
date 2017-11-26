@@ -9,7 +9,4 @@ import com.locksdk.Result;
 
 public interface ActiveLockListener {
     void activeLockCallback(Result<String> result);
-//    void onActiveLockSuccess();
-//
-//    void onActiviteLockFail(String code, String msg);
 }

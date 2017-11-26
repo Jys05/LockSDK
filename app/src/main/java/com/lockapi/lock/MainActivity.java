@@ -1,13 +1,9 @@
 package com.lockapi.lock;
 
-import android.Manifest;
-import android.app.Activity;
 import android.content.Intent;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
-import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -15,30 +11,18 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
 
-import com.library.base.util.DateUtil;
 import com.library.base.util.recyclerview.BaseAdapterHelper;
 import com.library.base.util.recyclerview.OnItemClickListener;
 import com.library.base.util.recyclerview.QuickAdapter;
-import com.locksdk.Constant;
-import com.locksdk.DealDataUtil;
 import com.locksdk.LockAPI;
 import com.locksdk.LockFactory;
 import com.locksdk.Result;
 import com.locksdk.listener.ConnectListener;
 import com.locksdk.listener.ScannerListener;
-import com.locksdk.util.ASCIICodeUtil;
-import com.locksdk.util.BCDCodeUtil;
-import com.locksdk.util.DealtByteUtil;
-import com.locksdk.util.LockSDKHexUtil;
-import com.locksdk.util.Util;
 import com.locksdk.baseble.ViseBle;
 import com.locksdk.baseble.model.BluetoothLeDevice;
-import com.locksdk.baseble.utils.HexUtil;
 
-import java.security.Permission;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
@@ -73,7 +57,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void onScannerClick(View view) {
-        mLockAPI.getBoxList(this ,mScannerListener);
+        mLockAPI.getBoxList(null ,mScannerListener);
     }
 
 
@@ -84,10 +68,11 @@ public class MainActivity extends AppCompatActivity {
         }
 
         @Override
-        public void onBoxFoundScanning(Result<List<BluetoothLeDevice>> boxs_Name) {
-            List<BluetoothLeDevice> devices = boxs_Name.getData();
+        public void onBoxFoundScanning(Result<List<BluetoothLeDevice>> scannerDevideResult, Result<List<String>> boxNamesResult) {
+            List<BluetoothLeDevice> devices = scannerDevideResult.getData();
             mQuickAdapter.replaceAll(devices);
         }
+
 
         @Override
         public void onScannerFail(String code, String msg) {
@@ -108,7 +93,7 @@ public class MainActivity extends AppCompatActivity {
                 mLockAPI.openConnection(bluetoothLeDevice, 5000, mConnectListener);
             } else {
                 Log.e("======>", "已连接，准备断开连接");
-                mLockAPI.closeConnection(null);
+                mLockAPI.closeConnection();
             }
         }
 
@@ -127,7 +112,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         @Override
-        public void onSuccess(BluetoothLeDevice device, String boxName) {
+        public void onSuccess(BluetoothLeDevice device, String uuid, String boxName) {
             mMsg = "连接成功";
             mHandler.sendEmptyMessage(0x00);
             Log.i(TAG, "连接成功");

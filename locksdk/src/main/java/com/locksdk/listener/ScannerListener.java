@@ -12,10 +12,10 @@ import java.util.List;
 
 public interface ScannerListener {
 
-    void onStartScanner(String code , String mag);
+    void onStartScanner(String code, String msg);
 
-    void onBoxFoundScanning(Result<List<BluetoothLeDevice>> boxs_Name);
+    void onBoxFoundScanning(Result<List<BluetoothLeDevice>> scannerDevideResult , Result<List<String>> boxNamesResult);
 
-    void onScannerFail(String code , String msg);
+    void onScannerFail(String code, String msg);
 
 }

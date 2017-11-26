@@ -6,13 +6,12 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.support.v4.content.ContextCompat;
+import android.text.TextUtils;
 import android.util.Log;
-import android.widget.Toast;
 
 import com.locksdk.bean.NoficeCallbackData;
 import com.locksdk.bean.RandomAttr;
 import com.locksdk.listener.ActiveLockListener;
-import com.locksdk.listener.ApplyPermissionListener;
 import com.locksdk.listener.ConnectListener;
 import com.locksdk.listener.GetLockIdListener;
 import com.locksdk.listener.GetRandomListener;
@@ -22,15 +21,14 @@ import com.locksdk.listener.OpenLockListener;
 import com.locksdk.listener.QueryLogsListener;
 import com.locksdk.listener.ScannerListener;
 import com.locksdk.util.DealtByteUtil;
+import com.locksdk.util.LockStatusUtil;
 import com.locksdk.util.WriteAndNoficeUtil;
-import com.locksdk.baseble.ViseBle;
 import com.locksdk.baseble.model.BluetoothLeDevice;
 import com.locksdk.baseble.utils.HexUtil;
 
 import java.util.List;
 import java.util.Map;
 
-import static com.locksdk.util.ApplyLocationPermissionUtil.applyLocationPermission;
 
 /**
  * Created by Sujiayong on 2017/11/14.
@@ -79,24 +77,43 @@ public class LockAPI {
         return this;
     }
 
+    public static final int PREMISSION_REQUEST_CODE = 0x01;
+
     //获取款箱列表
-    public void getBoxList(Activity activiy, final ScannerListener listener) {
+    public void getBoxList(Activity activiy, String uuid, final ScannerListener listener) {
+        if (!TextUtils.isEmpty(uuid)) {
+            Constant.SERVICE_UUID = uuid;
+        }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            Log.e("======>", ContextCompat.checkSelfPermission(activiy, Manifest.permission.ACCESS_COARSE_LOCATION) + "");
             if (ContextCompat.checkSelfPermission(activiy, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                 String[] permissions = new String[]{Manifest.permission.ACCESS_COARSE_LOCATION};
-                activiy.requestPermissions(permissions, 0x01);
+                activiy.requestPermissions(permissions, PREMISSION_REQUEST_CODE);
             } else {
                 LockApiBleUtil.getInstance().startScanner(listener);
             }
         } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
             LockApiBleUtil.getInstance().startScanner(listener);
         }
+    }
 
+    //获取款箱列表
+    public void getBoxList(String uuid, final ScannerListener listener) {
+        if (!TextUtils.isEmpty(uuid)) {
+            Constant.SERVICE_UUID = uuid;
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            if (ContextCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                listener.onScannerFail(Constant.CODE.CODE_SCANNER_FAIL2, Constant.MSG.MSG_LOCATION_PERSISION);
+            } else {
+                LockApiBleUtil.getInstance().startScanner(listener);
+            }
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
+            LockApiBleUtil.getInstance().startScanner(listener);
+        }
     }
 
     //获取扫描到的款箱名字，（P:在getBoxList的扫描成功的接口调用，否则可以为null，或size为0）
-    public List<String> getScannerBoxNames() {
+    public Result<List<String>> getScannerBoxNames() {
         return LockApiBleUtil.getInstance().getScannerBoxNames();
     }
 
@@ -106,8 +123,13 @@ public class LockAPI {
     }
 
     //关闭连接
-    public void closeConnection(String uuid) {
+    public void closeConnection() {
         LockApiBleUtil.getInstance().closeConnection();
+    }
+
+    //获取锁具ID
+    public void getLockIdByBoxName(GetLockIdListener lockIdListener) {
+        LockApiBleUtil.getInstance().getLockIdByBoxName(lockIdListener);
     }
 
     //激活
@@ -134,10 +156,6 @@ public class LockAPI {
         GetRandomUtil.getRandom(boxName, listener);
     }
 
-    //获取锁具ID
-    public void getLockIdByBoxName(String boxName, GetLockIdListener lockIdListener) {
-        LockApiBleUtil.getInstance().getLockIdByBoxName(boxName, lockIdListener);
-    }
 
     //查询锁状态
     public void queryLockStatus(String lockId) {
@@ -159,7 +177,6 @@ public class LockAPI {
         @Override
         public void onNoficeSuccess(NoficeCallbackData callbackData) {
             if (callbackData.isFinish()) {
-                Log.e((callbackData.getFunctionCode()) + "====>", callbackData.getData().length + "====" + HexUtil.encodeHexStr(callbackData.getData()));
                 dealtNotifyCallBackData(callbackData);
             }
         }
@@ -203,24 +220,20 @@ public class LockAPI {
                 System.arraycopy(data, 16, btRandom, 0, btRandom.length);
                 randomAttr.setRandom(new String(btRandom));
 
-                //TODO : 2017/11/23 数值固定
                 byte[] btCloseCode = new byte[10];
                 System.arraycopy(data, 24, btCloseCode, 0, btCloseCode.length);
                 Log.e(TAG, HexUtil.encodeHexStr(btCloseCode));
                 randomAttr.setCloseCode(new String(btCloseCode));
-//                randomAttr.setCloseCode("12345");
 
                 byte[] btDpCommKeyVer = new byte[36];
                 System.arraycopy(data, 34, btDpCommKeyVer, 0, btDpCommKeyVer.length);
                 Log.e(TAG, HexUtil.encodeHexStr(btCloseCode));
                 randomAttr.setDpCommKeyVer(new String(btDpCommKeyVer));
-//                randomAttr.setDpCommKeyVer("123123215432");
 
                 byte[] btDpKeyVer = new byte[36];
                 System.arraycopy(data, 70, btDpKeyVer, 0, btDpKeyVer.length);
                 Log.e(TAG, HexUtil.encodeHexStr(btCloseCode));
                 randomAttr.setDpKeyVer(new String(btDpKeyVer));
-//                randomAttr.setDpKeyVer("sadasds");
 
                 getRandomResult.setData(randomAttr);
                 mGetRandomListener.getRandomCallback(getRandomResult);
@@ -237,18 +250,15 @@ public class LockAPI {
 
                 byte[] callbackInfo = new byte[16];
                 System.arraycopy(data, 18, callbackInfo, 0, callbackInfo.length);
-                String msg = " ";
                 if (HexUtil.encodeHexStr(btCode).equals("0000")) {
-                     msg = "款箱名：" + (new String(btBoxName)) + "返回结果：" + HexUtil.encodeHexStr(btCode)
-                            + "信息：" +"开锁成功";
+                    openLockResult.setCode(HexUtil.encodeHexStr(btCode));
+                    openLockResult.setMsg("开锁成功");
+                    openLockResult.setData(new String(btBoxName));
                 } else {
-                     msg = "款箱名：" + (new String(btBoxName)) + "返回结果：" + HexUtil.encodeHexStr(btCode)
-                            + "信息：" + (new String(callbackInfo));
+                    openLockResult.setCode(HexUtil.encodeHexStr(btCode));
+                    openLockResult.setMsg(new String(callbackInfo));
+                    openLockResult.setData(new String(btBoxName));
                 }
-
-                openLockResult.setCode("0000");
-                openLockResult.setMsg("开锁成功");
-                openLockResult.setData(msg);
                 mOpenLockListener.openLockCallback(openLockResult);
                 break;
             case (byte) 0x93:
@@ -265,8 +275,11 @@ public class LockAPI {
                 System.arraycopy(data2, 1, btBoxName3, 0, btBoxName3.length);
                 byte[] btBoxName4 = DealtByteUtil.dataClear0(btBoxName3);
                 String boxName = new String(btBoxName4);
-                //TODO : 2017/11/23 锁具ID这里处理可能有问题
-                mLockStatusListener.onChange(boxName, LockApiBleUtil.getInstance().getConnectedBoxDevice().getAddress(), null);
+
+                byte[] btBoxStatus = new byte[2];
+                System.arraycopy(data2, data2.length - 2, btBoxStatus, 0, btBoxStatus.length);
+
+                mLockStatusListener.onChange(boxName, LockApiBleUtil.getInstance().getLockIDStr(), LockStatusUtil.getBoxStatus(btBoxStatus));
                 break;
         }
 

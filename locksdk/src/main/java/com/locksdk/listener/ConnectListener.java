@@ -11,7 +11,7 @@ public interface ConnectListener {
 
     void onWaiting(String uuid);//正在连接过程中
 
-    void onSuccess(BluetoothLeDevice device, String boxName);//连接成功
+    void onSuccess(BluetoothLeDevice device, String uuid, String boxName);//连接成功
 
     void onFail(String uuid, String msg);//连接失败
 

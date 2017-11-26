@@ -9,6 +9,7 @@ import android.util.Log;
 import com.locksdk.Constant;
 import com.locksdk.DealDataUtil;
 import com.locksdk.LockApiBleUtil;
+import com.locksdk.baseble.model.resolver.GattAttributeResolver;
 import com.locksdk.bean.NoficeCallbackData;
 import com.locksdk.bean.WriteCallbackData;
 import com.locksdk.listener.NoficeDataListener;
@@ -22,7 +23,6 @@ import com.locksdk.baseble.core.DeviceMirror;
 import com.locksdk.baseble.core.DeviceMirrorPool;
 import com.locksdk.baseble.exception.BleException;
 import com.locksdk.baseble.model.BluetoothLeDevice;
-import com.locksdk.baseble.model.resolver.GattAttributeResolver;
 import com.locksdk.baseble.utils.HexUtil;
 
 import java.util.LinkedList;
@@ -211,7 +211,7 @@ public class WriteAndNoficeUtil {
         if (LockApiBleUtil.getInstance().getGatt() == null) return;
         if (LockApiBleUtil.getInstance().getConnectedBoxDevice() == null) return;
         BluetoothGattService bluetoothGattService = LockApiBleUtil.getInstance().getBluetoothGattService();
-        UUID characteristicUUID = bluetoothGattService.getCharacteristic(UUID.fromString(Constant.READ_UUID)).getUuid();
+        UUID characteristicUUID = bluetoothGattService.getCharacteristic(UUID.fromString(Constant.NOTIFY_UUID)).getUuid();
         UUID mServiceUUID = bluetoothGattService.getUuid();
         mNoficeCallbackData = new NoficeCallbackData();
         mDeviceMirrorPool = ViseBle.getInstance().getDeviceMirrorPool();
@@ -259,10 +259,8 @@ public class WriteAndNoficeUtil {
             if (data == null) {
                 return;
             }
-            Log.e(TAG, "callback success:" + HexUtil.encodeHexStr(data));
             if (bluetoothGattInfo.getPropertyType() == PropertyType.PROPERTY_NOTIFY) {
                 DeviceMirror deviceMirror = LockApiBleUtil.getInstance().getDeviceMirror();
-                Log.e("====", "sasadhjkas");
                 deviceMirror.setNotifyListener(bluetoothGattInfo.getGattInfoKey(), receiveCallback);
             } else if (bluetoothGattInfo.getPropertyType() == PropertyType.PROPERTY_WRITE) {
                 mWriteCallbackData.setData(data);
@@ -274,6 +272,9 @@ public class WriteAndNoficeUtil {
 
         @Override
         public void onFailure(BleException exception) {
+            mReadListener.onReadListener(null);
+            mWriteCallbackData.setData(null);
+            mWriteDataListener.onWirteSuccess(mWriteCallbackData);
             if (exception == null) {
                 return;
             }
@@ -283,17 +284,20 @@ public class WriteAndNoficeUtil {
     private IBleCallback receiveCallback = new IBleCallback() {
         @Override
         public void onSuccess(byte[] data, BluetoothGattChannel bluetoothGattChannel, BluetoothLeDevice bluetoothLeDevice) {
-            Log.e(TAG, "监听通知成功" + data.length + "====" + HexUtil.encodeHexStr(data));
+            Log.e(TAG, "监听通知成功：长度—" + data.length + "；数据16进制—" + HexUtil.encodeHexStr(data));
             byte[] callBlck;
-            boolean isFinish = DealDataUtil.dealtDealData(data);
-            mNoficeCallbackData.setFinish(isFinish);
-            if (isFinish) {
+            DealDataUtil.DealtSituation situation = DealDataUtil.dealtDealData(data);
+            mNoficeCallbackData.setFinish(situation.isFinish());
+            if (situation.isFinish()) {
                 callBlck = DealDataUtil.callbackDataMap.get(DealDataUtil.ressonpCode);
-                // TODO: 2017/11/24 由于硬件的应答码错误，暂时修改为0x12 ：80002e12201711240302304b5831303100000000
-//                if(DealDataUtil.ressonpCode == (byte) 0x92){
-//                    callBlck = DealDataUtil.callbackDataMap.get(0x12);
-//                }
-                mNoficeCallbackData.setData(callBlck);
+                if (!situation.isFail()) {
+                    mNoficeCallbackData.setData(callBlck);
+                } else {
+                    mNoficeCallbackData.setData(null);
+                    if (noficeDataListener == null) return;
+                    noficeDataListener.onNoficeFail(mNoficeCallbackData);
+                    Log.e(TAG, "通知Notify返回数据有误或掉包现象，或者数据处理有误");
+                }
             }
             if (noficeDataListener == null) return;
             noficeDataListener.onNoficeSuccess(mNoficeCallbackData);
@@ -318,12 +322,10 @@ public class WriteAndNoficeUtil {
         List<BluetoothGattService> gattServices = deviceMirror.getBluetoothGatt().getServices();
         for (BluetoothGattService bluetoothGattService : gattServices) {
             String uuid = bluetoothGattService.getUuid().toString();
-            if (GattAttributeResolver.getAttributeName(uuid, "不qingchi").equals("Device Information")) {
-                Log.e(TAG, GattAttributeResolver.getAttributeName(uuid, "不知道") + "=====" + uuid);
+            if (GattAttributeResolver.getAttributeName(uuid, "不清楚").equals("Device Information")) {
                 List<BluetoothGattCharacteristic> gattCharacteristics = bluetoothGattService.getCharacteristics();
                 for (final BluetoothGattCharacteristic gattCharacteristic : gattCharacteristics) {
                     if (GattAttributeResolver.getAttributeName(gattCharacteristic.getUuid().toString(), "不知道").contains("System")) {
-                        Log.e(TAG, GattAttributeResolver.getAttributeName(gattCharacteristic.getUuid().toString(), "不知道") + "====" + gattCharacteristic.getUuid().toString());
                         bindChannel(bluetoothLeDevice, PropertyType.PROPERTY_READ, bluetoothGattService.getUuid(), gattCharacteristic.getUuid(), null);
                     }
                 }
