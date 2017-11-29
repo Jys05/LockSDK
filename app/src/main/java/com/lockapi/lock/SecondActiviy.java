@@ -55,7 +55,7 @@ public class SecondActiviy extends AppCompatActivity {
         Log.i(TAG, bundle.getString("boxMac", "   "));
         mBoxName = bundle.getString("boxName");
         mBoxAddress = bundle.getString("boxMac");
-        mLockAPI = LockFactory.getInstance(this);
+        mLockAPI =LockAPI.getInstance().init(this);
 
     }
 

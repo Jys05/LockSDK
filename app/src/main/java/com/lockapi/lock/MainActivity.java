@@ -53,33 +53,44 @@ public class MainActivity extends AppCompatActivity {
         mRecyclerview.setLayoutManager(new LinearLayoutManager(this));
         mRecyclerview.setAdapter(mQuickAdapter);
         mQuickAdapter.setOnItemClickListener(mOnItemClickListener);
-        mLockAPI = LockFactory.getInstance(this);
     }
 
     public void onScannerClick(View view) {
-        mLockAPI.getBoxList(null ,mScannerListener);
+      mHandler2.sendEmptyMessage(0x00);
     }
 
-
-    private ScannerListener mScannerListener = new ScannerListener() {
+    private Handler mHandler2 = new Handler(new Handler.Callback() {
         @Override
-        public void onStartScanner(String code, String mag) {
-            Toast.makeText(MainActivity.this, "扫描开始", Toast.LENGTH_SHORT).show();
-        }
+        public boolean handleMessage(Message message) {
+            MainActivity.this.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    mLockAPI = LockAPI.getInstance().init(MainActivity.this);
+                    ScannerListener mScannerListener = new ScannerListener() {
+                        @Override
+                        public void onStartScanner(String code, String mag) {
+                            Toast.makeText(MainActivity.this, "扫描开始", Toast.LENGTH_SHORT).show();
+                        }
 
-        @Override
-        public void onBoxFoundScanning(Result<List<BluetoothLeDevice>> scannerDevideResult, Result<List<String>> boxNamesResult) {
-            List<BluetoothLeDevice> devices = scannerDevideResult.getData();
-            mQuickAdapter.replaceAll(devices);
-        }
+                        @Override
+                        public void onBoxFoundScanning(Result<List<BluetoothLeDevice>> scannerDevideResult, Result<List<String>> boxNamesResult) {
+                            List<BluetoothLeDevice> devices = scannerDevideResult.getData();
+                            mQuickAdapter.replaceAll(devices);
+                        }
 
 
-        @Override
-        public void onScannerFail(String code, String msg) {
+                        @Override
+                        public void onScannerFail(String code, String msg) {
 //            Toast.makeText(MainActivity.this, "扫描出错", Toast.LENGTH_SHORT).show();
-            Log.i(TAG + "==扫描出错==>", msg);
+                            Log.i(TAG + "==扫描出错==>", msg);
+                        }
+                    };
+                    mLockAPI.getBoxList(MainActivity.this, null, mScannerListener);
+                }
+            });
+            return false;
         }
-    };
+    });
 
     private OnItemClickListener mOnItemClickListener = new OnItemClickListener() {
 
@@ -90,7 +101,7 @@ public class MainActivity extends AppCompatActivity {
             BluetoothLeDevice bluetoothLeDevice = mQuickAdapter.getItem(i);
             if (!ViseBle.getInstance().isConnect(bluetoothLeDevice)) {
                 Log.e("======>", "没有连接，装备连接" + bluetoothLeDevice.getName());
-                mLockAPI.openConnection(bluetoothLeDevice, 5000, mConnectListener);
+                mLockAPI.openConnection(bluetoothLeDevice, 10000, mConnectListener);
             } else {
                 Log.e("======>", "已连接，准备断开连接");
                 mLockAPI.closeConnection();
