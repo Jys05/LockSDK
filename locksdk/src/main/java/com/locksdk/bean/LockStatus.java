@@ -52,6 +52,42 @@ public class LockStatus {
     }
 
     public void setBatteryLevel(String batteryLevelStr) {
-        this.batteryLevel = Integer.valueOf(LockStatusUtil.toD(batteryLevelStr, 2));
+        this.batteryLevel = Integer.valueOf(LockStatusUtil.toD(batteryLevelStr , 2));
+    }
+
+    public int getLockStatus() {
+        return lockStatus;
+    }
+
+    public int getCloseTimoutAlarm() {
+        return closeTimoutAlarm;
+    }
+
+    public int getVibrateAlarm() {
+        return vibrateAlarm;
+    }
+
+    public int getLockedAlarm() {
+        return lockedAlarm;
+    }
+
+    public int getBoxStatus() {
+        return boxStatus;
+    }
+
+    public int getSwitchError() {
+        return switchError;
+    }
+
+    public int getAlarmSwitchStatus() {
+        return alarmSwitchStatus;
+    }
+
+    public int getShelfStatus() {
+        return shelfStatus;
+    }
+
+    public int getBatteryLevel() {
+        return batteryLevel;
     }
 }

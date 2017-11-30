@@ -1,5 +1,7 @@
 package com.locksdk.util;
 
+import android.util.Log;
+
 import com.locksdk.baseble.utils.HexUtil;
 import com.locksdk.bean.LockStatus;
 
@@ -10,27 +12,50 @@ import com.locksdk.bean.LockStatus;
 
 public class LockStatusUtil {
 
-    public static LockStatus getBoxStatus(byte[] btLockStatus) {
-        if (btLockStatus.length != 2) return null;
-        char[] charLockStatus = HToB(HexUtil.encodeHexStr(btLockStatus));
-        if (charLockStatus.length != 16) return null;
+    private static final String TAG = "LockStatusUtil";
+
+    public static LockStatus getBoxStatus(byte btLockStatus1, byte btLockStatus2) {
+        char[] binaryStatus1 = byte2Binary(btLockStatus1);
+        char[] binaryStatus2 = byte2Binary(btLockStatus2);
+        if (binaryStatus1.length > 8) return null;
+        if (binaryStatus2.length > 8) return null;
+        char[] charLockStatus1 = new char[]{'0', '0', '0', '0', '0', '0', '0', '0'};
+        System.arraycopy(binaryStatus1, 0, charLockStatus1, 8 - binaryStatus1.length, binaryStatus1.length);
+        char[] charLockStatus2 = new char[]{'0', '0', '0', '0', '0', '0', '0', '0'};
+        System.arraycopy(binaryStatus2, 0, charLockStatus2, 8 - binaryStatus2.length, binaryStatus2.length);
+
+        /******************************/
+        //TODO : 2017/11/30 测试
+        for (int i = 0; i < charLockStatus1.length; i++) {
+            Log.e(TAG, charLockStatus1[i] + "");
+        }
+        Log.e(TAG, "====" + charLockStatus2.length);
+        for (int i = 0; i < charLockStatus2.length; i++) {
+            Log.e(TAG, charLockStatus2[i] + "");
+        }
+        /******************************/
         LockStatus lockStatus = new LockStatus();
-        lockStatus.setLockedAlarm(charLockStatus[0]);
-        lockStatus.setVibrateAlarm(charLockStatus[1]);
-        lockStatus.setAlarmSwitchStatus(charLockStatus[2]);
-        lockStatus.setBoxStatus(charLockStatus[3]);
-        lockStatus.setSwitchError(charLockStatus[4]);
-        lockStatus.setLockStatus(charLockStatus[5]);
-        lockStatus.setShelfStatus(charLockStatus[12]);
-        lockStatus.setBatteryLevel((charLockStatus[6] + "") + (charLockStatus[7] + ""));
+        lockStatus.setLockedAlarm(charLockStatus1[0]);
+        lockStatus.setVibrateAlarm(charLockStatus1[1]);
+        lockStatus.setCloseTimoutAlarm(charLockStatus1[2]);
+        lockStatus.setBoxStatus(charLockStatus1[3]);
+        lockStatus.setSwitchError(charLockStatus1[4]);
+        lockStatus.setLockStatus(charLockStatus1[5]);
+        lockStatus.setBatteryLevel((charLockStatus1[6] + "") + (charLockStatus1[7] + ""));
+        //款箱状态2
+        lockStatus.setShelfStatus(charLockStatus2[4]);
+        lockStatus.setAlarmSwitchStatus(charLockStatus2[5]);
         return lockStatus;
     }
 
-
-    // 十六进制转二进制
-    private static char[] HToB(String a) {
-        String b = Integer.toBinaryString(Integer.valueOf(toD(a, 16)));
-        return b.toCharArray();
+    /**
+     * 字节转二进制
+     *
+     * @return
+     */
+    private static char[] byte2Binary(byte data) {
+        char[] result = Integer.toBinaryString((data & 0xFF)).toCharArray();
+        return result;
     }
 
     // 任意进制数转为十进制数
@@ -78,4 +103,7 @@ public class LockStatusUtil {
 
         return i;
     }
+
+
+
 }

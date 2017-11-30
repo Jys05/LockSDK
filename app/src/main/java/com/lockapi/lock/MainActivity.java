@@ -1,9 +1,12 @@
 package com.lockapi.lock;
 
 import android.content.Intent;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -21,7 +24,9 @@ import com.locksdk.listener.ConnectListener;
 import com.locksdk.listener.ScannerListener;
 import com.locksdk.baseble.ViseBle;
 import com.locksdk.baseble.model.BluetoothLeDevice;
+import com.locksdk.util.LockStatusUtil;
 
+import java.io.File;
 import java.util.List;
 
 import butterknife.ButterKnife;
@@ -53,6 +58,11 @@ public class MainActivity extends AppCompatActivity {
         mRecyclerview.setLayoutManager(new LinearLayoutManager(this));
         mRecyclerview.setAdapter(mQuickAdapter);
         mQuickAdapter.setOnItemClickListener(mOnItemClickListener);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
     }
 
     public void onScannerClick(View view) {

@@ -9,13 +9,9 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
-import android.widget.Toast;
 
-import com.library.base.util.ToastUtil;
-import com.locksdk.Constant;
 import com.locksdk.LockAPI;
 import com.locksdk.LockApiBleUtil;
-import com.locksdk.LockFactory;
 import com.locksdk.Result;
 import com.locksdk.bean.LockStatus;
 import com.locksdk.bean.RandomAttr;
@@ -26,8 +22,6 @@ import com.locksdk.listener.LockStatusListener;
 import com.locksdk.listener.OpenLockListener;
 import com.locksdk.listener.QueryLogsListener;
 import com.locksdk.util.DateUtil;
-import com.locksdk.util.WriteAndNoficeUtil;
-import com.locksdk.baseble.utils.HexUtil;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -44,6 +38,7 @@ public class SecondActiviy extends AppCompatActivity {
     private String mBoxAddress;
     private TextView tv_Result;
     private String mMsg;
+    private static final String strWriting = "数据写入中";
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -55,8 +50,7 @@ public class SecondActiviy extends AppCompatActivity {
         Log.i(TAG, bundle.getString("boxMac", "   "));
         mBoxName = bundle.getString("boxName");
         mBoxAddress = bundle.getString("boxMac");
-        mLockAPI =LockAPI.getInstance().init(this);
-
+        mLockAPI = LockAPI.getInstance().init(this);
     }
 
     @Override
@@ -73,6 +67,7 @@ public class SecondActiviy extends AppCompatActivity {
 
     //获取锁具ID
     public void onGetLockIdByBoxNameClick(View view) {
+        tv_Result.setText(strWriting);
         mLockAPI.getLockIdByBoxName(new GetLockIdListener() {
             @Override
             public void onGetLockIDListener(String lockId) {
@@ -85,18 +80,19 @@ public class SecondActiviy extends AppCompatActivity {
 
     //激活
     public void onActiviteLockClick(View view) {
+        tv_Result.setText(strWriting);
         Map<String, String> param = new HashMap<>();
         param.put("trTime", DateUtil.format(DateUtil.yyyyMMddHHmmss_not, System.currentTimeMillis()));
-        param.put("lockId",LockApiBleUtil.getInstance().getLockIDStr());
+        param.put("lockId", LockApiBleUtil.getInstance().getLockIDStr());
         param.put("dpKey", "0000");
         param.put("dpCommKey", "0000");
         param.put("dpCommKeyVer", "0000");
         param.put("dpKeyVer", "0000");
         param.put("dpKeyChkCode", "0000");
         param.put("dpCommChkCode", "0000");
-        if(TextUtils.isEmpty(mBoxName)){
+        if (TextUtils.isEmpty(mBoxName)) {
             param.put("boxName", "KX001");
-        }else {
+        } else {
             param.put("boxName", mBoxName);
         }
         mLockAPI.activeLock(param, new ActiveLockListener() {
@@ -111,6 +107,7 @@ public class SecondActiviy extends AppCompatActivity {
 
     //获取随机
     public void onGetRandomClick(View view) {
+        tv_Result.setText(strWriting);
         mLockAPI.getRandom("KX001", new GetRandomListener() {
             @Override
             public void getRandomCallback(Result<RandomAttr> randomAttrResult) {
@@ -127,23 +124,36 @@ public class SecondActiviy extends AppCompatActivity {
 
     //查询状态
     public void onQueryLockStatusClick(View view) {
+        tv_Result.setText(strWriting);
         mLockAPI.registerLockStatusListener(new LockStatusListener() {
             @Override
             public void onChange(String boxName, String lockId, LockStatus newStatus) {
                 mMsg = "款箱名：" + boxName
                         + "\n锁具ID：" + lockId
-                        + "\n锁具状态：" + "81";
+                        + "\n锁状态：" + newStatus.getLockStatus()
+                        + "\n超时未关报警：" + newStatus.getCloseTimoutAlarm()
+                        + "\n震动报警：" + newStatus.getVibrateAlarm()
+                        + "\n锁定报警：" + newStatus.getLockedAlarm()
+                        + "\n款箱状态：" + newStatus.getBoxStatus()
+                        + "\n锁开关错误：" + newStatus.getSwitchError()
+                        + "\n款箱报警提醒开关状态：" + newStatus.getAlarmSwitchStatus()
+                        + "\n上下架状态：" + newStatus.getShelfStatus()
+                        + "\n电池电量：" + newStatus.getBatteryLevel()
+                ;
                 mHandler.sendEmptyMessage(0x00);
             }
+
         }).queryLockStatus(mBoxAddress.replace(":", ""));
     }
 
     //查询日志
     public void onQueryLogsClick(View view) {
+        tv_Result.setText(strWriting);
+        //00934b5839393900000000000000000000000200'
         Map<String, String> param = new HashMap<>();
-        param.put("lockId",LockApiBleUtil.getInstance().getLockIDStr());
+        param.put("lockId", LockApiBleUtil.getInstance().getLockIDStr());
         param.put("startSeq", "00");
-        param.put("endSeq", "01");
+        param.put("endSeq", "02");
         mLockAPI.queryLogs(param, new QueryLogsListener() {
             @Override
             public void queryLogsCallback(Result<String> result) {
@@ -156,11 +166,12 @@ public class SecondActiviy extends AppCompatActivity {
 
     //开锁
     public void onOpenLockClick(View view) {
+        tv_Result.setText(strWriting);
         Map<String, String> param = new HashMap<>();
-        param.put("trTime", DateUtil.format(DateUtil.yyyyMMddHHmmss_not , System.currentTimeMillis()));
-        if(TextUtils.isEmpty(mBoxName)){
+        param.put("trTime", DateUtil.format(DateUtil.yyyyMMddHHmmss_not, System.currentTimeMillis()));
+        if (TextUtils.isEmpty(mBoxName)) {
             param.put("boxName", "KX001");
-        }else {
+        } else {
             param.put("boxName", mBoxName);
         }
         param.put("userId", "userId");
@@ -169,11 +180,11 @@ public class SecondActiviy extends AppCompatActivity {
             @Override
             public void openLockCallback(Result<String> open) {
 //TODO : 2017/11/23
-                if(open.getCode().equals("0001")){
+                if (open.getCode().equals("0001")) {
                     mMsg = open.getMsg();
                     mHandler.sendEmptyMessage(0x00);
-                }else {
-                    mMsg = open.getData();
+                } else {
+                    mMsg = "开锁成功：" + open.getData();
                     mHandler.sendEmptyMessage(0x00);
                 }
             }

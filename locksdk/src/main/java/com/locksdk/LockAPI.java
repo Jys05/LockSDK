@@ -279,7 +279,7 @@ public class LockAPI {
                 byte[] btBoxStatus = new byte[2];
                 System.arraycopy(data2, data2.length - 2, btBoxStatus, 0, btBoxStatus.length);
 
-                mLockStatusListener.onChange(boxName, LockApiBleUtil.getInstance().getLockIDStr(), LockStatusUtil.getBoxStatus(btBoxStatus));
+                mLockStatusListener.onChange(boxName, LockApiBleUtil.getInstance().getLockIDStr(), LockStatusUtil.getBoxStatus(btBoxStatus[0],btBoxStatus[1]));
                 break;
         }
 

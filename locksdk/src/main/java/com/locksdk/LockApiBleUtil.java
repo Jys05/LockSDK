@@ -59,7 +59,7 @@ import static com.locksdk.util.BleStateListenerUtil.setOnBleReceiver;
  * 蓝牙工具：扫描，连接，断开连接，获取锁具ID
  */
 
-public class LockApiBleUtil {
+public class LockApiBleUtil  {
 
     private static final String TAG = "LockApiBleUtil";
 
@@ -127,6 +127,7 @@ public class LockApiBleUtil {
                 }
             }
         }
+
         return instance;
     }
 
