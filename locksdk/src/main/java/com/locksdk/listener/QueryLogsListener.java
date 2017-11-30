@@ -12,6 +12,6 @@ import java.util.List;
 
 public interface QueryLogsListener  {
 
-    void queryLogsCallback(Result<List<LockLog>> result);
+//    void queryLogsCallback(Result<List<LockLog>> result);
     void queryLogsCallback(Result<String> result);
 }

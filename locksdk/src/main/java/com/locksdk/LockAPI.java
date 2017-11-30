@@ -272,7 +272,7 @@ public class LockAPI {
                 byte[] data2 = callbackData.getData();
                 Log.e(TAG, "长度" + data2.length);
                 byte[] btBoxName3 = new byte[16];
-                System.arraycopy(data2, 1, btBoxName3, 0, btBoxName3.length);
+                System.arraycopy(data2, 0, btBoxName3, 0, btBoxName3.length);
                 byte[] btBoxName4 = DealtByteUtil.dataClear0(btBoxName3);
                 String boxName = new String(btBoxName4);
 

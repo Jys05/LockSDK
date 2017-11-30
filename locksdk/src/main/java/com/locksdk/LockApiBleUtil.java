@@ -101,7 +101,7 @@ public class LockApiBleUtil  {
         mLockIDStr = lockIDStr;
     }
 
-    private String mLockIDStr;
+    private String mLockIDStr = "";
 
     public DeviceMirror getDeviceMirror() {
         return mDeviceMirror;
