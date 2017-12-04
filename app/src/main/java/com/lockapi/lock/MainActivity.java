@@ -338,9 +338,10 @@ public class MainActivity extends FrameActivity {
 
         @Override
         public void onFail(String uuid, String msg) {
-            mMsg = "连接错误";
+            mMsg = msg;
             LoadingUtil.hidden();
-            mHandler.sendEmptyMessage(0x00);
+//            mHandler.sendEmptyMessage(0x00);
+            mHandler.sendEmptyMessage(0x03);
             Log.i(TAG, "连接错误:" + msg);
         }
 
@@ -355,8 +356,6 @@ public class MainActivity extends FrameActivity {
         @Override
         public void onClose(String uuid, String boxName) {
             mMsg = "断开成功";
-            mSvConnected.setVisibility(View.GONE);
-            mLlScanner.setVisibility(View.VISIBLE);
             mLockAPI.closeConnection();
             mHandler.sendEmptyMessage(0x00);
             Log.i(TAG, "onClose");
@@ -369,7 +368,11 @@ public class MainActivity extends FrameActivity {
         public boolean handleMessage(Message message) {
             if (message.what == 0x00) {
                 Toast.makeText(MainActivity.this, mMsg + "", Toast.LENGTH_SHORT).show();
-            } else {
+            } else if(message.what==0x03) {
+                Toast.makeText(MainActivity.this, mMsg + "", Toast.LENGTH_SHORT).show();
+                mSvConnected.setVisibility(View.GONE);
+                mLlScanner.setVisibility(View.VISIBLE);
+            }else {
                 LoadingUtil.hidden();
                 tv_Result.setText(mMsg + " ");
             }

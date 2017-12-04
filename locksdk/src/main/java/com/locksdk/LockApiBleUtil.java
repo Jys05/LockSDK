@@ -427,7 +427,7 @@ public class LockApiBleUtil {
             }
             if (exception instanceof ConnectException) {
                 if (mConnectListener != null) {
-                    mConnectListener.onClose(Constant.SERVICE_UUID, Constant.MSG.MSG_DISCONNECT);
+                    mConnectListener.onFail(Constant.SERVICE_UUID, Constant.MSG.MSG_CONNECT_FAIL2);
                 }
             }
             Log.i(TAG, exception.getDescription() + "失败从重连次数：" + mConnectRetryCount);

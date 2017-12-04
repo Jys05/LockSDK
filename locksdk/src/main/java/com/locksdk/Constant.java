@@ -52,6 +52,8 @@ public class Constant {
 
         public static final String MSG_CONNECT_FAIL = "连接失败";
 
+        public static final String MSG_CONNECT_FAIL2 = "时间过长未操作，款箱自动断开";
+
         public static final String MSG_DISCONNECT = "连接断开";
 
         public static final String MSG_CONNECT_DEVICE_NULL = "连接设备不存在";
