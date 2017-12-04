@@ -1,37 +1,28 @@
 package com.locksdk;
 
-import android.Manifest;
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
-import android.bluetooth.BluetoothGattCallback;
-import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.le.ScanCallback;
 import android.bluetooth.le.ScanFilter;
 import android.bluetooth.le.ScanResult;
 import android.bluetooth.le.ScanSettings;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.ParcelUuid;
 import android.support.annotation.RequiresApi;
-import android.support.v4.content.ContextCompat;
-import android.text.TextUtils;
 import android.util.Log;
-import android.widget.Toast;
 
 import com.locksdk.baseble.common.BleConfig;
-import com.locksdk.bean.NoficeCallbackData;
+import com.locksdk.baseble.exception.ConnectException;
 import com.locksdk.listener.BleStateListener;
 import com.locksdk.listener.ConnectListener;
 import com.locksdk.listener.GetLockIdListener;
-import com.locksdk.listener.NoficeDataListener;
 import com.locksdk.listener.ReadListener;
 import com.locksdk.listener.ScannerListener;
 import com.locksdk.util.WriteAndNoficeUtil;
@@ -42,7 +33,6 @@ import com.locksdk.baseble.exception.BleException;
 import com.locksdk.baseble.exception.TimeoutException;
 import com.locksdk.baseble.model.BluetoothLeDevice;
 import com.locksdk.baseble.model.BluetoothLeDeviceStore;
-import com.locksdk.baseble.utils.BleUtil;
 import com.locksdk.baseble.utils.HexUtil;
 
 import java.util.ArrayList;
@@ -59,7 +49,7 @@ import static com.locksdk.util.BleStateListenerUtil.setOnBleReceiver;
  * 蓝牙工具：扫描，连接，断开连接，获取锁具ID
  */
 
-public class LockApiBleUtil  {
+public class LockApiBleUtil {
 
     private static final String TAG = "LockApiBleUtil";
 
@@ -172,6 +162,7 @@ public class LockApiBleUtil  {
             return;
         }
         clearScannerResult();
+        stopScanner();
         //开始扫描
         mScannerListener.onStartScanner(Constant.CODE.CODE_SUCCESS, Constant.MSG.MSG_SCANNERING);
         startScannerSetting();
@@ -389,6 +380,8 @@ public class LockApiBleUtil  {
     private void setConnect() {
         if (mConnectBoxDevice != null) {
             //调用“连接中”接口
+            mConnectRetryCount = BleConfig.getInstance().getConnectRetryCount();
+            Log.i(TAG, "失败从重连次数：" + mConnectRetryCount);
             mConnectListener.onWaiting(Constant.SERVICE_UUID);
             ViseBle.getInstance().connect(mConnectBoxDevice, mIConnectCallback);
         } else {
@@ -396,6 +389,8 @@ public class LockApiBleUtil  {
                     , Constant.MSG.MSG_CONNECT_DEVICE_NULL);
         }
     }
+
+    private int mConnectRetryCount = BleConfig.getInstance().getConnectRetryCount();
 
     private IConnectCallback mIConnectCallback = new IConnectCallback() {
         @Override
@@ -418,21 +413,24 @@ public class LockApiBleUtil  {
 
         @Override
         public void onConnectFailure(BleException exception) {
-            mConnectBoxDevice = null;
-            isConnecting = false;
-            if (exception instanceof TimeoutException) {
-                mConnectListener.onTimeout(Constant.SERVICE_UUID, BleConfig.getInstance().getConnectTimeout());
-            } else {
-                if (mConnectListener != null) {
-//                    if (ViseBle.getInstance().getBluetoothAdapter().isEnabled()) {
-//                        ViseBle.getInstance().getBluetoothAdapter().disable();
-//                    } else {
-//                        ViseBle.getInstance().getBluetoothAdapter().enable();
-//                    }
-                    mConnectListener.onFail(Constant.SERVICE_UUID, Constant.MSG.MSG_CONNECT_FAIL);
+            mConnectRetryCount--;
+            if (mConnectRetryCount == 0) {
+                mConnectBoxDevice = null;
+                isConnecting = false;
+                if (exception instanceof TimeoutException) {
+                    mConnectListener.onTimeout(Constant.SERVICE_UUID, BleConfig.getInstance().getConnectTimeout() * 3);
+                } else {
+                    if (mConnectListener != null) {
+                        mConnectListener.onFail(Constant.SERVICE_UUID, Constant.MSG.MSG_CONNECT_FAIL);
+                    }
                 }
             }
-            Log.i(TAG, exception.getDescription());
+            if (exception instanceof ConnectException) {
+                if (mConnectListener != null) {
+                    mConnectListener.onClose(Constant.SERVICE_UUID, Constant.MSG.MSG_DISCONNECT);
+                }
+            }
+            Log.i(TAG, exception.getDescription() + "失败从重连次数：" + mConnectRetryCount);
         }
 
         @Override

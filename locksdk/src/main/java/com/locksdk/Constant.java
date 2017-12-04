@@ -52,6 +52,8 @@ public class Constant {
 
         public static final String MSG_CONNECT_FAIL = "连接失败";
 
+        public static final String MSG_DISCONNECT = "连接断开";
+
         public static final String MSG_CONNECT_DEVICE_NULL = "连接设备不存在";
 
         public static final String MSG_GET_LOCK_ID_FAIL = "获取款箱锁具ID错误";

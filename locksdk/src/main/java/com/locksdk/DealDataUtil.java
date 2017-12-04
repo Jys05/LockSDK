@@ -83,7 +83,7 @@ public class DealDataUtil {
     //组包
     public static DealtSituation dealtDealData(byte[] callbackData) {
         if (callbackData[0] == 0x00) {
-            data = new byte[callbackData.length - 1];
+            data = new byte[callbackData.length - 2];
             System.arraycopy(callbackData, 2, data, 0, data.length);
             ressonpCode = callbackData[1];
             callbackDataMap.put(callbackData[1], data);

@@ -13,6 +13,7 @@ import android.widget.TextView;
 import com.locksdk.LockAPI;
 import com.locksdk.LockApiBleUtil;
 import com.locksdk.Result;
+import com.locksdk.bean.LockLog;
 import com.locksdk.bean.LockStatus;
 import com.locksdk.bean.RandomAttr;
 import com.locksdk.listener.ActiveLockListener;
@@ -24,6 +25,7 @@ import com.locksdk.listener.QueryLogsListener;
 import com.locksdk.util.DateUtil;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -149,17 +151,16 @@ public class SecondActiviy extends AppCompatActivity {
     //查询日志
     public void onQueryLogsClick(View view) {
         tv_Result.setText(strWriting);
-        //00934b5839393900000000000000000000000200'
         Map<String, String> param = new HashMap<>();
         param.put("lockId", LockApiBleUtil.getInstance().getLockIDStr());
         param.put("startSeq", "00");
         param.put("endSeq", "02");
         mLockAPI.queryLogs(param, new QueryLogsListener() {
             @Override
-            public void queryLogsCallback(Result<String> result) {
+            public void queryLogsCallback(Result<List<LockLog>> result) {
                 mHandler.sendEmptyMessage(0x00);
                 mMsg = "查询日志成功："
-                        + "\n日志数据：" + result.getData();
+                        + "\n日志数据：" + result.getData().size();
             }
         });
     }

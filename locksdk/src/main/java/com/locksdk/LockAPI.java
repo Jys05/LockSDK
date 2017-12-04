@@ -9,6 +9,7 @@ import android.support.v4.content.ContextCompat;
 import android.text.TextUtils;
 import android.util.Log;
 
+import com.locksdk.bean.LockLog;
 import com.locksdk.bean.NoficeCallbackData;
 import com.locksdk.bean.RandomAttr;
 import com.locksdk.listener.ActiveLockListener;
@@ -22,6 +23,7 @@ import com.locksdk.listener.QueryLogsListener;
 import com.locksdk.listener.ScannerListener;
 import com.locksdk.util.DealtByteUtil;
 import com.locksdk.util.LockStatusUtil;
+import com.locksdk.util.LogsDataUtil;
 import com.locksdk.util.WriteAndNoficeUtil;
 import com.locksdk.baseble.model.BluetoothLeDevice;
 import com.locksdk.baseble.utils.HexUtil;
@@ -262,10 +264,10 @@ public class LockAPI {
                 mOpenLockListener.openLockCallback(openLockResult);
                 break;
             case (byte) 0x93:
-                Result<String> queryLogsCallbackResult = new Result<>();
+                Result<List<LockLog>> queryLogsCallbackResult = new Result<>();
                 queryLogsCallbackResult.setCode("0000");
                 queryLogsCallbackResult.setMsg("查询日志成功");
-                queryLogsCallbackResult.setData(HexUtil.encodeHexStr(callbackData.getData()));
+                queryLogsCallbackResult.setData(LogsDataUtil.dealLogsData(callbackData.getData()));
                 mQueryLogsListener.queryLogsCallback(queryLogsCallbackResult);
                 break;
             case (byte) 0x94:

@@ -28,9 +28,12 @@ public class QueryLogsUtil {
         String startSeq = param.get("startSeq");
         String endSeq = param.get("endSeq");
         if (TextUtils.isEmpty(startSeq)) return;
-        if (Integer.valueOf(startSeq) > Integer.valueOf(endSeq)) return;
-        byte[] btStartSeq = LockSDKHexUtil.hexStringToByte(startSeq, true);
-        byte[] btEndSeq = LockSDKHexUtil.hexStringToByte(endSeq, true);
+        if (Integer.valueOf(startSeq) > Integer.valueOf(endSeq)) {
+            Log.e("====>"  , "大小不对");
+            return;
+        }
+        byte[] btStartSeq =intToBytes2(Integer.valueOf(startSeq));
+        byte[] btEndSeq = intToBytes2(Integer.valueOf(endSeq));
         Log.e(TAG, HexUtil.encodeHexStr(btStartSeq));
         Log.e(TAG, HexUtil.encodeHexStr(btEndSeq));
         byte[] data = new byte[2 + btEndSeq.length + btStartSeq.length];
@@ -39,6 +42,20 @@ public class QueryLogsUtil {
         System.arraycopy(btStartSeq, 0, data, 2, btStartSeq.length);
         System.arraycopy(btEndSeq, 0, data, 2 + btStartSeq.length, btEndSeq.length);
         WriteAndNoficeUtil.getInstantce().writeFunctionCode(data[1], data, writeDataListener);
+    }
+
+    /**
+     * 将int类型的数据转换为byte数组
+     * 原理：将int数据中的四个byte取出，分别存储
+     * @param n int数据
+     * @return 生成的byte数组
+     */
+    public static byte[] intToBytes2(int n){
+        byte[] b = new byte[4];
+        for(int i = 0;i < 4;i++){
+            b[i] = (byte)(n >> (24 - i * 8));
+        }
+        return b;
     }
 
     private static WriteDataListener writeDataListener = new WriteDataListener() {
