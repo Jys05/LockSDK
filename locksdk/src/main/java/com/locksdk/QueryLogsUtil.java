@@ -29,10 +29,10 @@ public class QueryLogsUtil {
         String endSeq = param.get("endSeq");
         if (TextUtils.isEmpty(startSeq)) return;
         if (Integer.valueOf(startSeq) > Integer.valueOf(endSeq)) {
-            Log.e("====>"  , "大小不对");
+            Log.e("====>", "大小不对");
             return;
         }
-        byte[] btStartSeq =intToBytes2(Integer.valueOf(startSeq));
+        byte[] btStartSeq = intToBytes2(Integer.valueOf(startSeq));
         byte[] btEndSeq = intToBytes2(Integer.valueOf(endSeq));
         Log.e(TAG, HexUtil.encodeHexStr(btStartSeq));
         Log.e(TAG, HexUtil.encodeHexStr(btEndSeq));
@@ -47,15 +47,20 @@ public class QueryLogsUtil {
     /**
      * 将int类型的数据转换为byte数组
      * 原理：将int数据中的四个byte取出，分别存储
+     *
      * @param n int数据
      * @return 生成的byte数组
      */
-    public static byte[] intToBytes2(int n){
+    public static byte[] intToBytes2(int n) {
         byte[] b = new byte[4];
-        for(int i = 0;i < 4;i++){
-            b[i] = (byte)(n >> (24 - i * 8));
+        for (int i = 0; i < 4; i++) {
+            b[i] = (byte) (n >> (24 - i * 8));
         }
-        return b;
+        byte[] result = new byte[4];
+        for (int i = 0; i < result.length; i++) {
+            result[i] = b[result.length-1-i];
+        }
+        return result;
     }
 
     private static WriteDataListener writeDataListener = new WriteDataListener() {

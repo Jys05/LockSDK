@@ -316,6 +316,7 @@ public class LockApiBleUtil {
     /**************************** 蓝牙连接、关闭连接 *************************************/
 
     private static boolean isConnecting = false;
+    private static boolean isConnectSuccess = false;
 
     /**
      * 开始连接
@@ -368,6 +369,7 @@ public class LockApiBleUtil {
         mBoxMac = null;
         mBoxName = null;
         isConnecting = false;
+        isConnectSuccess = false;
         if (mConnectedBoxDevice != null) {
             ViseBle.getInstance().disconnect(mConnectedBoxDevice);
             mConnectedBoxDevice = null;
@@ -378,6 +380,7 @@ public class LockApiBleUtil {
     }
 
     private void setConnect() {
+        isConnectSuccess = false;
         if (mConnectBoxDevice != null) {
             //调用“连接中”接口
             mConnectRetryCount = BleConfig.getInstance().getConnectRetryCount();
@@ -397,6 +400,7 @@ public class LockApiBleUtil {
         public void onConnectSuccess(DeviceMirror deviceMirror) {
             if (mConnectListener != null) {
                 isConnecting = false;
+                isConnectSuccess = true;
                 //再次获取连接的款箱名、锁具ID(款箱Mac)
                 mDeviceMirror = deviceMirror;
                 mBoxName = deviceMirror.getBluetoothLeDevice().getDevice().getName();
@@ -425,10 +429,13 @@ public class LockApiBleUtil {
                     }
                 }
             }
-            if (exception instanceof ConnectException) {
-                if (mConnectListener != null) {
-                    mConnectListener.onFail(Constant.SERVICE_UUID, Constant.MSG.MSG_CONNECT_FAIL2);
+            if (isConnectSuccess) {
+                if (exception instanceof ConnectException) {
+                    if (mConnectListener != null) {
+                        mConnectListener.onFail(Constant.SERVICE_UUID, Constant.MSG.MSG_CONNECT_FAIL2);
+                    }
                 }
+                isConnectSuccess = false;
             }
             Log.i(TAG, exception.getDescription() + "失败从重连次数：" + mConnectRetryCount);
         }
@@ -437,6 +444,7 @@ public class LockApiBleUtil {
         public void onDisconnect(boolean isActive) {
             mConnectBoxDevice = null;
             isConnecting = false;
+            isConnectSuccess = false;
             mConnectListener.onClose(Constant.SERVICE_UUID, mBoxName);
         }
     };

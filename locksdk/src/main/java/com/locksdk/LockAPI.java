@@ -243,23 +243,30 @@ public class LockAPI {
             case (byte) 0x92:
                 Result<String> openLockResult = new Result<>();
                 data = callbackData.getData();
+                Log.e(TAG, "开锁：" + HexUtil.encodeHexStr(data));
                 btBoxName1 = new byte[16];
                 System.arraycopy(data, 0, btBoxName1, 0, btBoxName1.length);
                 btBoxName = DealtByteUtil.dataClear0(btBoxName1);
-
+                String strBoxName = new String(btBoxName);
+                Log.e(TAG, "开锁款箱名：" + btBoxName + "====" + HexUtil.encodeHexStr(btBoxName1));
                 byte[] btCode = new byte[2];
                 System.arraycopy(data, 16, btCode, 0, btCode.length);
-
+                Log.e(TAG, "开锁信息码：" + HexUtil.encodeHexStr(btCode));
                 byte[] callbackInfo = new byte[16];
                 System.arraycopy(data, 18, callbackInfo, 0, callbackInfo.length);
+                byte[] callbackInfo2 = DealtByteUtil.dataClear0(callbackInfo);      //去零
+                Log.e(TAG, "开锁信息：" + new String(callbackInfo2) + "====" + HexUtil.encodeHexStr(callbackInfo));
+                //4b583030310000000000000000000000 0300 766572696679206661696c6564000000
+
+                //4b583030310000000000000000000000 0000 73756363657373000000000000000000
                 if (HexUtil.encodeHexStr(btCode).equals("0000")) {
                     openLockResult.setCode(HexUtil.encodeHexStr(btCode));
-                    openLockResult.setMsg("开锁成功");
-                    openLockResult.setData(new String(btBoxName));
+                    openLockResult.setMsg(new String(callbackInfo2));
+                    openLockResult.setData(strBoxName);
                 } else {
                     openLockResult.setCode(HexUtil.encodeHexStr(btCode));
-                    openLockResult.setMsg(new String(callbackInfo));
-                    openLockResult.setData(new String(btBoxName));
+                    openLockResult.setMsg(new String(callbackInfo2));
+                    openLockResult.setData(strBoxName);
                 }
                 mOpenLockListener.openLockCallback(openLockResult);
                 break;
@@ -267,6 +274,7 @@ public class LockAPI {
                 Result<List<LockLog>> queryLogsCallbackResult = new Result<>();
                 queryLogsCallbackResult.setCode("0000");
                 queryLogsCallbackResult.setMsg("查询日志成功");
+                Log.e(TAG, HexUtil.encodeHexStr(callbackData.getData()));
                 queryLogsCallbackResult.setData(LogsDataUtil.dealLogsData(callbackData.getData()));
                 mQueryLogsListener.queryLogsCallback(queryLogsCallbackResult);
                 break;
@@ -281,7 +289,7 @@ public class LockAPI {
                 byte[] btBoxStatus = new byte[2];
                 System.arraycopy(data2, data2.length - 2, btBoxStatus, 0, btBoxStatus.length);
 
-                mLockStatusListener.onChange(boxName, LockApiBleUtil.getInstance().getLockIDStr(), LockStatusUtil.getBoxStatus(btBoxStatus[0],btBoxStatus[1]));
+                mLockStatusListener.onChange(boxName, LockApiBleUtil.getInstance().getLockIDStr(), LockStatusUtil.getBoxStatus(btBoxStatus[0], btBoxStatus[1]));
                 break;
         }
 

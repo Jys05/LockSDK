@@ -37,6 +37,7 @@ import com.locksdk.listener.OpenLockListener;
 import com.locksdk.listener.QueryLogsListener;
 import com.locksdk.listener.ScannerListener;
 import com.locksdk.util.DateUtil;
+import com.locksdk.util.LogsDataUtil;
 
 import java.util.HashMap;
 import java.util.List;
@@ -83,6 +84,12 @@ public class MainActivity extends FrameActivity {
         initRecyclerView();
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        byte b = 0x25;
+        Log.e("====>", (b & 0xFF) + "====" + LogsDataUtil.getOptTyp(b));
+    }
 
     private void initRecyclerView() {
         mQuickAdapter = new QuickAdapter<BluetoothLeDevice>(this, R.layout.item_device) {
@@ -149,7 +156,6 @@ public class MainActivity extends FrameActivity {
 
     //激活/初始化
     public void onActiviteLockClick(View view) {
-        LoadingUtil.showTipText("写入数据中");
         Map<String, String> param = new HashMap<>();
         param.put("trTime", DateUtil.format(DateUtil.yyyyMMddHHmmss_not, System.currentTimeMillis()));
         param.put("lockId", LockApiBleUtil.getInstance().getLockIDStr());
@@ -161,10 +167,12 @@ public class MainActivity extends FrameActivity {
         param.put("dpCommChkCode", "0000");
         final String boxName = mEtInputBoxName.getText().toString().trim();
         if (TextUtils.isEmpty(boxName)) {
+            ToastUtil.show("请输入初始化款箱名字");
             return;
         } else {
             param.put("boxName", boxName);
         }
+        LoadingUtil.showTipText("写入数据中");
         mLockAPI.activeLock(param, new ActiveLockListener() {
             @Override
             public void activeLockCallback(Result<String> result) {
@@ -243,9 +251,20 @@ public class MainActivity extends FrameActivity {
         mLockAPI.queryLogs(param, new QueryLogsListener() {
             @Override
             public void queryLogsCallback(Result<List<LockLog>> result) {
+                List<LockLog> lockLogs = result.getData();
+                if (lockLogs == null) {
+                    mMsg = "获取日志失败";
+                } else {
+                    String log = "\n日志条数：" + lockLogs.size() + "\n";
+                    for (int i = 0; i < lockLogs.size(); i++) {
+                        log = log + "操作类型：" + lockLogs.get(i).getOptType() + "\n"
+                                + "操作时间：" + lockLogs.get(i).getOptTime() + "\n"
+                                + "操作用户ID：" + lockLogs.get(i).getUserId() + "\n";
+                    }
+                    mMsg = "查询日志成功："
+                            + "\n日志数据：" + log;
+                }
                 mHandler.sendEmptyMessage(0x02);
-                mMsg = "查询日志成功："
-                        + "\n日志数据：" + result.getData().size();
             }
         });
     }
@@ -271,11 +290,13 @@ public class MainActivity extends FrameActivity {
             @Override
             public void openLockCallback(Result<String> open) {
 //TODO : 2017/11/23
-                if (open.getCode().equals("0001")) {
-                    mMsg = open.getMsg();
+                if (open.getCode().equals("0000")) {
+                    mMsg = "开锁成功：" + open.getData() +
+                            "开锁信息：" + open.getMsg();
                     mHandler.sendEmptyMessage(0x02);
                 } else {
-                    mMsg = "开锁成功：" + open.getData();
+                    mMsg = "开锁失败：" + open.getData() +
+                            "开锁信息：" + open.getMsg();
                     mHandler.sendEmptyMessage(0x02);
                 }
             }
@@ -368,11 +389,11 @@ public class MainActivity extends FrameActivity {
         public boolean handleMessage(Message message) {
             if (message.what == 0x00) {
                 Toast.makeText(MainActivity.this, mMsg + "", Toast.LENGTH_SHORT).show();
-            } else if(message.what==0x03) {
+            } else if (message.what == 0x03) {
                 Toast.makeText(MainActivity.this, mMsg + "", Toast.LENGTH_SHORT).show();
                 mSvConnected.setVisibility(View.GONE);
                 mLlScanner.setVisibility(View.VISIBLE);
-            }else {
+            } else {
                 LoadingUtil.hidden();
                 tv_Result.setText(mMsg + " ");
             }
@@ -382,11 +403,11 @@ public class MainActivity extends FrameActivity {
 
     @Override
     public void onBackPressed() {
-        if(mSvConnected.getVisibility() == View.VISIBLE){
+        if (mSvConnected.getVisibility() == View.VISIBLE) {
             mSvConnected.setVisibility(View.GONE);
             mLlScanner.setVisibility(View.VISIBLE);
             mLockAPI.closeConnection();
-        }else {
+        } else {
             super.onBackPressed();
         }
     }
