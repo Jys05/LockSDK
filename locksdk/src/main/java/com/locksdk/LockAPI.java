@@ -50,6 +50,7 @@ public class LockAPI {
     private QueryLogsListener mQueryLogsListener;
     private OpenLockListener mOpenLockListener;
     private ActiveLockListener mActiveLockListener;
+    private boolean isWriting = false;      //为了设备自动休眠添加的，判断是否写入
 
     private LockAPI() {
 
@@ -80,6 +81,16 @@ public class LockAPI {
     }
 
     public static final int PREMISSION_REQUEST_CODE = 0x01;
+
+
+    public boolean isWriting() {
+        return isWriting;
+    }
+
+    public void setWriting(boolean writing) {
+        isWriting = writing;
+    }
+
 
     //获取款箱列表
     public void getBoxList(Activity activiy, String uuid, final ScannerListener listener) {
@@ -131,29 +142,34 @@ public class LockAPI {
 
     //获取锁具ID
     public void getLockIdByBoxName(GetLockIdListener lockIdListener) {
+        isWriting = true;
         LockApiBleUtil.getInstance().getLockIdByBoxName(lockIdListener);
     }
 
     //激活
     public void activeLock(Map<String, String> param, ActiveLockListener lockListener) {
+        isWriting = true;
         mActiveLockListener = lockListener;
         ActiveLockUtil.activeLock(param, lockListener);
     }
 
     //注册锁具状态
     public LockAPI registerLockStatusListener(LockStatusListener lockStatusListener) {
+        isWriting = true;
         this.mLockStatusListener = lockStatusListener;
         return this;
     }
 
     //开锁
     public void openLock(Map<String, String> param, OpenLockListener lockListener) {
+        isWriting = true;
         mOpenLockListener = lockListener;
         OpenLockUtil.opnenLock(param, lockListener);
     }
 
     //获取随机数（开箱触发）
     public void getRandom(String boxName, GetRandomListener listener) {
+        isWriting = true;
         mGetRandomListener = listener;
         GetRandomUtil.getRandom(boxName, listener);
     }
@@ -161,11 +177,13 @@ public class LockAPI {
 
     //查询锁状态
     public void queryLockStatus(String lockId) {
+        isWriting = true;
         QueryLockStatusUtil.queryLockStatus(lockId, mLockStatusListener);
     }
 
     //查询日志
     public void queryLogs(Map<String, String> param, QueryLogsListener logsListener) {
+        isWriting = true;
         mQueryLogsListener = logsListener;
         QueryLogsUtil.queryLogs(param, logsListener);
     }

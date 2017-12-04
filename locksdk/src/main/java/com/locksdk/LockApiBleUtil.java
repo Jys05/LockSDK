@@ -14,6 +14,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
+import android.os.Handler;
+import android.os.Message;
 import android.os.ParcelUuid;
 import android.support.annotation.RequiresApi;
 import android.util.Log;
@@ -134,7 +136,7 @@ public class LockApiBleUtil {
                 .setConnectRetryInterval(1000)//设置连接失败重试间隔时间
                 .setOperateRetryCount(3)//设置数据操作失败重试次数
                 .setOperateRetryInterval(1000)//设置数据操作失败重试间隔时间
-                .setMaxConnectCount(3);//设置最大连接设备数量
+                .setMaxConnectCount(1);//设置最大连接设备数量
         //蓝牙信息初始化，全局唯一，必须在应用初始化时调用
         ViseBle.getInstance().init(context);
     }
@@ -317,6 +319,28 @@ public class LockApiBleUtil {
 
     private static boolean isConnecting = false;
     private static boolean isConnectSuccess = false;
+    private int mDeviceSleepTime = 12;          //在连接成功之后也赋值了
+    private Handler mHandler = new Handler(new Handler.Callback() {
+        @Override
+        public boolean handleMessage(Message message) {
+            LockAPI lockAPI = LockAPI.getInstance();
+            if (lockAPI.isWriting()) {      //正在写入
+                Log.e("=====>" , "从新计算");
+                mDeviceSleepTime = 12;
+            } else {
+                mDeviceSleepTime--;
+                if (mDeviceSleepTime == 0) {
+                    if (isConnectSuccess) {
+                        Log.e("=====>" , "发东西给板子");
+                        lockAPI.queryLockStatus(mLockIDStr);
+                    }
+                }
+            }
+            Log.e("=====>" , "开始"+mDeviceSleepTime);
+            mHandler.sendEmptyMessageDelayed(0x00, 1000);
+            return false;
+        }
+    });
 
     /**
      * 开始连接
@@ -412,6 +436,9 @@ public class LockApiBleUtil {
                 lockAPI.resigeterNotify();      //注册通知监听
                 //调用连接成功接口
                 mConnectListener.onSuccess(mConnectedBoxDevice, Constant.SERVICE_UUID, mBoxName);
+                //防止设备休眠，时间计算12秒后发数据给板子
+                mDeviceSleepTime = 12;
+                mHandler.sendEmptyMessageDelayed(0x00, 1000);
             }
         }
 
@@ -419,6 +446,7 @@ public class LockApiBleUtil {
         public void onConnectFailure(BleException exception) {
             mConnectRetryCount--;
             if (mConnectRetryCount == 0) {
+                mConnectRetryCount = BleConfig.getInstance().getConnectRetryCount();
                 mConnectBoxDevice = null;
                 isConnecting = false;
                 if (exception instanceof TimeoutException) {
@@ -429,14 +457,14 @@ public class LockApiBleUtil {
                     }
                 }
             }
-            if (isConnectSuccess) {
-                if (exception instanceof ConnectException) {
-                    if (mConnectListener != null) {
-                        mConnectListener.onFail(Constant.SERVICE_UUID, Constant.MSG.MSG_CONNECT_FAIL2);
-                    }
-                }
-                isConnectSuccess = false;
-            }
+//            if (isConnectSuccess) {
+//                if (exception instanceof ConnectException) {
+//                    if (mConnectListener != null) {
+//                        mConnectListener.onFail(Constant.SERVICE_UUID, Constant.MSG.MSG_CONNECT_FAIL2);
+//                    }
+//                }
+//                isConnectSuccess = false;
+//            }
             Log.i(TAG, exception.getDescription() + "失败从重连次数：" + mConnectRetryCount);
         }
 
