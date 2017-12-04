@@ -1,6 +1,5 @@
 package com.lockapi.lock;
 
-import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.support.v7.widget.LinearLayoutManager;
@@ -37,7 +36,6 @@ import com.locksdk.listener.OpenLockListener;
 import com.locksdk.listener.QueryLogsListener;
 import com.locksdk.listener.ScannerListener;
 import com.locksdk.util.DateUtil;
-import com.locksdk.util.LogsDataUtil;
 
 import java.util.HashMap;
 import java.util.List;
@@ -45,7 +43,6 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import butterknife.ButterKnife;
 import butterknife.InjectView;
 
 
@@ -72,6 +69,7 @@ public class MainActivity extends FrameActivity {
     private LockAPI mLockAPI;
     private static final String TAG = "MainActivity";
     private String mBoxName;
+    private ScannerListener mScannerListener;
 
     @Override
     protected int layoutId() {
@@ -81,15 +79,10 @@ public class MainActivity extends FrameActivity {
     @Override
     protected void initComponent() {
         super.initComponent();
+        mLockAPI = LockAPI.getInstance().init(MainActivity.this);
         initRecyclerView();
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        byte b = 0x25;
-        Log.e("====>", (b & 0xFF) + "====" + LogsDataUtil.getOptTyp(b));
-    }
 
     private void initRecyclerView() {
         mQuickAdapter = new QuickAdapter<BluetoothLeDevice>(this, R.layout.item_device) {
@@ -108,8 +101,8 @@ public class MainActivity extends FrameActivity {
 
     //获取款箱
     public void onScannerClick(View view) {
-        mLockAPI = LockAPI.getInstance().init(MainActivity.this);
-        ScannerListener mScannerListener = new ScannerListener() {
+        mQuickAdapter.clear();
+        mScannerListener = new ScannerListener() {
             @Override
             public void onStartScanner(String code, String mag) {
                 Toast.makeText(MainActivity.this, "扫描开始", Toast.LENGTH_SHORT).show();
@@ -138,6 +131,8 @@ public class MainActivity extends FrameActivity {
         mLockAPI.closeConnection();
         mSvConnected.setVisibility(View.GONE);
         mLlScanner.setVisibility(View.VISIBLE);
+        mQuickAdapter.clear();
+        mLockAPI.getBoxList(MainActivity.this, null, mScannerListener);
     }
 
     //获取锁具ID
@@ -390,9 +385,11 @@ public class MainActivity extends FrameActivity {
             if (message.what == 0x00) {
                 Toast.makeText(MainActivity.this, mMsg + "", Toast.LENGTH_SHORT).show();
             } else if (message.what == 0x03) {
-                Toast.makeText(MainActivity.this, mMsg + "", Toast.LENGTH_SHORT).show();
+                Toast.makeText(MainActivity.this, mMsg + "，重新扫描 ", Toast.LENGTH_SHORT).show();
                 mSvConnected.setVisibility(View.GONE);
                 mLlScanner.setVisibility(View.VISIBLE);
+                mQuickAdapter.clear();
+                mLockAPI.getBoxList(MainActivity.this, null, mScannerListener);
             } else {
                 LoadingUtil.hidden();
                 tv_Result.setText(mMsg + " ");
@@ -407,6 +404,8 @@ public class MainActivity extends FrameActivity {
             mSvConnected.setVisibility(View.GONE);
             mLlScanner.setVisibility(View.VISIBLE);
             mLockAPI.closeConnection();
+            mQuickAdapter.clear();
+            mLockAPI.getBoxList(MainActivity.this, null, mScannerListener);
         } else {
             super.onBackPressed();
         }

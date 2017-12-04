@@ -64,7 +64,7 @@ public class LogsDataUtil {
     }
 
     //获取操作类型
-    public static String getOptTyp(byte btOptType) {
+    private static String getOptTyp(byte btOptType) {
         String strOptType = "";
         switch (btOptType) {
             case (byte) 0x01:
