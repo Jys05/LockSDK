@@ -15,6 +15,7 @@ import android.widget.Toast;
 
 import com.library.base.frame.FrameActivity;
 import com.library.base.util.LoadingUtil;
+import com.library.base.util.LogUtil;
 import com.library.base.util.ToastUtil;
 import com.library.base.util.recyclerview.BaseAdapterHelper;
 import com.library.base.util.recyclerview.OnItemClickListener;
@@ -249,6 +250,7 @@ public class MainActivity extends FrameActivity {
         param.put("lockId", LockApiBleUtil.getInstance().getLockIDStr());
         param.put("startSeq", strStart);
         param.put("endSeq", strEnd);
+        Log.e("=====>" , strStart+"=-=="+strEnd);
         mLockAPI.queryLogs(param, new QueryLogsListener() {
             @Override
             public void queryLogsCallback(Result<List<LockLog>> result) {

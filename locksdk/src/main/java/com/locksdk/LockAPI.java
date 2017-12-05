@@ -51,7 +51,7 @@ public class LockAPI {
     private OpenLockListener mOpenLockListener;
     private ActiveLockListener mActiveLockListener;
     private boolean isWriting = false;      //为了设备自动休眠添加的，判断是否写入
-    private int mDeviceSleepTime = 12000;   //设备休眠时间
+    private int mDeviceSleepTime = 7000;   //设备休眠时间
 
     private LockAPI() {
 
