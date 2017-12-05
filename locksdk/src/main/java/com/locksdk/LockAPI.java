@@ -200,9 +200,8 @@ public class LockAPI {
 
     //清理LockApiBleUtil中防止设备休眠的Handler
     public void removeCallbacksAndMessages() {
-        if (LockApiBleUtil.getInstance().mHandler != null) {
-            LockApiBleUtil.getInstance().mHandler.removeCallbacksAndMessages(null);
-        }
+        //清理Handler
+        LockApiBleUtil.getInstance().clearHandler();
     }
 
     private NoficeDataListener mNoficeDataListener = new NoficeDataListener() {
@@ -308,9 +307,6 @@ public class LockAPI {
                 Log.e(TAG, "查询日志成功：" + HexUtil.encodeHexStr(data));
                 queryLogsCallbackResult.setData(LogsDataUtil.dealLogsData(data));
                 mQueryLogsListener.queryLogsCallback(queryLogsCallbackResult);
-                //6b 78 30 30 39 00 00 00 00 00 00 00 00 00 00 00 00 00 02 010000000220171016145000534753472d4130303200000000000000 020000000320171016145000534753472d4130303300000000000000
-                //6b 78 30 30 39 00 00 00 00 00 00 00 00 00 00 00    00 02 010000000220171016145000534753472d4130303200000000000000 020000000320171016145000534753472d4130303300000000000000 00
-                //6b783030390000000000000000000000 0003 000000000120171016145000534753472d4130303100000000000000010000000220171016145000534753472d4130303200000000000000020000000320171016145000534753472d413030330000000000000000
                 break;
             case (byte) 0x94:
 //                byte[] data2 = callbackData.getData();

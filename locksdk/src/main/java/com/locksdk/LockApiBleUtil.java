@@ -361,6 +361,12 @@ public class LockApiBleUtil {
         mDeviceSleepTime = deviceSleepTime;
     }
 
+    //清理Handler
+    public void clearHandler(){
+        if (mHandler != null) {
+            mHandler.removeCallbacksAndMessages(null);
+        }
+    }
     /**
      * 开始连接
      *
@@ -413,9 +419,8 @@ public class LockApiBleUtil {
         mBoxName = null;
         isConnecting = false;
         isConnectSuccess = false;
-        if (mHandler != null) {
-            mHandler.removeCallbacksAndMessages(null);
-        }
+        //清理Handler
+        clearHandler();
         if (mConnectedBoxDevice != null) {
             ViseBle.getInstance().disconnect(mConnectedBoxDevice);
             mConnectedBoxDevice = null;
@@ -474,20 +479,28 @@ public class LockApiBleUtil {
                 isConnecting = false;
                 if (exception instanceof TimeoutException) {
                     mConnectListener.onTimeout(Constant.SERVICE_UUID, BleConfig.getInstance().getConnectTimeout() * 3);
+                    //清理Handler
+                    clearHandler();
                 } else {
                     if (mConnectListener != null) {
                         mConnectListener.onFail(Constant.SERVICE_UUID, Constant.MSG.MSG_CONNECT_FAIL);
                     }
+                    //清理Handler
+                    clearHandler();
                 }
+
             }
-//            if (isConnectSuccess) {
-//                if (exception instanceof ConnectException) {
-//                    if (mConnectListener != null) {
-//                        mConnectListener.onFail(Constant.SERVICE_UUID, Constant.MSG.MSG_CONNECT_FAIL2);
-//                    }
-//                }
-//                isConnectSuccess = false;
-//            }
+            if (isConnectSuccess) {
+                if (exception instanceof ConnectException) {
+                    if (mConnectListener != null) {
+                        mConnectListener.onFail(Constant.SERVICE_UUID, Constant.MSG.MSG_CONNECT_FAIL2);
+                    }
+                    //款箱自动断开，SDK内部调用断开连接
+                    LockAPI.getInstance().closeConnection();
+                }
+                isConnectSuccess = false;
+
+            }
             Log.i(TAG, exception.getDescription() + "失败从重连次数：" + mConnectRetryCount);
         }
 
@@ -496,6 +509,8 @@ public class LockApiBleUtil {
             mConnectBoxDevice = null;
             isConnecting = false;
             isConnectSuccess = false;
+            //清理Handler
+            clearHandler();
             mConnectListener.onClose(Constant.SERVICE_UUID, mBoxName);
         }
     };
@@ -510,12 +525,12 @@ public class LockApiBleUtil {
                     Log.i(TAG + "======>", data.length + "---" + HexUtil.encodeHexStr(data));
                     LockApiBleUtil.getInstance().setLockID(data);
                     LockApiBleUtil.getInstance().setLockIDStr(HexUtil.encodeHexStr(data));
-                    if(lockIdListener!=null){
+                    if (lockIdListener != null) {
                         lockIdListener.onGetLockIDListener(HexUtil.encodeHexStr(data));
                     }
 
                 } else {
-                    if(lockIdListener!=null){
+                    if (lockIdListener != null) {
                         lockIdListener.onGetLockIDListener(null);
                     }
                 }

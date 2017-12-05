@@ -84,6 +84,11 @@ public class MainActivity extends FrameActivity {
         initRecyclerView();
     }
 
+    @Override
+    protected void onDestroy() {
+        LockAPI.getInstance().removeCallbacksAndMessages();
+        super.onDestroy();
+    }
 
     private void initRecyclerView() {
         mQuickAdapter = new QuickAdapter<BluetoothLeDevice>(this, R.layout.item_device) {
