@@ -59,7 +59,9 @@ public class OpenLockUtil {
     private static WriteDataListener writeDataListener = new WriteDataListener() {
         @Override
         public void onWirteSuccess(WriteCallbackData callbackData) {
-            Log.i(TAG + "======>", callbackData.getData().length + "---" + HexUtil.encodeHexStr(callbackData.getData()));
+            if (callbackData != null && callbackData.getData() != null) {
+                Log.i(TAG + "======>", callbackData.getData().length + "---" + HexUtil.encodeHexStr(callbackData.getData()));
+            }
 
         }
 

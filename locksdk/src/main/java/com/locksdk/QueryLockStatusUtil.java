@@ -34,8 +34,10 @@ public class QueryLockStatusUtil {
 
     private static WriteDataListener writeDataListener = new WriteDataListener() {
         @Override
-        public void onWirteSuccess(WriteCallbackData data) {
-            Log.e(TAG, data.getData().length + "====" + HexUtil.encodeHexStr(data.getData()));
+        public void onWirteSuccess(WriteCallbackData callbackData) {
+            if (callbackData != null && callbackData.getData() != null) {
+                Log.i(TAG , callbackData.getData().length + "---" + HexUtil.encodeHexStr(callbackData.getData()));
+            }
         }
 
         @Override

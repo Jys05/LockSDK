@@ -65,8 +65,10 @@ public class QueryLogsUtil {
 
     private static WriteDataListener writeDataListener = new WriteDataListener() {
         @Override
-        public void onWirteSuccess(WriteCallbackData data) {
-
+        public void onWirteSuccess(WriteCallbackData callbackData) {
+            if (callbackData != null && callbackData.getData() != null) {
+                Log.i(TAG + "======>", callbackData.getData().length + "---" + HexUtil.encodeHexStr(callbackData.getData()));
+            }
         }
 
         @Override

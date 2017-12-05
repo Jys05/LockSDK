@@ -21,8 +21,10 @@ public class LogsDataUtil {
         System.arraycopy(data, 0, btBoxName1, 0, btBoxName1.length);
         byte[] btBoxName = DealtByteUtil.dataClear0(btBoxName1);
         String boxName = new String(btBoxName);
+
         byte[] callBackResult = new byte[2];        //返回的操作是否正确
         System.arraycopy(data, 16, callBackResult, 0, callBackResult.length);
+        Log.e(TAG, "返回的操作是否正确：" + callBackResult.length + "====>" + HexUtil.encodeHexStr(callBackResult));
         int callBack = Integer.valueOf(HexUtil.encodeHexStr(callBackResult));
         List<LockLog> logsDataLists = new ArrayList<>();
         if (callBack == 0) {

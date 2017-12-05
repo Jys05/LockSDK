@@ -1,6 +1,7 @@
 package com.locksdk;
 
 import android.text.TextUtils;
+import android.util.Log;
 
 import com.locksdk.bean.WriteCallbackData;
 import com.locksdk.listener.ActiveLockListener;
@@ -77,6 +78,9 @@ public class ActiveLockUtil {
     private static WriteDataListener writeDataListener = new WriteDataListener() {
         @Override
         public void onWirteSuccess(WriteCallbackData callbackData) {
+            if (callbackData != null && callbackData.getData() != null) {
+                Log.i(TAG + "======>", callbackData.getData().length + "---" + HexUtil.encodeHexStr(callbackData.getData()));
+            }
         }
 
         @Override

@@ -24,6 +24,7 @@ import com.locksdk.LockApiBleUtil;
 import com.locksdk.Result;
 import com.locksdk.baseble.ViseBle;
 import com.locksdk.baseble.model.BluetoothLeDevice;
+import com.locksdk.baseble.utils.HexUtil;
 import com.locksdk.bean.LockLog;
 import com.locksdk.bean.LockStatus;
 import com.locksdk.bean.RandomAttr;

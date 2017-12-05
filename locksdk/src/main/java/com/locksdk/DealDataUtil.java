@@ -84,7 +84,7 @@ public class DealDataUtil {
     public static DealtSituation dealtDealData(byte[] callbackData) {
         if (callbackData[0] == 0x00) {
             data = new byte[callbackData.length - 2];
-            System.arraycopy(callbackData, 2, data, 0, data.length);
+            System.arraycopy(callbackData, 1, data, 0, data.length);
             ressonpCode = callbackData[1];
             callbackDataMap.put(callbackData[1], data);
             situation.setFinish(true);
@@ -94,10 +94,10 @@ public class DealDataUtil {
         if (callbackData[0] == ((byte) 0x80)) {
             int number = (((callbackData[1] << 8) & 0xFFFF) + (callbackData[2] & 0xFF));
             Log.e(TAG, "总报文长度：" + number);
-            data = new byte[number - 1];
+            data = new byte[number];
             ressonpCode = callbackData[3];
             callbackDataMap.put(ressonpCode, data);
-            System.arraycopy(callbackData, 4, data, 0, callbackData.length - 4);
+            System.arraycopy(callbackData, 3, data, 0, callbackData.length - 3);
             pakeSize = (number - 17) / 19 + 1;  //报文分包的个数
             if ((number - 17) % 19 != 0) {
                 pakeSize++;         //如果有余数，证明还需要分一个包；
@@ -108,14 +108,14 @@ public class DealDataUtil {
             situation.setFail(false);
             return situation;
         } else if (surplusPakeSize != 0 && data != null && callbackData[0] == (byte) (0x80 + (pakeSize - surplusPakeSize))) {
-            System.arraycopy(callbackData, 1, data, 16 + (pakeSize - surplusPakeSize - 1) * 19, callbackData.length - 1);
+            System.arraycopy(callbackData, 1, data, 17 + (pakeSize - surplusPakeSize - 1) * 19, callbackData.length - 1);
             surplusPakeSize--;
             situation.setFinish(false);
             situation.setFail(false);
             return situation;
         } else if (surplusPakeSize != 0 && callbackData[0] == (byte) (0x00 + (pakeSize - surplusPakeSize))) {
             //最后一个包：
-            System.arraycopy(callbackData, 1, data, 16 + (pakeSize - surplusPakeSize - 1) * 19, callbackData.length - 1);
+            System.arraycopy(callbackData, 1, data, 17 + (pakeSize - surplusPakeSize - 1) * 19, callbackData.length - 1);
             surplusPakeSize--;
             callbackDataMap.put(ressonpCode, data);
             pakeSize = 0;//报文分包的总个数

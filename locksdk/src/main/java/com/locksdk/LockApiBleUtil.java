@@ -22,11 +22,13 @@ import android.util.Log;
 
 import com.locksdk.baseble.common.BleConfig;
 import com.locksdk.baseble.exception.ConnectException;
+import com.locksdk.bean.WriteCallbackData;
 import com.locksdk.listener.BleStateListener;
 import com.locksdk.listener.ConnectListener;
 import com.locksdk.listener.GetLockIdListener;
 import com.locksdk.listener.ReadListener;
 import com.locksdk.listener.ScannerListener;
+import com.locksdk.listener.WriteDataListener;
 import com.locksdk.util.WriteAndNoficeUtil;
 import com.locksdk.baseble.ViseBle;
 import com.locksdk.baseble.callback.IConnectCallback;
@@ -319,28 +321,45 @@ public class LockApiBleUtil {
 
     private static boolean isConnecting = false;
     private static boolean isConnectSuccess = false;
-    private int mDeviceSleepTime = 12;          //在连接成功之后也赋值了
-    private Handler mHandler = new Handler(new Handler.Callback() {
+    public int mDeviceSleepTime = LockAPI.getInstance().getDeviceSleepTime();          //在连接成功之后也赋值了
+    public Handler mHandler = new Handler(new Handler.Callback() {
         @Override
         public boolean handleMessage(Message message) {
             LockAPI lockAPI = LockAPI.getInstance();
             if (lockAPI.isWriting()) {      //正在写入
-                Log.e("=====>" , "从新计算");
-                mDeviceSleepTime = 12;
+                Log.e("=====>", "从新计算");
+                mDeviceSleepTime = lockAPI.getDeviceSleepTime();
             } else {
-                mDeviceSleepTime--;
+                mDeviceSleepTime = mDeviceSleepTime - 100;
                 if (mDeviceSleepTime == 0) {
                     if (isConnectSuccess) {
-                        Log.e("=====>" , "发东西给板子");
-                        lockAPI.queryLockStatus(mLockIDStr);
+                        Log.e("=====>", "发东西给板子");
+                        mDeviceSleepTime = lockAPI.getDeviceSleepTime();
+//                        lockAPI.queryLockStatus(mLockIDStr);
+                        WriteAndNoficeUtil.getInstantce().writeForDeviceSleep(new WriteDataListener() {
+                            @Override
+                            public void onWirteSuccess(WriteCallbackData data) {
+                                mDeviceSleepTime = LockAPI.getInstance().getDeviceSleepTime();
+                            }
+
+                            @Override
+                            public void onWriteFail(WriteCallbackData data) {
+
+                            }
+                        });
                     }
                 }
+                Log.e("=====>", "开始" + mDeviceSleepTime);
+                mHandler.sendEmptyMessageDelayed(0x00, 100);
             }
-            Log.e("=====>" , "开始"+mDeviceSleepTime);
-            mHandler.sendEmptyMessageDelayed(0x00, 1000);
             return false;
         }
     });
+
+
+    public void setDeviceSleepTime(int deviceSleepTime) {
+        mDeviceSleepTime = deviceSleepTime;
+    }
 
     /**
      * 开始连接
@@ -394,6 +413,9 @@ public class LockApiBleUtil {
         mBoxName = null;
         isConnecting = false;
         isConnectSuccess = false;
+        if (mHandler != null) {
+            mHandler.removeCallbacksAndMessages(null);
+        }
         if (mConnectedBoxDevice != null) {
             ViseBle.getInstance().disconnect(mConnectedBoxDevice);
             mConnectedBoxDevice = null;
@@ -427,6 +449,7 @@ public class LockApiBleUtil {
                 isConnectSuccess = true;
                 //再次获取连接的款箱名、锁具ID(款箱Mac)
                 mDeviceMirror = deviceMirror;
+                mConnectRetryCount = BleConfig.getInstance().getConnectRetryCount();
                 mBoxName = deviceMirror.getBluetoothLeDevice().getDevice().getName();
                 mBoxMac = deviceMirror.getBluetoothLeDevice().getDevice().getAddress();
                 mConnectedBoxDevice = deviceMirror.getBluetoothLeDevice();
@@ -437,8 +460,8 @@ public class LockApiBleUtil {
                 //调用连接成功接口
                 mConnectListener.onSuccess(mConnectedBoxDevice, Constant.SERVICE_UUID, mBoxName);
                 //防止设备休眠，时间计算12秒后发数据给板子
-                mDeviceSleepTime = 12;
-                mHandler.sendEmptyMessageDelayed(0x00, 1000);
+                mDeviceSleepTime = lockAPI.getDeviceSleepTime();
+                mHandler.sendEmptyMessageDelayed(0x00, 100);
             }
         }
 
@@ -484,11 +507,17 @@ public class LockApiBleUtil {
             @Override
             public void onReadListener(byte[] data) {
                 if (data != null) {
+                    Log.i(TAG + "======>", data.length + "---" + HexUtil.encodeHexStr(data));
                     LockApiBleUtil.getInstance().setLockID(data);
                     LockApiBleUtil.getInstance().setLockIDStr(HexUtil.encodeHexStr(data));
-                    lockIdListener.onGetLockIDListener(HexUtil.encodeHexStr(data));
+                    if(lockIdListener!=null){
+                        lockIdListener.onGetLockIDListener(HexUtil.encodeHexStr(data));
+                    }
+
                 } else {
-                    lockIdListener.onGetLockIDListener(null);
+                    if(lockIdListener!=null){
+                        lockIdListener.onGetLockIDListener(null);
+                    }
                 }
             }
         });

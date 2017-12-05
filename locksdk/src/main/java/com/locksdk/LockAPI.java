@@ -51,6 +51,7 @@ public class LockAPI {
     private OpenLockListener mOpenLockListener;
     private ActiveLockListener mActiveLockListener;
     private boolean isWriting = false;      //为了设备自动休眠添加的，判断是否写入
+    private int mDeviceSleepTime = 12000;   //设备休眠时间
 
     private LockAPI() {
 
@@ -89,6 +90,11 @@ public class LockAPI {
 
     public void setWriting(boolean writing) {
         isWriting = writing;
+    }
+
+
+    public int getDeviceSleepTime() {
+        return mDeviceSleepTime;
     }
 
 
@@ -142,34 +148,33 @@ public class LockAPI {
 
     //获取锁具ID
     public void getLockIdByBoxName(GetLockIdListener lockIdListener) {
-        isWriting = true;
         LockApiBleUtil.getInstance().getLockIdByBoxName(lockIdListener);
     }
 
     //激活
     public void activeLock(Map<String, String> param, ActiveLockListener lockListener) {
-        isWriting = true;
+        removeCallbacksAndMessages();
         mActiveLockListener = lockListener;
         ActiveLockUtil.activeLock(param, lockListener);
     }
 
     //注册锁具状态
     public LockAPI registerLockStatusListener(LockStatusListener lockStatusListener) {
-        isWriting = true;
+        removeCallbacksAndMessages();
         this.mLockStatusListener = lockStatusListener;
         return this;
     }
 
     //开锁
     public void openLock(Map<String, String> param, OpenLockListener lockListener) {
-        isWriting = true;
+        removeCallbacksAndMessages();
         mOpenLockListener = lockListener;
         OpenLockUtil.opnenLock(param, lockListener);
     }
 
     //获取随机数（开箱触发）
     public void getRandom(String boxName, GetRandomListener listener) {
-        isWriting = true;
+        removeCallbacksAndMessages();
         mGetRandomListener = listener;
         GetRandomUtil.getRandom(boxName, listener);
     }
@@ -177,13 +182,13 @@ public class LockAPI {
 
     //查询锁状态
     public void queryLockStatus(String lockId) {
-        isWriting = true;
+        removeCallbacksAndMessages();
         QueryLockStatusUtil.queryLockStatus(lockId, mLockStatusListener);
     }
 
     //查询日志
     public void queryLogs(Map<String, String> param, QueryLogsListener logsListener) {
-        isWriting = true;
+        removeCallbacksAndMessages();
         mQueryLogsListener = logsListener;
         QueryLogsUtil.queryLogs(param, logsListener);
     }
@@ -191,6 +196,13 @@ public class LockAPI {
     //注册蓝牙通知监听
     public void resigeterNotify() {
         WriteAndNoficeUtil.getInstantce().noficeFunctionCode(mNoficeDataListener);     //设置通知监听
+    }
+
+    //清理LockApiBleUtil中防止设备休眠的Handler
+    public void removeCallbacksAndMessages() {
+        if (LockApiBleUtil.getInstance().mHandler != null) {
+            LockApiBleUtil.getInstance().mHandler.removeCallbacksAndMessages(null);
+        }
     }
 
     private NoficeDataListener mNoficeDataListener = new NoficeDataListener() {
@@ -209,13 +221,17 @@ public class LockAPI {
 
     private void dealtNotifyCallBackData(NoficeCallbackData callbackData) {
         //TODO : 2017/11/23 没有加监听是否为空判断
-        byte[] data;
+        byte[] data = new byte[(callbackData.getData().length - 1)];
         byte[] btBoxName1;
         byte[] btBoxName;
-        switch (callbackData.getFunctionCode()) {
+        Log.e(TAG, "返回拼接好的数据长度：" + callbackData.getData().length + "=====" + HexUtil.encodeHexStr(callbackData.getData()));
+        byte responseCode = callbackData.getData()[0];
+        System.arraycopy(callbackData.getData(), 1, data, 0, data.length);
+        Log.e(TAG, "真正报文长度：" + data.length + "=====" + HexUtil.encodeHexStr(data));
+        switch (responseCode) {
             case (byte) 0x90:
                 Result<String> activiteLockResult = new Result<>();
-                data = callbackData.getData();
+//                data = callbackData.getData();
                 btBoxName1 = new byte[16];
                 System.arraycopy(data, 0, btBoxName1, 0, btBoxName1.length);
                 btBoxName = DealtByteUtil.dataClear0(btBoxName1);
@@ -229,7 +245,7 @@ public class LockAPI {
                 RandomAttr randomAttr = new RandomAttr();
                 getRandomResult.setCode("0000");
                 getRandomResult.setMsg("获取成功");
-                data = callbackData.getData();
+//                data = callbackData.getData();
                 Log.e(TAG, "长度" + data.length);
                 btBoxName1 = new byte[16];
                 System.arraycopy(data, 0, btBoxName1, 0, btBoxName1.length);
@@ -260,7 +276,7 @@ public class LockAPI {
                 break;
             case (byte) 0x92:
                 Result<String> openLockResult = new Result<>();
-                data = callbackData.getData();
+//                data = callbackData.getData();
                 Log.e(TAG, "开锁：" + HexUtil.encodeHexStr(data));
                 btBoxName1 = new byte[16];
                 System.arraycopy(data, 0, btBoxName1, 0, btBoxName1.length);
@@ -274,9 +290,6 @@ public class LockAPI {
                 System.arraycopy(data, 18, callbackInfo, 0, callbackInfo.length);
                 byte[] callbackInfo2 = DealtByteUtil.dataClear0(callbackInfo);      //去零
                 Log.e(TAG, "开锁信息：" + new String(callbackInfo2) + "====" + HexUtil.encodeHexStr(callbackInfo));
-                //4b583030310000000000000000000000 0300 766572696679206661696c6564000000
-
-                //4b583030310000000000000000000000 0000 73756363657373000000000000000000
                 if (HexUtil.encodeHexStr(btCode).equals("0000")) {
                     openLockResult.setCode(HexUtil.encodeHexStr(btCode));
                     openLockResult.setMsg(new String(callbackInfo2));
@@ -292,24 +305,30 @@ public class LockAPI {
                 Result<List<LockLog>> queryLogsCallbackResult = new Result<>();
                 queryLogsCallbackResult.setCode("0000");
                 queryLogsCallbackResult.setMsg("查询日志成功");
-                Log.e(TAG, HexUtil.encodeHexStr(callbackData.getData()));
-                queryLogsCallbackResult.setData(LogsDataUtil.dealLogsData(callbackData.getData()));
+                Log.e(TAG, "查询日志成功：" + HexUtil.encodeHexStr(data));
+                queryLogsCallbackResult.setData(LogsDataUtil.dealLogsData(data));
                 mQueryLogsListener.queryLogsCallback(queryLogsCallbackResult);
+                //6b 78 30 30 39 00 00 00 00 00 00 00 00 00 00 00 00 00 02 010000000220171016145000534753472d4130303200000000000000 020000000320171016145000534753472d4130303300000000000000
+                //6b 78 30 30 39 00 00 00 00 00 00 00 00 00 00 00    00 02 010000000220171016145000534753472d4130303200000000000000 020000000320171016145000534753472d4130303300000000000000 00
+                //6b783030390000000000000000000000 0003 000000000120171016145000534753472d4130303100000000000000010000000220171016145000534753472d4130303200000000000000020000000320171016145000534753472d413030330000000000000000
                 break;
             case (byte) 0x94:
-                byte[] data2 = callbackData.getData();
-                Log.e(TAG, "长度" + data2.length);
+//                byte[] data2 = callbackData.getData();
+                Log.e(TAG, "长度" + data.length);
                 byte[] btBoxName3 = new byte[16];
-                System.arraycopy(data2, 0, btBoxName3, 0, btBoxName3.length);
+                System.arraycopy(data, 0, btBoxName3, 0, btBoxName3.length);
                 byte[] btBoxName4 = DealtByteUtil.dataClear0(btBoxName3);
                 String boxName = new String(btBoxName4);
 
                 byte[] btBoxStatus = new byte[2];
-                System.arraycopy(data2, data2.length - 2, btBoxStatus, 0, btBoxStatus.length);
-
-                mLockStatusListener.onChange(boxName, LockApiBleUtil.getInstance().getLockIDStr(), LockStatusUtil.getBoxStatus(btBoxStatus[0], btBoxStatus[1]));
+                System.arraycopy(data, data.length - 2, btBoxStatus, 0, btBoxStatus.length);
+                if (mLockStatusListener != null) {
+                    mLockStatusListener.onChange(boxName, LockApiBleUtil.getInstance().getLockIDStr(), LockStatusUtil.getBoxStatus(btBoxStatus[0], btBoxStatus[1]));
+                }
                 break;
         }
-
+        setWriting(false);
+        LockApiBleUtil.getInstance().setDeviceSleepTime(mDeviceSleepTime);
+        LockApiBleUtil.getInstance().mHandler.sendEmptyMessage(0x00);
     }
 }

@@ -21,6 +21,7 @@ import com.locksdk.baseble.utils.HexUtil;
 public class GetRandomUtil {
 
     private static GetRandomListener getRandomListener;
+     private static final String TAG = "GetRandomUtil";
 
     public static void getRandom(String boxName, GetRandomListener listener) {
         getRandomListener = listener;
@@ -36,8 +37,10 @@ public class GetRandomUtil {
 
     private static WriteDataListener writeDataListener = new WriteDataListener() {
         @Override
-        public void onWirteSuccess(WriteCallbackData data) {
-
+        public void onWirteSuccess(WriteCallbackData callbackData) {
+            if (callbackData != null && callbackData.getData() != null) {
+                Log.i(TAG + "======>", callbackData.getData().length + "---" + HexUtil.encodeHexStr(callbackData.getData()));
+            }
         }
 
         @Override

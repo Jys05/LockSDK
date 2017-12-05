@@ -8,6 +8,7 @@ import android.util.Log;
 
 import com.locksdk.Constant;
 import com.locksdk.DealDataUtil;
+import com.locksdk.LockAPI;
 import com.locksdk.LockApiBleUtil;
 import com.locksdk.baseble.model.resolver.GattAttributeResolver;
 import com.locksdk.bean.NoficeCallbackData;
@@ -40,7 +41,6 @@ public class WriteAndNoficeUtil {
     private final String TAG = "WriteAndNoficeUtil";
     private DeviceMirrorPool mDeviceMirrorPool;
     private BluetoothLeDevice connectedDevice;
-    public boolean isWriting = false;
     private byte resCode = 0;   //应答码
     private static WriteAndNoficeUtil instantce;
     private NoficeCallbackData mNoficeCallbackData;
@@ -92,7 +92,9 @@ public class WriteAndNoficeUtil {
         resCode = FunCode2RespCode.funCode2RespCode(functionCode);
         mNoficeCallbackData.setFunctionCode(resCode);
         deviceMirror.bindChannel(bleCallback, bluetoothGattChannel);
-        isWriting = true;
+        //设置为正在写入
+        LockAPI lockAPI = LockAPI.getInstance();
+        lockAPI.setWriting(true);
         deviceMirror.writeData(data);
     }
 
@@ -130,8 +132,46 @@ public class WriteAndNoficeUtil {
         resCode = FunCode2RespCode.funCode2RespCode(functionCode);
         mNoficeCallbackData.setFunctionCode(resCode);
         deviceMirror.bindChannel(bleCallback, bluetoothGattChannel);
-        isWriting = true;
+        //设置为正在写入
+        LockAPI lockAPI = LockAPI.getInstance();
+        lockAPI.setWriting(true);
         write(data);
+    }
+
+
+    public void writeForDeviceSleep(final WriteDataListener listener) {
+        if (LockApiBleUtil.getInstance().getGatt() == null) return;
+        if (LockApiBleUtil.getInstance().getConnectedBoxDevice() == null) return;
+        connectedDevice = LockApiBleUtil.getInstance().getConnectedBoxDevice();
+        mWriteCallbackData = new WriteCallbackData();      //写入数据的回调
+        BluetoothGattService bluetoothGattService = LockApiBleUtil.getInstance().getBluetoothGattService();
+        UUID characteristicUUID = bluetoothGattService.getCharacteristic(UUID.fromString(Constant.WRITE_UUID)).getUuid();
+        UUID mServiceUUID = bluetoothGattService.getUuid();
+        mDeviceMirrorPool = ViseBle.getInstance().getDeviceMirrorPool();
+        //        DeviceMirror deviceMirror = mDeviceMirrorPool.getDeviceMirror(connectedDevice);
+        final DeviceMirror deviceMirror = LockApiBleUtil.getInstance().getDeviceMirror();
+        BluetoothGattChannel bluetoothGattChannel = new BluetoothGattChannel.Builder()
+                .setBluetoothGatt(deviceMirror.getBluetoothGatt())
+                .setPropertyType(PropertyType.PROPERTY_WRITE)
+                .setServiceUUID(mServiceUUID)
+                .setCharacteristicUUID(characteristicUUID)
+                .setDescriptorUUID(null)
+                .builder();
+        deviceMirror.bindChannel(new IBleCallback() {
+            @Override
+            public void onSuccess(byte[] data, BluetoothGattChannel bluetoothGattChannel, BluetoothLeDevice bluetoothLeDevice) {
+                listener.onWirteSuccess(null);
+            }
+
+            @Override
+            public void onFailure(BleException exception) {
+
+            }
+        }, bluetoothGattChannel);
+        byte[] data = new byte[2];
+        data[0] = 0x00;
+        data[1] = 0x14;
+        deviceMirror.writeData(data);
     }
 
     //发送队列，提供一种简单的处理方式，实际项目场景需要根据需求优化
@@ -272,9 +312,15 @@ public class WriteAndNoficeUtil {
 
         @Override
         public void onFailure(BleException exception) {
-            mReadListener.onReadListener(null);
-            mWriteCallbackData.setData(null);
-            mWriteDataListener.onWirteSuccess(mWriteCallbackData);
+            if (mReadListener != null) {
+                mReadListener.onReadListener(null);
+            }
+            if (mWriteCallbackData != null) {
+                mWriteCallbackData.setData(null);
+            }
+            if (mWriteDataListener != null) {
+                mWriteDataListener.onWirteSuccess(mWriteCallbackData);
+            }
             if (exception == null) {
                 return;
             }
@@ -291,6 +337,7 @@ public class WriteAndNoficeUtil {
             if (situation.isFinish()) {
                 callBlck = DealDataUtil.callbackDataMap.get(DealDataUtil.ressonpCode);
                 if (!situation.isFail()) {
+                    Log.e(TAG, "监听通知处理好的数据：长度—" + callBlck.length + "；数据16进制—" + HexUtil.encodeHexStr(callBlck));
                     mNoficeCallbackData.setData(callBlck);
                 } else {
                     mNoficeCallbackData.setData(null);
