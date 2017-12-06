@@ -147,8 +147,8 @@ public class MainActivity extends FrameActivity {
         LoadingUtil.showTipText("写入数据中");
         mLockAPI.getLockIdByBoxName(new GetLockIdListener() {
             @Override
-            public void onGetLockIDListener(String lockId) {
-                mMsg = "锁具ID：" + lockId;
+            public void onGetLockIDListener(Result<String> lockId) {
+                mMsg = "锁具ID：" + lockId.getData() + "\n返回信息：" + lockId.getMsg();
                 mHandler.sendEmptyMessage(0x02);
             }
         });
@@ -179,7 +179,7 @@ public class MainActivity extends FrameActivity {
             @Override
             public void activeLockCallback(Result<String> result) {
                 mBoxName = boxName;
-                mMsg = "激活成功："
+                mMsg = "返回信息：" + result.getMsg()
                         + "\n激活数据：" + result.getData();
                 mHandler.sendEmptyMessage(0x02);
             }
@@ -196,7 +196,8 @@ public class MainActivity extends FrameActivity {
         mLockAPI.getRandom(mBoxName, new GetRandomListener() {
             @Override
             public void getRandomCallback(Result<RandomAttr> randomAttrResult) {
-                mMsg = "款箱名：" + randomAttrResult.getData().getBoxName()
+                mMsg = "返回信息：" + randomAttrResult.getMsg() +
+                        "\n款箱名：" + randomAttrResult.getData().getBoxName()
                         + "\n随机数：" + randomAttrResult.getData().getRandom()
                         + "\n闭锁码：" + randomAttrResult.getData().getCloseCode()
                         + "\n动态密码传输密钥版本" + randomAttrResult.getData().getDpCommKeyVer()
@@ -250,13 +251,13 @@ public class MainActivity extends FrameActivity {
         param.put("lockId", LockApiBleUtil.getInstance().getLockIDStr());
         param.put("startSeq", strStart);
         param.put("endSeq", strEnd);
-        Log.e("=====>" , strStart+"=-=="+strEnd);
+        Log.e("=====>", strStart + "=-==" + strEnd);
         mLockAPI.queryLogs(param, new QueryLogsListener() {
             @Override
             public void queryLogsCallback(Result<List<LockLog>> result) {
                 List<LockLog> lockLogs = result.getData();
                 if (lockLogs == null) {
-                    mMsg = "获取日志失败";
+                    mMsg = result.getMsg();
                 } else {
                     String log = "\n日志条数：" + lockLogs.size() + "\n";
                     for (int i = 0; i < lockLogs.size(); i++) {

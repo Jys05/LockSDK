@@ -7,5 +7,5 @@ import com.locksdk.Result;
  */
 
 public interface GetLockIdListener {
-    void onGetLockIDListener(Result< String> lockId);
+    void onGetLockIDListener(Result< String> resultLockID);
 }

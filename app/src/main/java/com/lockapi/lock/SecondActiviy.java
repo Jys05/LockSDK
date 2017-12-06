@@ -72,8 +72,8 @@ public class SecondActiviy extends AppCompatActivity {
         tv_Result.setText(strWriting);
         mLockAPI.getLockIdByBoxName(new GetLockIdListener() {
             @Override
-            public void onGetLockIDListener(String lockId) {
-                mMsg = "锁具ID：" + lockId;
+            public void onGetLockIDListener(Result< String> lockId) {
+                mMsg = "锁具ID：" + lockId.getData();
                 mHandler.sendEmptyMessage(0x00);
             }
         });
