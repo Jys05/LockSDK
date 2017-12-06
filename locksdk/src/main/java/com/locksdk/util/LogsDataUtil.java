@@ -24,7 +24,7 @@ public class LogsDataUtil {
 
         byte[] callBackResult = new byte[2];        //返回的操作是否正确
         System.arraycopy(data, 16, callBackResult, 0, callBackResult.length);
-        Log.e(TAG, "返回的操作是否正确：" + callBackResult.length + "====>" + HexUtil.encodeHexStr(callBackResult));
+        LogUtil.i(TAG, "返回的操作是否正确：" + callBackResult.length + "====>" + HexUtil.encodeHexStr(callBackResult));
         int callBack = Integer.valueOf(HexUtil.encodeHexStr(callBackResult));
         List<LockLog> logsDataLists = new ArrayList<>();
         if (callBack == 0) {
@@ -32,28 +32,28 @@ public class LogsDataUtil {
             int intLogNum = btLogNum & 0xFF;
             byte[] logDatas = new byte[data.length - 19];
             System.arraycopy(data, 19, logDatas, 0, logDatas.length);
-            Log.e(TAG, "日志个数：" + (logDatas.length / 28) + "==日志数据：==>" + HexUtil.encodeHexStr(logDatas));
+            LogUtil.i(TAG, "日志个数：" + (logDatas.length / 28) + "==日志数据：==>" + HexUtil.encodeHexStr(logDatas));
             //TODO : 2017/12/1 此判断不知道需不需要
 //            if (intLogNum != logDatas.length / 28) return null;
 //            List<byte[]> logsDataLists = new ArrayList<>();
             for (int i = 0; i < logDatas.length / 28; i++) {
                 byte[] logData = new byte[28];
                 System.arraycopy(logDatas, i * 28, logData, 0, logData.length);
-                Log.e(TAG, HexUtil.encodeHexStr(logData));
+                LogUtil.i(TAG, HexUtil.encodeHexStr(logData));
                 //操作类型
                 byte btOptType = logData[4];
                 String strOptType = getOptTyp(btOptType);
-                Log.e(TAG, "操作类型：" + strOptType + "===" + (btOptType & 0xFF));
+                LogUtil.i(TAG, "操作类型：" + strOptType + "===" + (btOptType & 0xFF));
                 //操作时间
                 byte[] operationTime = new byte[7];
                 System.arraycopy(logData, 5, operationTime, 0, operationTime.length);
                 String strOptTime = BCDCodeUtil.bcd2Str(operationTime);
-                Log.e(TAG, "操作时间：" + strOptTime);
+                LogUtil.i(TAG, "操作时间：" + strOptTime);
                 //用户ID
                 byte[] btUserId = new byte[16];
                 System.arraycopy(logData, 12, btUserId, 0, btUserId.length);
                 String strUserId = new String(DealtByteUtil.dataClear0(btUserId));
-                Log.e(TAG, "操作UserID：" + strUserId+"===="+HexUtil.encodeHexStr(btUserId));
+                LogUtil.i(TAG, "操作UserID：" + strUserId+"===="+HexUtil.encodeHexStr(btUserId));
                 LockLog lockLog = new LockLog();
                 lockLog.setOptType(strOptType);
                 lockLog.setOptTime(strOptTime);

@@ -3,6 +3,8 @@ package com.locksdk;
 import android.util.Log;
 
 
+import com.locksdk.util.LogUtil;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -93,7 +95,7 @@ public class DealDataUtil {
         }
         if (callbackData[0] == ((byte) 0x80)) {
             int number = (((callbackData[1] << 8) & 0xFFFF) + (callbackData[2] & 0xFF));
-            Log.e(TAG, "总报文长度：" + number);
+            LogUtil.i(TAG, "总报文长度：" + number);
             data = new byte[number];
             ressonpCode = callbackData[3];
             callbackDataMap.put(ressonpCode, data);
@@ -103,7 +105,7 @@ public class DealDataUtil {
                 pakeSize++;         //如果有余数，证明还需要分一个包；
             }
             surplusPakeSize = pakeSize - 1;       //剩余包数：（已经处理了0x80这个包），所以pakeSize-1
-            Log.e(TAG, "，剩余的包数：" + surplusPakeSize);
+            LogUtil.i(TAG, "，剩余的包数：" + surplusPakeSize);
             situation.setFinish(false);
             situation.setFail(false);
             return situation;

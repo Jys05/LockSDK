@@ -27,11 +27,11 @@ public class LockStatusUtil {
         /******************************/
         //TODO : 2017/11/30 测试
         for (int i = 0; i < charLockStatus1.length; i++) {
-            Log.e(TAG, charLockStatus1[i] + "");
+            LogUtil.i(TAG, charLockStatus1[i] + "");
         }
-        Log.e(TAG, "====" + charLockStatus2.length);
+        LogUtil.i(TAG, "====" + charLockStatus2.length);
         for (int i = 0; i < charLockStatus2.length; i++) {
-            Log.e(TAG, charLockStatus2[i] + "");
+            LogUtil.i(TAG, charLockStatus2[i] + "");
         }
         /******************************/
         LockStatus lockStatus = new LockStatus();

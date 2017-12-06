@@ -8,6 +8,7 @@ import com.locksdk.listener.LockStatusListener;
 import com.locksdk.listener.NoficeDataListener;
 import com.locksdk.listener.WriteDataListener;
 import com.locksdk.util.DealtByteUtil;
+import com.locksdk.util.LogUtil;
 import com.locksdk.util.WriteAndNoficeUtil;
 import com.locksdk.baseble.utils.HexUtil;
 
@@ -36,20 +37,20 @@ public class QueryLockStatusUtil {
         @Override
         public void onWirteSuccess(WriteCallbackData callbackData) {
             if (callbackData != null && callbackData.getData() != null) {
-                Log.i(TAG , callbackData.getData().length + "---" + HexUtil.encodeHexStr(callbackData.getData()));
+                LogUtil.i(TAG , callbackData.getData().length + "---" + HexUtil.encodeHexStr(callbackData.getData()));
             }
         }
 
         @Override
         public void onWriteFail(WriteCallbackData data) {
-
+            LogUtil.i(TAG + "onWriteFail", Constant.MSG.MSG_WRITE_FAIL);
         }
     };
 
     private static NoficeDataListener noficeDataListener = new NoficeDataListener() {
         @Override
         public void onNoficeSuccess(NoficeCallbackData callbackData) {
-            Log.e(TAG, callbackData.getData().length + "---" + HexUtil.encodeHexStr(callbackData.getData()));
+            LogUtil.i(TAG, callbackData.getData().length + "---" + HexUtil.encodeHexStr(callbackData.getData()));
             byte[] data = callbackData.getData();
             if (data.length == 20) {
                 byte[] resonpenCode = new byte[1];      //应答码：
@@ -58,7 +59,7 @@ public class QueryLockStatusUtil {
                     byte[] boxNamePaint = new byte[16];
                     System.arraycopy(data, 2, boxNamePaint, 0, boxNamePaint.length);
                     byte[] btBoxName = DealtByteUtil.dataClear0(boxNamePaint);
-                    Log.e("=====>", new String(btBoxName));
+                    LogUtil.i(TAG, new String(btBoxName));
                     String boxName = new String(btBoxName);
                     lockStatusListener.onChange(boxName, locid, null);
                 }

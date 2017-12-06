@@ -10,6 +10,7 @@ import com.locksdk.listener.WriteDataListener;
 import com.locksdk.util.BCDCodeUtil;
 import com.locksdk.util.DateUtil;
 import com.locksdk.util.DealtByteUtil;
+import com.locksdk.util.LogUtil;
 import com.locksdk.util.WriteAndNoficeUtil;
 import com.locksdk.baseble.utils.HexUtil;
 
@@ -34,14 +35,14 @@ public class OpenLockUtil {
         String boxName = param.get("boxName");
         if (TextUtils.isEmpty(boxName)) {
             Result<String> result = new Result<>();
-            result.setCode("0001");
-            result.setData("款箱名为空");
+            result.setCode(Constant.CODE.OPEN_LOCK_FAIL);
+            result.setMsg(Constant.MSG.MSG_BOX_NAME_NULL);
+            result.setData(null);
             lockListener.openLockCallback(result);
             return;
         }
         String userId = param.get("userId");
         String dynamicPwd = param.get("dynamicPwd");
-//        String time = DateUtil.format(DateUtil.yyyyMMddHHmmss_not, System.currentTimeMillis());
         byte[] btTime = BCDCodeUtil.str2Bcd(trTime);
         byte[] btBoxName = DealtByteUtil.dataAdd0(boxName.getBytes(), 16);
         byte[] btDynamicPwd = DealtByteUtil.dataAdd0(dynamicPwd.getBytes(), 6);
@@ -60,14 +61,19 @@ public class OpenLockUtil {
         @Override
         public void onWirteSuccess(WriteCallbackData callbackData) {
             if (callbackData != null && callbackData.getData() != null) {
-                Log.i(TAG + "======>", callbackData.getData().length + "---" + HexUtil.encodeHexStr(callbackData.getData()));
+                LogUtil.i(TAG + "_onWirteSuccess", callbackData.getData().length + "---" + HexUtil.encodeHexStr(callbackData.getData()));
             }
 
         }
 
         @Override
         public void onWriteFail(WriteCallbackData data) {
-
+            LogUtil.i(TAG + "onWriteFail", Constant.MSG.MSG_WRITE_FAIL);
+            Result<String> result = new Result<>();
+            result.setCode(Constant.CODE.OPEN_LOCK_FAIL);
+            result.setMsg(Constant.MSG.MSG_WRITE_FAIL);
+            result.setData(null);
+            openLockListener.openLockCallback(result);
         }
     };
 

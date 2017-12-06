@@ -3,13 +3,18 @@ package com.locksdk;
 import android.text.TextUtils;
 import android.util.Log;
 
+import com.locksdk.bean.LockLog;
+import com.locksdk.bean.RandomAttr;
 import com.locksdk.bean.WriteCallbackData;
 import com.locksdk.listener.QueryLogsListener;
 import com.locksdk.listener.WriteDataListener;
 import com.locksdk.util.LockSDKHexUtil;
+import com.locksdk.util.LogUtil;
+import com.locksdk.util.RegexUtil;
 import com.locksdk.util.WriteAndNoficeUtil;
 import com.locksdk.baseble.utils.HexUtil;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -28,14 +33,40 @@ public class QueryLogsUtil {
         String startSeq = param.get("startSeq");
         String endSeq = param.get("endSeq");
         if (TextUtils.isEmpty(startSeq)) return;
-        if (Integer.valueOf(startSeq) > Integer.valueOf(endSeq)) {
-            Log.e("====>", "大小不对");
+        if (TextUtils.isEmpty(endSeq)) return;
+        int startSeqNum = Integer.valueOf(startSeq);        //起始序号
+        int endSeqNum = Integer.valueOf(endSeq);            //结束序号
+        if (!RegexUtil.isNotNegativeInteger(startSeq) || !RegexUtil.isNotNegativeInteger(endSeq)) {
+            LogUtil.i(TAG, Constant.MSG.MSG_START_END_FAIL2);
+            Result<List<LockLog>> result = new Result<>();
+            result.setCode(Constant.CODE.QUERY_LOGS_FAIL);
+            result.setMsg(Constant.MSG.MSG_START_END_FAIL2);
+            result.setData(null);
+            logsListener.queryLogsCallback(result);
             return;
         }
-        byte[] btStartSeq = intToBytes2(Integer.valueOf(startSeq));
-        byte[] btEndSeq = intToBytes2(Integer.valueOf(endSeq));
-        Log.e(TAG, HexUtil.encodeHexStr(btStartSeq));
-        Log.e(TAG, HexUtil.encodeHexStr(btEndSeq));
+        if (startSeqNum > endSeqNum) {
+            LogUtil.i(TAG, Constant.MSG.MSG_START_END_FAIL);
+            Result<List<LockLog>> result = new Result<>();
+            result.setCode(Constant.CODE.QUERY_LOGS_FAIL);
+            result.setMsg(Constant.MSG.MSG_START_END_FAIL);
+            result.setData(null);
+            logsListener.queryLogsCallback(result);
+            return;
+        }
+        if (endSeqNum > 10) {
+            LogUtil.i(TAG, Constant.MSG.MSG_END_FAIL);
+            Result<List<LockLog>> result = new Result<>();
+            result.setCode(Constant.CODE.QUERY_LOGS_FAIL);
+            result.setMsg(Constant.MSG.MSG_END_FAIL);
+            result.setData(null);
+            logsListener.queryLogsCallback(result);
+            return;
+        }
+        byte[] btStartSeq = intToBytes2(startSeqNum);
+        byte[] btEndSeq = intToBytes2(endSeqNum);
+        LogUtil.i(TAG, HexUtil.encodeHexStr(btStartSeq));
+        LogUtil.i(TAG, HexUtil.encodeHexStr(btEndSeq));
         byte[] data = new byte[2 + btEndSeq.length + btStartSeq.length];
         data[0] = 0x00;
         data[1] = 0x13;
@@ -58,7 +89,7 @@ public class QueryLogsUtil {
         }
         byte[] result = new byte[4];
         for (int i = 0; i < result.length; i++) {
-            result[i] = b[result.length-1-i];
+            result[i] = b[result.length - 1 - i];
         }
         return result;
     }
@@ -73,7 +104,12 @@ public class QueryLogsUtil {
 
         @Override
         public void onWriteFail(WriteCallbackData data) {
-
+            LogUtil.i(TAG + "onWriteFail", Constant.MSG.MSG_WRITE_FAIL);
+            Result<List<LockLog>> result = new Result<>();
+            result.setCode(Constant.CODE.QUERY_LOGS_FAIL);
+            result.setMsg(Constant.MSG.MSG_WRITE_FAIL);
+            result.setData(null);
+            queryLogsListener.queryLogsCallback(result);
         }
     };
 

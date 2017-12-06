@@ -9,6 +9,7 @@ import com.locksdk.listener.WriteDataListener;
 import com.locksdk.util.BCDCodeUtil;
 import com.locksdk.util.DateUtil;
 import com.locksdk.util.DealtByteUtil;
+import com.locksdk.util.LogUtil;
 import com.locksdk.util.WriteAndNoficeUtil;
 import com.locksdk.baseble.utils.HexUtil;
 
@@ -35,8 +36,9 @@ public class ActiveLockUtil {
         String lockId = param.get("lockId");        //锁具ID
         if (TextUtils.isEmpty(lockId)) {
             Result<String> result = new Result<>();
-            result.setCode("0001");
-            result.setData("未获取锁具ID");
+            result.setCode(Constant.CODE.CODE_ACTIVE_FAIL);
+            result.setMsg(Constant.MSG.MSG_LOCK_ID_NULL);
+            result.setData(null);
             lockListener.activeLockCallback(result);
             return;
         }
@@ -47,7 +49,6 @@ public class ActiveLockUtil {
         String dpKeyChkCode = param.get("dpKeyChkCode");        //动态密码密钥校验值
         String dpCommChkCode = param.get("dpCommChkCode");      //动态密码传输密钥校验值
         String boxName = param.get("boxName");      //款箱名称
-        String time = DateUtil.format(DateUtil.yyyyMMddHHmmss_not, System.currentTimeMillis());
         byte[] btTime = BCDCodeUtil.str2Bcd(trTime);
         //TODO : 2017/11/23 数据固定
 //        byte[] btLockId = LockApiBleUtil.getInstance().getLockID();
@@ -79,13 +80,18 @@ public class ActiveLockUtil {
         @Override
         public void onWirteSuccess(WriteCallbackData callbackData) {
             if (callbackData != null && callbackData.getData() != null) {
-                Log.i(TAG + "======>", callbackData.getData().length + "---" + HexUtil.encodeHexStr(callbackData.getData()));
+                LogUtil.i(TAG + "onWirteSuccess", callbackData.getData().length + "---" + HexUtil.encodeHexStr(callbackData.getData()));
             }
         }
 
         @Override
         public void onWriteFail(WriteCallbackData data) {
-
+            LogUtil.i(TAG + "onWriteFail", Constant.MSG.MSG_WRITE_FAIL);
+            Result<String> result = new Result<>();
+            result.setCode(Constant.CODE.CODE_ACTIVE_FAIL);
+            result.setMsg(Constant.MSG.MSG_WRITE_FAIL);
+            result.setData(null);
+            activeLockListener.activeLockCallback(result);
         }
     };
 

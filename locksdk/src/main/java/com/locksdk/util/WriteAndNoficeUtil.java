@@ -275,8 +275,8 @@ public class WriteAndNoficeUtil {
     public void bindChannel(BluetoothLeDevice bluetoothLeDevice, PropertyType propertyType, UUID serviceUUID,
                             UUID characteristicUUID, UUID descriptorUUID) {
         DeviceMirror deviceMirror = LockApiBleUtil.getInstance().getDeviceMirror();
-        Log.e("服务：", serviceUUID.toString());
-        Log.e("GATT：", characteristicUUID.toString());
+        LogUtil.i("服务：", serviceUUID.toString());
+        LogUtil.i("GATT：", characteristicUUID.toString());
         if (deviceMirror != null) {
             BluetoothGattChannel bluetoothGattChannel = new BluetoothGattChannel.Builder()
                     .setBluetoothGatt(deviceMirror.getBluetoothGatt())
@@ -330,20 +330,20 @@ public class WriteAndNoficeUtil {
     private IBleCallback receiveCallback = new IBleCallback() {
         @Override
         public void onSuccess(byte[] data, BluetoothGattChannel bluetoothGattChannel, BluetoothLeDevice bluetoothLeDevice) {
-            Log.e(TAG, "监听通知成功：长度—" + data.length + "；数据16进制—" + HexUtil.encodeHexStr(data));
+            LogUtil.i(TAG, "监听通知成功：长度—" + data.length + "；数据16进制—" + HexUtil.encodeHexStr(data));
             byte[] callBlck;
             DealDataUtil.DealtSituation situation = DealDataUtil.dealtDealData(data);
             mNoficeCallbackData.setFinish(situation.isFinish());
             if (situation.isFinish()) {
                 callBlck = DealDataUtil.callbackDataMap.get(DealDataUtil.ressonpCode);
                 if (!situation.isFail()) {
-                    Log.e(TAG, "监听通知处理好的数据：长度—" + callBlck.length + "；数据16进制—" + HexUtil.encodeHexStr(callBlck));
+                    LogUtil.i(TAG, "监听通知处理好的数据：长度—" + callBlck.length + "；数据16进制—" + HexUtil.encodeHexStr(callBlck));
                     mNoficeCallbackData.setData(callBlck);
                 } else {
                     mNoficeCallbackData.setData(null);
                     if (noficeDataListener == null) return;
                     noficeDataListener.onNoficeFail(mNoficeCallbackData);
-                    Log.e(TAG, "通知Notify返回数据有误或掉包现象，或者数据处理有误");
+                    LogUtil.i(TAG, "通知Notify返回数据有误或掉包现象，或者数据处理有误");
                 }
             }
             if (noficeDataListener == null) return;
@@ -352,7 +352,7 @@ public class WriteAndNoficeUtil {
 
         @Override
         public void onFailure(BleException exception) {
-            Log.e(TAG, "监听通知失败");
+            LogUtil.i(TAG, "监听通知失败");
             mNoficeCallbackData.setData(null);
             if (noficeDataListener == null) return;
             noficeDataListener.onNoficeFail(mNoficeCallbackData);

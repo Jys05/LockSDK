@@ -10,6 +10,7 @@ import com.locksdk.listener.GetRandomListener;
 import com.locksdk.listener.NoficeDataListener;
 import com.locksdk.listener.WriteDataListener;
 import com.locksdk.util.DealtByteUtil;
+import com.locksdk.util.LogUtil;
 import com.locksdk.util.WriteAndNoficeUtil;
 import com.locksdk.baseble.utils.HexUtil;
 
@@ -21,11 +22,18 @@ import com.locksdk.baseble.utils.HexUtil;
 public class GetRandomUtil {
 
     private static GetRandomListener getRandomListener;
-     private static final String TAG = "GetRandomUtil";
+    private static final String TAG = "GetRandomUtil";
 
     public static void getRandom(String boxName, GetRandomListener listener) {
         getRandomListener = listener;
-        if (TextUtils.isEmpty(boxName)) return;
+        if (TextUtils.isEmpty(boxName)) {
+            Result<RandomAttr> result = new Result<>();
+            result.setCode(Constant.CODE.GET_RANDOM_FAIL);
+            result.setMsg(Constant.MSG.MSG_BOX_NAME_NULL);
+            result.setData(null);
+            listener.getRandomCallback(result);
+            return;
+        }
         byte[] data = new byte[18];
         data[0] = 0x00;
         data[1] = 0x11;
@@ -39,15 +47,16 @@ public class GetRandomUtil {
         @Override
         public void onWirteSuccess(WriteCallbackData callbackData) {
             if (callbackData != null && callbackData.getData() != null) {
-                Log.i(TAG + "======>", callbackData.getData().length + "---" + HexUtil.encodeHexStr(callbackData.getData()));
+                LogUtil.i(TAG + "_onWirteSuccess", callbackData.getData().length + "---" + HexUtil.encodeHexStr(callbackData.getData()));
             }
         }
 
         @Override
         public void onWriteFail(WriteCallbackData data) {
             Result<RandomAttr> randomAttrResult = new Result<>();
-            randomAttrResult.setMsg(Constant.CODE.GET_RANDOM_FAIL);
-            randomAttrResult.setCode(Constant.MSG.MSG_WRITE_FAIL);
+            randomAttrResult.setCode(Constant.CODE.GET_RANDOM_FAIL);
+            randomAttrResult.setMsg(Constant.MSG.MSG_WRITE_FAIL);
+            randomAttrResult.setData(null);
             getRandomListener.getRandomCallback(randomAttrResult);
         }
     };

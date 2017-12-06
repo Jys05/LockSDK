@@ -23,6 +23,7 @@ import com.locksdk.listener.QueryLogsListener;
 import com.locksdk.listener.ScannerListener;
 import com.locksdk.util.DealtByteUtil;
 import com.locksdk.util.LockStatusUtil;
+import com.locksdk.util.LogUtil;
 import com.locksdk.util.LogsDataUtil;
 import com.locksdk.util.WriteAndNoficeUtil;
 import com.locksdk.baseble.model.BluetoothLeDevice;
@@ -76,6 +77,7 @@ public class LockAPI {
         if (context == null) {
             return null;
         }
+        LogUtil.setEnable(true);
         mContext = context.getApplicationContext();
         LockApiBleUtil.getInstance().init(context);
         return this;
@@ -142,8 +144,8 @@ public class LockAPI {
     }
 
     //关闭连接
-    public void closeConnection() {
-        LockApiBleUtil.getInstance().closeConnection();
+    public boolean closeConnection() {
+        return LockApiBleUtil.getInstance().closeConnection();
     }
 
     //获取锁具ID
@@ -208,13 +210,14 @@ public class LockAPI {
         @Override
         public void onNoficeSuccess(NoficeCallbackData callbackData) {
             if (callbackData.isFinish()) {
+                LogUtil.i(TAG, callbackData.getData().length + "---" + HexUtil.encodeHexStr(callbackData.getData()));
                 dealtNotifyCallBackData(callbackData);
             }
         }
 
         @Override
         public void onNoficeFail(NoficeCallbackData callbackData) {
-
+            LogUtil.i(TAG + "onNoficeFail", Constant.MSG.MSG_NOTIFY_FAIL);
         }
     };
 
@@ -223,10 +226,10 @@ public class LockAPI {
         byte[] data = new byte[(callbackData.getData().length - 1)];
         byte[] btBoxName1;
         byte[] btBoxName;
-        Log.e(TAG, "返回拼接好的数据长度：" + callbackData.getData().length + "=====" + HexUtil.encodeHexStr(callbackData.getData()));
+        LogUtil.i(TAG, "返回拼接好的数据长度：" + callbackData.getData().length + "=====" + HexUtil.encodeHexStr(callbackData.getData()));
         byte responseCode = callbackData.getData()[0];
         System.arraycopy(callbackData.getData(), 1, data, 0, data.length);
-        Log.e(TAG, "真正报文长度：" + data.length + "=====" + HexUtil.encodeHexStr(data));
+        LogUtil.i(TAG, "真正报文长度：" + data.length + "=====" + HexUtil.encodeHexStr(data));
         switch (responseCode) {
             case (byte) 0x90:
                 Result<String> activiteLockResult = new Result<>();
@@ -234,18 +237,16 @@ public class LockAPI {
                 btBoxName1 = new byte[16];
                 System.arraycopy(data, 0, btBoxName1, 0, btBoxName1.length);
                 btBoxName = DealtByteUtil.dataClear0(btBoxName1);
-                activiteLockResult.setCode("0000");
-                activiteLockResult.setMsg("激活成功");
+                activiteLockResult.setCode(Constant.CODE.CODE_SUCCESS);
+                activiteLockResult.setMsg(Constant.MSG.MSG_ACTIVE_SUCCESS);
                 activiteLockResult.setData(new String(btBoxName));
                 mActiveLockListener.activeLockCallback(activiteLockResult);
                 break;
             case (byte) 0x91:
                 Result<RandomAttr> getRandomResult = new Result<>();
                 RandomAttr randomAttr = new RandomAttr();
-                getRandomResult.setCode("0000");
-                getRandomResult.setMsg("获取成功");
 //                data = callbackData.getData();
-                Log.e(TAG, "长度" + data.length);
+                LogUtil.i(TAG, "长度" + data.length);
                 btBoxName1 = new byte[16];
                 System.arraycopy(data, 0, btBoxName1, 0, btBoxName1.length);
                 btBoxName = DealtByteUtil.dataClear0(btBoxName1);
@@ -257,39 +258,41 @@ public class LockAPI {
 
                 byte[] btCloseCode = new byte[10];
                 System.arraycopy(data, 24, btCloseCode, 0, btCloseCode.length);
-                Log.e(TAG, HexUtil.encodeHexStr(btCloseCode));
+                LogUtil.i(TAG, HexUtil.encodeHexStr(btCloseCode));
                 randomAttr.setCloseCode(new String(btCloseCode));
 
                 byte[] btDpCommKeyVer = new byte[36];
                 System.arraycopy(data, 34, btDpCommKeyVer, 0, btDpCommKeyVer.length);
-                Log.e(TAG, HexUtil.encodeHexStr(btCloseCode));
+                LogUtil.i(TAG, HexUtil.encodeHexStr(btCloseCode));
                 randomAttr.setDpCommKeyVer(new String(btDpCommKeyVer));
 
                 byte[] btDpKeyVer = new byte[36];
                 System.arraycopy(data, 70, btDpKeyVer, 0, btDpKeyVer.length);
-                Log.e(TAG, HexUtil.encodeHexStr(btCloseCode));
+                LogUtil.i(TAG, HexUtil.encodeHexStr(btCloseCode));
                 randomAttr.setDpKeyVer(new String(btDpKeyVer));
 
+                getRandomResult.setCode(Constant.CODE.CODE_SUCCESS);
+                getRandomResult.setMsg(Constant.MSG.MSG_GET_RANDOM_SUCCESS);
                 getRandomResult.setData(randomAttr);
                 mGetRandomListener.getRandomCallback(getRandomResult);
                 break;
             case (byte) 0x92:
                 Result<String> openLockResult = new Result<>();
 //                data = callbackData.getData();
-                Log.e(TAG, "开锁：" + HexUtil.encodeHexStr(data));
+                LogUtil.i(TAG, "开锁：" + HexUtil.encodeHexStr(data));
                 btBoxName1 = new byte[16];
                 System.arraycopy(data, 0, btBoxName1, 0, btBoxName1.length);
                 btBoxName = DealtByteUtil.dataClear0(btBoxName1);
                 String strBoxName = new String(btBoxName);
-                Log.e(TAG, "开锁款箱名：" + btBoxName + "====" + HexUtil.encodeHexStr(btBoxName1));
+                LogUtil.i(TAG, "开锁款箱名：" + btBoxName + "====" + HexUtil.encodeHexStr(btBoxName1));
                 byte[] btCode = new byte[2];
                 System.arraycopy(data, 16, btCode, 0, btCode.length);
-                Log.e(TAG, "开锁信息码：" + HexUtil.encodeHexStr(btCode));
+                LogUtil.i(TAG, "开锁信息码：" + HexUtil.encodeHexStr(btCode));
                 byte[] callbackInfo = new byte[16];
                 System.arraycopy(data, 18, callbackInfo, 0, callbackInfo.length);
                 byte[] callbackInfo2 = DealtByteUtil.dataClear0(callbackInfo);      //去零
-                Log.e(TAG, "开锁信息：" + new String(callbackInfo2) + "====" + HexUtil.encodeHexStr(callbackInfo));
-                if (HexUtil.encodeHexStr(btCode).equals("0000")) {
+                LogUtil.i(TAG, "开锁信息：" + new String(callbackInfo2) + "====" + HexUtil.encodeHexStr(callbackInfo));
+                if (HexUtil.encodeHexStr(btCode).equals(Constant.CODE.CODE_SUCCESS)) {
                     openLockResult.setCode(HexUtil.encodeHexStr(btCode));
                     openLockResult.setMsg(new String(callbackInfo2));
                     openLockResult.setData(strBoxName);
@@ -302,15 +305,15 @@ public class LockAPI {
                 break;
             case (byte) 0x93:
                 Result<List<LockLog>> queryLogsCallbackResult = new Result<>();
-                queryLogsCallbackResult.setCode("0000");
-                queryLogsCallbackResult.setMsg("查询日志成功");
-                Log.e(TAG, "查询日志成功：" + HexUtil.encodeHexStr(data));
+                queryLogsCallbackResult.setCode(Constant.CODE.CODE_SUCCESS);
+                queryLogsCallbackResult.setMsg(Constant.MSG.MSG_QUERY_LOGS_SUCCESS);
+                LogUtil.i(TAG, "查询日志成功：" + HexUtil.encodeHexStr(data));
                 queryLogsCallbackResult.setData(LogsDataUtil.dealLogsData(data));
                 mQueryLogsListener.queryLogsCallback(queryLogsCallbackResult);
                 break;
             case (byte) 0x94:
 //                byte[] data2 = callbackData.getData();
-                Log.e(TAG, "长度" + data.length);
+                LogUtil.i(TAG, "长度" + data.length);
                 byte[] btBoxName3 = new byte[16];
                 System.arraycopy(data, 0, btBoxName3, 0, btBoxName3.length);
                 byte[] btBoxName4 = DealtByteUtil.dataClear0(btBoxName3);

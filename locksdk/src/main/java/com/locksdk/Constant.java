@@ -32,11 +32,14 @@ public class Constant {
 
         public static final String CODE_GET_LOCK_ID_FAIL = "0005";          //获取款箱锁具ID错误
 
-        public static final String CODEACTIVE_FAIL = "0006";          //激活过程有误
+        public static final String CODE_ACTIVE_FAIL = "0006";          //激活失败
 
         public static final String GET_RANDOM_FAIL = "0007";          //获取随机数有误
 
         public static final String OPEN_LOCK_FAIL = "0008";          //开锁有误
+
+        public static final String QUERY_LOGS_FAIL = "0009";          //查询日志有误
+
     }
 
     public static final class MSG {
@@ -46,11 +49,17 @@ public class Constant {
 
         public static final String MSG_SCANNER_FAIL = "扫描失败";
 
+        public static final String MSG_SCANNER_FAIL_NULL = "ScannerListener为空";
+
+        public static final String MSG_LOCK_API_INIT_FAIL= "LockApi未初始化，请初始化LockApi";
+
         public static final String MSG_LOCATION_PERSISION = "定位权限未开启";
 
         public static final String MSG_CONNECT_TIME_OUT = "连接超时";
 
         public static final String MSG_CONNECT_FAIL = "连接失败";
+
+        public static final String MSG_CONNECT_FAIL_NULL = "ConnectListener为空";
 
         public static final String MSG_CONNECT_FAIL2 = "时间过长未操作，款箱自动断开";
 
@@ -64,15 +73,23 @@ public class Constant {
 
         public static final String MSG_GET_RANDOM_SUCCESS = "获取随机数成功";
 
+        public static final String MSG_LOCK_ID_NULL = "锁具id为空";
+
+        public static final String MSG_BOX_NAME_NULL = "款箱名为空";
+
         public static final String MSG_WRITE_FAIL = "数据写入失败";
+
+        public static final String MSG_NOTIFY_FAIL = "数据接受失败";
+
+        public static final String MSG_START_END_FAIL = "起始序号小于结束序号";
+
+        public static final String MSG_END_FAIL = "结束序号大于10";
+
+        public static final String MSG_START_END_FAIL2 = "起始序号/结束序号：不是非负整数";
 
         public static final String MSG_ACTIVE_SUCCESS = "激活锁具成功";
 
-        public static final String MSG_DPKEY_FAIL = "对秘钥处理错误";
-
-        public static final String MSG_NOFICE_FAIL = "监听数据错误";
-
-        public static final String MSG_ENCODE_FAIL = "数据加密有误";
+        public static final String MSG_QUERY_LOGS_SUCCESS = "查询日志成功";
 
         public static final String MSG_OPEN_LOCk_FAIL = "开锁时数据加密失败";
 

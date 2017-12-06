@@ -29,6 +29,7 @@ import com.locksdk.listener.GetLockIdListener;
 import com.locksdk.listener.ReadListener;
 import com.locksdk.listener.ScannerListener;
 import com.locksdk.listener.WriteDataListener;
+import com.locksdk.util.LogUtil;
 import com.locksdk.util.WriteAndNoficeUtil;
 import com.locksdk.baseble.ViseBle;
 import com.locksdk.baseble.callback.IConnectCallback;
@@ -153,10 +154,14 @@ public class LockApiBleUtil {
      */
     public void startScanner(final ScannerListener listener) {
         if (listener == null) {
+            LogUtil.i(TAG, Constant.MSG.MSG_SCANNER_FAIL_NULL);
+            listener.onScannerFail(Constant.CODE.CODE_SCANNER_FAIL, Constant.MSG.MSG_SCANNER_FAIL_NULL);
             return;
         }
         mScannerListener = listener;
         if (ViseBle.getInstance().getContext() == null) {
+            LogUtil.i(TAG, Constant.MSG.MSG_LOCK_API_INIT_FAIL);
+            listener.onScannerFail(Constant.CODE.CODE_SCANNER_FAIL, Constant.MSG.MSG_LOCK_API_INIT_FAIL);
             return;
         }
         if (!isBleEnable(ViseBle.getInstance().getContext())) {
@@ -206,7 +211,7 @@ public class LockApiBleUtil {
                         mBluetoothLeDeviceStore.addDevice(new BluetoothLeDevice(bluetoothDevice, result.getRssi()
                                 , result.getScanRecord().getBytes(), result.getTimestampNanos()));
                         if (!mLockIdMap.containsValue(bluetoothDevice.getAddress())) {
-                            Log.e(TAG, bluetoothDevice.getName() + "——" + bluetoothDevice.getAddress());
+                            LogUtil.i(TAG, bluetoothDevice.getName() + "——" + bluetoothDevice.getAddress());
                             mLockIdMap.put(bluetoothDevice.getName(), bluetoothDevice.getAddress());
                         }
                         if (!mScanenrBoxNames.contains(bluetoothDevice.getName())) {
@@ -327,13 +332,12 @@ public class LockApiBleUtil {
         public boolean handleMessage(Message message) {
             LockAPI lockAPI = LockAPI.getInstance();
             if (lockAPI.isWriting()) {      //正在写入
-                Log.e("=====>", "从新计算");
                 mDeviceSleepTime = lockAPI.getDeviceSleepTime();
             } else {
                 mDeviceSleepTime = mDeviceSleepTime - 100;
                 if (mDeviceSleepTime == 0) {
                     if (isConnectSuccess) {
-                        Log.e("=====>", "发东西给板子");
+                        LogUtil.i(TAG, "防止休眠给板子发指令");
                         mDeviceSleepTime = lockAPI.getDeviceSleepTime();
 //                        lockAPI.queryLockStatus(mLockIDStr);
                         WriteAndNoficeUtil.getInstantce().writeForDeviceSleep(new WriteDataListener() {
@@ -349,7 +353,6 @@ public class LockApiBleUtil {
                         });
                     }
                 }
-                Log.e("=====>", "开始" + mDeviceSleepTime);
                 mHandler.sendEmptyMessageDelayed(0x00, 100);
             }
             return false;
@@ -362,11 +365,12 @@ public class LockApiBleUtil {
     }
 
     //清理Handler
-    public void clearHandler(){
+    public void clearHandler() {
         if (mHandler != null) {
             mHandler.removeCallbacksAndMessages(null);
         }
     }
+
     /**
      * 开始连接
      *
@@ -379,41 +383,48 @@ public class LockApiBleUtil {
             if (timeOut > 0) {
                 ViseBle.config().setConnectTimeout((int) timeOut);//连接超时时间
             }
-            if (isConnecting) return;
+            if (isConnecting) {
+                LogUtil.i(TAG, "正在连接");
+                listener.onWaiting(Constant.SERVICE_UUID);
+                return;
+            }
             mConnectListener = listener;
             mBoxName = boxDevice.getName();
             mConnectBoxDevice = boxDevice;
             //停止扫描
             stopScanner();
             //注册蓝牙广播监听
-            setOnBleReceiver(mBleStateListenerForConnect);
+//            setOnBleReceiver(mBleStateListenerForConnect);
             //关闭蓝牙
             isConnecting = true;
             setConnect();
+        } else {
+            LogUtil.i(TAG, Constant.MSG.MSG_CONNECT_FAIL_NULL);
+            listener.onFail(Constant.CODE.CODE_CONNECT_FAIL, Constant.MSG.MSG_CONNECT_FAIL_NULL);
         }
     }
 
-    private BleStateListener mBleStateListenerForConnect = new BleStateListener() {
-        @Override
-        public void onState_ON() {
-            isConnecting = true;
-            setConnect();
-            //关闭蓝牙广播监听
-            closeBleReceiver();
-        }
-
-        @Override
-        public void onState_OFF() {
-            //蓝牙状态为关闭时，启动蓝牙
-            ViseBle.getInstance().getBluetoothAdapter().enable();
-        }
-    };
+//    private BleStateListener mBleStateListenerForConnect = new BleStateListener() {
+//        @Override
+//        public void onState_ON() {
+//            isConnecting = true;
+//            setConnect();
+//            //关闭蓝牙广播监听
+//            closeBleReceiver();
+//        }
+//
+//        @Override
+//        public void onState_OFF() {
+//            //蓝牙状态为关闭时，启动蓝牙
+//            ViseBle.getInstance().getBluetoothAdapter().enable();
+//        }
+//    };
 
 
     /**
      * 关闭蓝牙款箱连接
      */
-    public void closeConnection() {
+    public boolean closeConnection() {
         //断开连接，将连接成功的box的Mac地址，赋值为空
         mBoxMac = null;
         mBoxName = null;
@@ -427,7 +438,7 @@ public class LockApiBleUtil {
         } else {
             ViseBle.getInstance().disconnect();
         }
-
+        return true;
     }
 
     private void setConnect() {
@@ -501,7 +512,7 @@ public class LockApiBleUtil {
                 isConnectSuccess = false;
 
             }
-            Log.i(TAG, exception.getDescription() + "失败从重连次数：" + mConnectRetryCount);
+            LogUtil.i(TAG, exception.getDescription() + "失败从重连次数：" + mConnectRetryCount);
         }
 
         @Override
@@ -518,20 +529,26 @@ public class LockApiBleUtil {
 
     /********************************** 获取款箱锁具ID ********************************/
     public void getLockIdByBoxName(final GetLockIdListener lockIdListener) {
+        final Result<String> resultLockId = new Result<>();
         WriteAndNoficeUtil.getInstantce().read(new ReadListener() {
             @Override
             public void onReadListener(byte[] data) {
                 if (data != null) {
-                    Log.i(TAG + "======>", data.length + "---" + HexUtil.encodeHexStr(data));
+                    LogUtil.i(TAG + "-getLockIdByBoxName", data.length + "---" + HexUtil.encodeHexStr(data));
                     LockApiBleUtil.getInstance().setLockID(data);
                     LockApiBleUtil.getInstance().setLockIDStr(HexUtil.encodeHexStr(data));
                     if (lockIdListener != null) {
-                        lockIdListener.onGetLockIDListener(HexUtil.encodeHexStr(data));
+                        resultLockId.setCode(Constant.CODE.CODE_SUCCESS);
+                        resultLockId.setMsg(Constant.MSG.MSG_GET_LOCK_ID_SUCCESS);
+                        resultLockId.setData(HexUtil.encodeHexStr(data));
+                        lockIdListener.onGetLockIDListener(resultLockId);
                     }
-
                 } else {
                     if (lockIdListener != null) {
-                        lockIdListener.onGetLockIDListener(null);
+                        resultLockId.setCode(Constant.CODE.CODE_GET_LOCK_ID_FAIL);
+                        resultLockId.setMsg(Constant.MSG.MSG_GET_LOCK_ID_FAIL);
+                        resultLockId.setData(null);
+                        lockIdListener.onGetLockIDListener(resultLockId);
                     }
                 }
             }

@@ -41,7 +41,7 @@ public class FunCode2RespCode {
                 break;
 
         }
-        Log.i(TAG, "响应码：" + respCode + "功能信息：" + funMsg);
+        LogUtil.i(TAG, "响应码：" + respCode + "功能信息：" + funMsg);
         return respCode;
     }
 }
