@@ -1,8 +1,7 @@
-package com.locksdk;
-
-import android.util.Log;
+package com.locksdk.lockApi;
 
 
+import com.locksdk.baseble.utils.HexUtil;
 import com.locksdk.util.LogUtil;
 
 import java.util.ArrayList;
@@ -85,12 +84,14 @@ public class DealDataUtil {
     //组包
     public static DealtSituation dealtDealData(byte[] callbackData) {
         if (callbackData[0] == 0x00) {
-            data = new byte[callbackData.length - 2];
+            data = new byte[callbackData.length - 1];
+            LogUtil.i(TAG , "长度:" + data.length+"===="+ HexUtil.encodeHexStr(data));
             System.arraycopy(callbackData, 1, data, 0, data.length);
             ressonpCode = callbackData[1];
             callbackDataMap.put(callbackData[1], data);
             situation.setFinish(true);
             situation.setFail(false);
+            LogUtil.i(TAG , "处理后长度:" + data.length+"===="+ HexUtil.encodeHexStr(data));
             return situation;
         }
         if (callbackData[0] == ((byte) 0x80)) {

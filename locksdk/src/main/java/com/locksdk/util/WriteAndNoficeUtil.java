@@ -4,12 +4,11 @@ import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattService;
 import android.os.Handler;
 import android.os.Looper;
-import android.util.Log;
 
-import com.locksdk.Constant;
-import com.locksdk.DealDataUtil;
-import com.locksdk.LockAPI;
-import com.locksdk.LockApiBleUtil;
+import com.locksdk.lockApi.Constant;
+import com.locksdk.lockApi.DealDataUtil;
+import com.locksdk.lockApi.LockAPI;
+import com.locksdk.lockApi.LockApiBleUtil;
 import com.locksdk.baseble.model.resolver.GattAttributeResolver;
 import com.locksdk.bean.NoficeCallbackData;
 import com.locksdk.bean.WriteCallbackData;
@@ -88,9 +87,10 @@ public class WriteAndNoficeUtil {
                 .setDescriptorUUID(null)
                 .builder();
         //将功能码设进回调数据中。
+         mNoficeCallbackData = new NoficeCallbackData();
         mWriteCallbackData.setFunctionCode(functionCode);
         resCode = FunCode2RespCode.funCode2RespCode(functionCode);
-        mNoficeCallbackData.setFunctionCode(resCode);
+        mNoficeCallbackData.setRespondCode(resCode);
         deviceMirror.bindChannel(bleCallback, bluetoothGattChannel);
         //设置为正在写入
         LockAPI lockAPI = LockAPI.getInstance();
@@ -128,9 +128,10 @@ public class WriteAndNoficeUtil {
                 .setDescriptorUUID(null)
                 .builder();
         //将功能码设进回调数据中。
+        mNoficeCallbackData = new NoficeCallbackData();
         mWriteCallbackData.setFunctionCode(functionCode);
         resCode = FunCode2RespCode.funCode2RespCode(functionCode);
-        mNoficeCallbackData.setFunctionCode(resCode);
+        mNoficeCallbackData.setRespondCode(resCode);
         deviceMirror.bindChannel(bleCallback, bluetoothGattChannel);
         //设置为正在写入
         LockAPI lockAPI = LockAPI.getInstance();
@@ -255,7 +256,7 @@ public class WriteAndNoficeUtil {
         UUID mServiceUUID = bluetoothGattService.getUuid();
         mNoficeCallbackData = new NoficeCallbackData();
         mDeviceMirrorPool = ViseBle.getInstance().getDeviceMirrorPool();
-        mNoficeCallbackData.setFunctionCode(resCode);
+        mNoficeCallbackData.setRespondCode(resCode);
         noficeDataListener = listener;
 //        final DeviceMirror deviceMirror = mDeviceMirrorPool.getDeviceMirror(connectedDevice);
         final DeviceMirror deviceMirror = LockApiBleUtil.getInstance().getDeviceMirror();
@@ -317,9 +318,9 @@ public class WriteAndNoficeUtil {
             }
             if (mWriteCallbackData != null) {
                 mWriteCallbackData.setData(null);
-            }
-            if (mWriteDataListener != null) {
-                mWriteDataListener.onWirteSuccess(mWriteCallbackData);
+                if (mWriteDataListener != null) {
+                    mWriteDataListener.onWriteFail(mWriteCallbackData);
+                }
             }
             if (exception == null) {
                 return;

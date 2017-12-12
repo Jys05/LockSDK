@@ -6,6 +6,7 @@ package com.locksdk.bean;
  */
 
 public class LockLog {
+    private String logNo;//日志序号
     private String optType;//操作类型
     private String optTime;//操作时间
     private String userId;//用户id
@@ -32,5 +33,13 @@ public class LockLog {
 
     public void setUserId(String userId) {
         this.userId = userId;
+    }
+
+    public String getLogNo() {
+        return logNo;
+    }
+
+    public void setLogNo(String logNo) {
+        this.logNo = logNo;
     }
 }

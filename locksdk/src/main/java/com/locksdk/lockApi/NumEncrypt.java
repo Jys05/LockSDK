@@ -1,4 +1,4 @@
-package com.locksdk;
+package com.locksdk.lockApi;
 
 import java.util.Arrays;
 

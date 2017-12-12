@@ -1,6 +1,4 @@
-package com.locksdk;
-
-import android.util.Log;
+package com.locksdk.lockApi;
 
 import com.locksdk.bean.NoficeCallbackData;
 import com.locksdk.bean.WriteCallbackData;

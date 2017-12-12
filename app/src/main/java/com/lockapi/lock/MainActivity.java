@@ -15,17 +15,15 @@ import android.widget.Toast;
 
 import com.library.base.frame.FrameActivity;
 import com.library.base.util.LoadingUtil;
-import com.library.base.util.LogUtil;
 import com.library.base.util.ToastUtil;
 import com.library.base.util.recyclerview.BaseAdapterHelper;
 import com.library.base.util.recyclerview.OnItemClickListener;
 import com.library.base.util.recyclerview.QuickAdapter;
-import com.locksdk.LockAPI;
-import com.locksdk.LockApiBleUtil;
-import com.locksdk.Result;
+import com.locksdk.lockApi.LockAPI;
+import com.locksdk.lockApi.LockApiBleUtil;
+import com.locksdk.lockApi.Result;
 import com.locksdk.baseble.ViseBle;
 import com.locksdk.baseble.model.BluetoothLeDevice;
-import com.locksdk.baseble.utils.HexUtil;
 import com.locksdk.bean.LockLog;
 import com.locksdk.bean.LockStatus;
 import com.locksdk.bean.RandomAttr;
@@ -136,10 +134,10 @@ public class MainActivity extends FrameActivity {
     //关闭连接
     public void onCloseConnectClick(View view) {
         mLockAPI.closeConnection();
-        mSvConnected.setVisibility(View.GONE);
-        mLlScanner.setVisibility(View.VISIBLE);
-        mQuickAdapter.clear();
-        mLockAPI.getBoxList(MainActivity.this, null, mScannerListener);
+//        mSvConnected.setVisibility(View.GONE);
+//        mLlScanner.setVisibility(View.VISIBLE);
+//        mQuickAdapter.clear();
+//        mLockAPI.getBoxList(MainActivity.this, null, mScannerListener);
     }
 
     //获取锁具ID
@@ -148,7 +146,11 @@ public class MainActivity extends FrameActivity {
         mLockAPI.getLockIdByBoxName(new GetLockIdListener() {
             @Override
             public void onGetLockIDListener(Result<String> lockId) {
-                mMsg = "锁具ID：" + lockId.getData() + "\n返回信息：" + lockId.getMsg();
+                if (!TextUtils.isEmpty(lockId.getData())) {
+                    mMsg = "锁具ID：" + lockId.getData() + "\n返回信息：" + lockId.getMsg();
+                } else {
+                    mMsg = "\n返回信息：" + lockId.getMsg();
+                }
                 mHandler.sendEmptyMessage(0x02);
             }
         });
@@ -179,8 +181,12 @@ public class MainActivity extends FrameActivity {
             @Override
             public void activeLockCallback(Result<String> result) {
                 mBoxName = boxName;
-                mMsg = "返回信息：" + result.getMsg()
-                        + "\n激活数据：" + result.getData();
+                if (!TextUtils.isEmpty(result.getData())) {
+                    mMsg = "返回信息：" + result.getMsg()
+                            + "\n激活数据：" + result.getData();
+                } else {
+                    mMsg = "返回信息：" + result.getMsg();
+                }
                 mHandler.sendEmptyMessage(0x02);
             }
         });
@@ -196,12 +202,16 @@ public class MainActivity extends FrameActivity {
         mLockAPI.getRandom(mBoxName, new GetRandomListener() {
             @Override
             public void getRandomCallback(Result<RandomAttr> randomAttrResult) {
-                mMsg = "返回信息：" + randomAttrResult.getMsg() +
-                        "\n款箱名：" + randomAttrResult.getData().getBoxName()
-                        + "\n随机数：" + randomAttrResult.getData().getRandom()
-                        + "\n闭锁码：" + randomAttrResult.getData().getCloseCode()
-                        + "\n动态密码传输密钥版本" + randomAttrResult.getData().getDpCommKeyVer()
-                        + "\n动态密码密钥版本" + randomAttrResult.getData().getDpKeyVer();
+                if (randomAttrResult.getData() != null) {
+                    mMsg = "返回信息：" + randomAttrResult.getMsg() +
+                            "\n款箱名：" + randomAttrResult.getData().getBoxName()
+                            + "\n随机数：" + randomAttrResult.getData().getRandom()
+                            + "\n闭锁码：" + randomAttrResult.getData().getCloseCode()
+                            + "\n动态密码传输密钥版本" + randomAttrResult.getData().getDpCommKeyVer()
+                            + "\n动态密码密钥版本" + randomAttrResult.getData().getDpKeyVer();
+                } else {
+                    mMsg = "返回信息：" + randomAttrResult.getMsg();
+                }
                 mHandler.sendEmptyMessage(0x02);
 
             }
@@ -218,18 +228,21 @@ public class MainActivity extends FrameActivity {
         mLockAPI.registerLockStatusListener(new LockStatusListener() {
             @Override
             public void onChange(String boxName, String lockId, LockStatus newStatus) {
-                mMsg = "款箱名：" + boxName
-                        + "\n锁具ID：" + lockId
-                        + "\n锁状态：" + newStatus.getLockStatus()
-                        + "\n超时未关报警：" + newStatus.getCloseTimoutAlarm()
-                        + "\n震动报警：" + newStatus.getVibrateAlarm()
-                        + "\n锁定报警：" + newStatus.getLockedAlarm()
-                        + "\n款箱状态：" + newStatus.getBoxStatus()
-                        + "\n锁开关错误：" + newStatus.getSwitchError()
-                        + "\n款箱报警提醒开关状态：" + newStatus.getAlarmSwitchStatus()
-                        + "\n上下架状态：" + newStatus.getShelfStatus()
-                        + "\n电池电量：" + newStatus.getBatteryLevel()
-                ;
+                if (newStatus != null) {
+                    mMsg = "款箱名：" + boxName
+                            + "\n锁具ID：" + lockId
+                            + "\n锁状态：" + newStatus.getLockStatus()
+                            + "\n超时未关报警：" + newStatus.getCloseTimoutAlarm()
+                            + "\n震动报警：" + newStatus.getVibrateAlarm()
+                            + "\n锁定报警：" + newStatus.getLockedAlarm()
+                            + "\n款箱状态：" + newStatus.getBoxStatus()
+                            + "\n锁开关错误：" + newStatus.getSwitchError()
+                            + "\n款箱报警提醒开关状态：" + newStatus.getAlarmSwitchStatus()
+                            + "\n上下架状态：" + newStatus.getShelfStatus()
+                            + "\n电池电量：" + newStatus.getBatteryLevel();
+                } else {
+                    mMsg = "款箱获取锁具状态数据有误";
+                }
                 mHandler.sendEmptyMessage(0x02);
             }
 
@@ -259,11 +272,12 @@ public class MainActivity extends FrameActivity {
                 if (lockLogs == null) {
                     mMsg = result.getMsg();
                 } else {
-                    String log = "\n日志条数：" + lockLogs.size() + "\n";
+                    String log = "\n日志条数：" + lockLogs.size() + "\n\n";
                     for (int i = 0; i < lockLogs.size(); i++) {
-                        log = log + "操作类型：" + lockLogs.get(i).getOptType() + "\n"
+                        log = log + "日志序号：" + lockLogs.get(i).getLogNo() + "\n"
+                                + "操作类型：" + lockLogs.get(i).getOptType() + "\n"
                                 + "操作时间：" + lockLogs.get(i).getOptTime() + "\n"
-                                + "操作用户ID：" + lockLogs.get(i).getUserId() + "\n";
+                                + "操作用户ID：" + lockLogs.get(i).getUserId() + "\n\n";
                     }
                     mMsg = "查询日志成功："
                             + "\n日志数据：" + log;
@@ -325,7 +339,7 @@ public class MainActivity extends FrameActivity {
             BluetoothLeDevice bluetoothLeDevice = mQuickAdapter.getItem(i);
             if (!ViseBle.getInstance().isConnect(bluetoothLeDevice)) {
                 Log.e("======>", "没有连接，装备连接" + bluetoothLeDevice.getName());
-                mLockAPI.openConnection(bluetoothLeDevice, 10000, mConnectListener);
+                mLockAPI.setSleepModel(true).openConnection(bluetoothLeDevice, 10000, mConnectListener);
             } else {
                 Log.e("======>", "已连接，准备断开连接");
                 mLockAPI.closeConnection();
@@ -382,6 +396,15 @@ public class MainActivity extends FrameActivity {
         public void onClose(String uuid, String boxName) {
             mMsg = "断开成功";
             mLockAPI.closeConnection();
+            MainActivity.this.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    mSvConnected.setVisibility(View.GONE);
+                    mLlScanner.setVisibility(View.VISIBLE);
+                    mQuickAdapter.clear();
+                    mLockAPI.getBoxList(MainActivity.this, null, mScannerListener);
+                }
+            });
             mHandler.sendEmptyMessage(0x00);
             Log.i(TAG, "onClose");
         }

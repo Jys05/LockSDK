@@ -1,4 +1,4 @@
-package com.locksdk;
+package com.locksdk.lockApi;
 
 /**
  * Created by Sujiayong on 2017/11/14.

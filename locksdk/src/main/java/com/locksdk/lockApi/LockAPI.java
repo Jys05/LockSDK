@@ -1,4 +1,4 @@
-package com.locksdk;
+package com.locksdk.lockApi;
 
 import android.Manifest;
 import android.app.Activity;
@@ -7,7 +7,6 @@ import android.content.pm.PackageManager;
 import android.os.Build;
 import android.support.v4.content.ContextCompat;
 import android.text.TextUtils;
-import android.util.Log;
 
 import com.locksdk.bean.LockLog;
 import com.locksdk.bean.NoficeCallbackData;
@@ -25,6 +24,7 @@ import com.locksdk.util.DealtByteUtil;
 import com.locksdk.util.LockStatusUtil;
 import com.locksdk.util.LogUtil;
 import com.locksdk.util.LogsDataUtil;
+import com.locksdk.util.LogsDataUtil.*;
 import com.locksdk.util.WriteAndNoficeUtil;
 import com.locksdk.baseble.model.BluetoothLeDevice;
 import com.locksdk.baseble.utils.HexUtil;
@@ -77,7 +77,7 @@ public class LockAPI {
         if (context == null) {
             return null;
         }
-        LogUtil.setEnable(true);
+        LogUtil.setEnable(false);
         mContext = context.getApplicationContext();
         LockApiBleUtil.getInstance().init(context);
         return this;
@@ -99,9 +99,22 @@ public class LockAPI {
         return mDeviceSleepTime;
     }
 
+    public LockAPI setSleepModel(boolean isAllowSleep) {
+        LogUtil.i(TAG, "关闭以及开启“防止休眠模式”默认是不休眠模式，isAllowSleep为true是允许设备（款箱）休眠");
+        LockApiBleUtil.getInstance().setSleepModel(isAllowSleep);
+        return this;
+    }
+
+    public LockAPI setLogsUtil(boolean isLogEnable) {
+        LogUtil.i(TAG, "关闭以及开启Log打印，默认关闭");
+        LogUtil.setEnable(isLogEnable);
+        return this;
+    }
+
 
     //获取款箱列表
     public void getBoxList(Activity activiy, String uuid, final ScannerListener listener) {
+        LogUtil.i(TAG, "获取款箱列表");
         if (!TextUtils.isEmpty(uuid)) {
             Constant.SERVICE_UUID = uuid;
         }
@@ -119,6 +132,7 @@ public class LockAPI {
 
     //获取款箱列表
     public void getBoxList(String uuid, final ScannerListener listener) {
+        LogUtil.i(TAG, "获取款箱列表");
         if (!TextUtils.isEmpty(uuid)) {
             Constant.SERVICE_UUID = uuid;
         }
@@ -135,26 +149,31 @@ public class LockAPI {
 
     //获取扫描到的款箱名字，（P:在getBoxList的扫描成功的接口调用，否则可以为null，或size为0）
     public Result<List<String>> getScannerBoxNames() {
+        LogUtil.i(TAG, "获取扫描到的款箱名字");
         return LockApiBleUtil.getInstance().getScannerBoxNames();
     }
 
     //连接
     public void openConnection(BluetoothLeDevice bluetoothLeDevice, long timeout, ConnectListener listener) {
+        LogUtil.i(TAG, "连接");
         LockApiBleUtil.getInstance().openConnection(bluetoothLeDevice, timeout, listener);
     }
 
     //关闭连接
     public boolean closeConnection() {
+        LogUtil.i(TAG, "关闭连接");
         return LockApiBleUtil.getInstance().closeConnection();
     }
 
     //获取锁具ID
     public void getLockIdByBoxName(GetLockIdListener lockIdListener) {
+        LogUtil.i(TAG, "获取锁具ID");
         LockApiBleUtil.getInstance().getLockIdByBoxName(lockIdListener);
     }
 
     //激活
     public void activeLock(Map<String, String> param, ActiveLockListener lockListener) {
+        LogUtil.i(TAG, "激活");
         removeCallbacksAndMessages();
         mActiveLockListener = lockListener;
         ActiveLockUtil.activeLock(param, lockListener);
@@ -162,6 +181,7 @@ public class LockAPI {
 
     //注册锁具状态
     public LockAPI registerLockStatusListener(LockStatusListener lockStatusListener) {
+        LogUtil.i(TAG, "注册锁具状态");
         removeCallbacksAndMessages();
         this.mLockStatusListener = lockStatusListener;
         return this;
@@ -169,6 +189,7 @@ public class LockAPI {
 
     //开锁
     public void openLock(Map<String, String> param, OpenLockListener lockListener) {
+        LogUtil.i(TAG, "开锁");
         removeCallbacksAndMessages();
         mOpenLockListener = lockListener;
         OpenLockUtil.opnenLock(param, lockListener);
@@ -176,6 +197,7 @@ public class LockAPI {
 
     //获取随机数（开箱触发）
     public void getRandom(String boxName, GetRandomListener listener) {
+        LogUtil.i(TAG, "获取随机数（开箱触发）");
         removeCallbacksAndMessages();
         mGetRandomListener = listener;
         GetRandomUtil.getRandom(boxName, listener);
@@ -184,12 +206,14 @@ public class LockAPI {
 
     //查询锁状态
     public void queryLockStatus(String lockId) {
+        LogUtil.i(TAG, "查询锁状态");
         removeCallbacksAndMessages();
         QueryLockStatusUtil.queryLockStatus(lockId, mLockStatusListener);
     }
 
     //查询日志
     public void queryLogs(Map<String, String> param, QueryLogsListener logsListener) {
+        LogUtil.i(TAG, "查询日志");
         removeCallbacksAndMessages();
         mQueryLogsListener = logsListener;
         QueryLogsUtil.queryLogs(param, logsListener);
@@ -197,11 +221,13 @@ public class LockAPI {
 
     //注册蓝牙通知监听
     public void resigeterNotify() {
+        LogUtil.i(TAG, "注册蓝牙通知监听");
         WriteAndNoficeUtil.getInstantce().noficeFunctionCode(mNoficeDataListener);     //设置通知监听
     }
 
     //清理LockApiBleUtil中防止设备休眠的Handler
     public void removeCallbacksAndMessages() {
+        LogUtil.i(TAG, "清理LockApiBleUtil中防止设备休眠的Handler");
         //清理Handler
         LockApiBleUtil.getInstance().clearHandler();
     }
@@ -210,18 +236,23 @@ public class LockAPI {
         @Override
         public void onNoficeSuccess(NoficeCallbackData callbackData) {
             if (callbackData.isFinish()) {
-                LogUtil.i(TAG, callbackData.getData().length + "---" + HexUtil.encodeHexStr(callbackData.getData()));
-                dealtNotifyCallBackData(callbackData);
+                if (callbackData.getData() != null) {
+                    LogUtil.i(TAG, callbackData.getData().length + "---" + HexUtil.encodeHexStr(callbackData.getData()));
+                    dealtNotifyCallBackDataForSuccess(callbackData);
+                } else {
+                    dealtNotifyCallBackDataForFail(callbackData);
+                }
             }
         }
 
         @Override
         public void onNoficeFail(NoficeCallbackData callbackData) {
             LogUtil.i(TAG + "onNoficeFail", Constant.MSG.MSG_NOTIFY_FAIL);
+            dealtNotifyCallBackDataForFail(callbackData);
         }
     };
 
-    private void dealtNotifyCallBackData(NoficeCallbackData callbackData) {
+    private void dealtNotifyCallBackDataForSuccess(NoficeCallbackData callbackData) {
         //TODO : 2017/11/23 没有加监听是否为空判断
         byte[] data = new byte[(callbackData.getData().length - 1)];
         byte[] btBoxName1;
@@ -304,11 +335,18 @@ public class LockAPI {
                 mOpenLockListener.openLockCallback(openLockResult);
                 break;
             case (byte) 0x93:
+                LogUtil.i(TAG, "查询日志数据：" + HexUtil.encodeHexStr(data));
                 Result<List<LockLog>> queryLogsCallbackResult = new Result<>();
-                queryLogsCallbackResult.setCode(Constant.CODE.CODE_SUCCESS);
-                queryLogsCallbackResult.setMsg(Constant.MSG.MSG_QUERY_LOGS_SUCCESS);
-                LogUtil.i(TAG, "查询日志成功：" + HexUtil.encodeHexStr(data));
-                queryLogsCallbackResult.setData(LogsDataUtil.dealLogsData(data));
+                DeatedLogsData deatedLogsData = LogsDataUtil.dealLogsData(data);
+                if (deatedLogsData.isSuccess()) {
+                    queryLogsCallbackResult.setCode(Constant.CODE.CODE_SUCCESS);
+                    queryLogsCallbackResult.setMsg(Constant.MSG.MSG_QUERY_LOGS_SUCCESS);
+                    queryLogsCallbackResult.setData(deatedLogsData.getLockLogList());
+                } else {
+                    queryLogsCallbackResult.setCode(Constant.CODE.QUERY_LOGS_FAIL);
+                    queryLogsCallbackResult.setMsg(Constant.MSG.MSG_QUERY_LOGS_FAIL + "，错误码：" + deatedLogsData.getCallBackResult());
+                    queryLogsCallbackResult.setData(null);
+                }
                 mQueryLogsListener.queryLogsCallback(queryLogsCallbackResult);
                 break;
             case (byte) 0x94:
@@ -329,5 +367,49 @@ public class LockAPI {
         setWriting(false);
         LockApiBleUtil.getInstance().setDeviceSleepTime(mDeviceSleepTime);
         LockApiBleUtil.getInstance().mHandler.sendEmptyMessage(0x00);
+    }
+
+    private void dealtNotifyCallBackDataForFail(NoficeCallbackData callbackData) {
+        //TODO : 2017/11/23 没有加监听是否为空判断
+        if (callbackData.getRespondCode() == 0) return;
+        byte responseCode = callbackData.getRespondCode();
+        switch (responseCode) {
+            case (byte) 0x90:
+                Result<String> activiteLockResult = new Result<>();
+                activiteLockResult.setCode(Constant.CODE.CODE_ACTIVE_FAIL);
+                activiteLockResult.setMsg(Constant.MSG.MSG_NOTIFY_FAIL);
+                activiteLockResult.setData(null);
+                mActiveLockListener.activeLockCallback(activiteLockResult);
+                break;
+            case (byte) 0x91:
+                Result<RandomAttr> getRandomResult = new Result<>();
+                getRandomResult.setCode(Constant.CODE.GET_RANDOM_FAIL);
+                getRandomResult.setMsg(Constant.MSG.MSG_NOTIFY_FAIL);
+                getRandomResult.setData(null);
+                mGetRandomListener.getRandomCallback(getRandomResult);
+                break;
+            case (byte) 0x92:
+                Result<String> openLockResult = new Result<>();
+                openLockResult.setCode(Constant.CODE.OPEN_LOCK_FAIL);
+                openLockResult.setMsg(Constant.MSG.MSG_NOTIFY_FAIL);
+                openLockResult.setData(null);
+                mOpenLockListener.openLockCallback(openLockResult);
+                break;
+            case (byte) 0x93:
+                Result<List<LockLog>> queryLogsCallbackResult = new Result<>();
+                queryLogsCallbackResult.setCode(Constant.CODE.QUERY_LOGS_FAIL);
+                queryLogsCallbackResult.setMsg(Constant.MSG.MSG_NOTIFY_FAIL);
+                queryLogsCallbackResult.setData(null);
+                mQueryLogsListener.queryLogsCallback(queryLogsCallbackResult);
+                break;
+            case (byte) 0x94:
+                if (mLockStatusListener != null) {
+                    mLockStatusListener.onChange(null, LockApiBleUtil.getInstance().getLockIDStr(), null);
+                }
+                break;
+        }
+        setWriting(false);
+        LockApiBleUtil.getInstance().setDeviceSleepTime(mDeviceSleepTime);
+        LockApiBleUtil.getInstance().mHandler.sendEmptyMessageDelayed(0x00, 100);
     }
 }

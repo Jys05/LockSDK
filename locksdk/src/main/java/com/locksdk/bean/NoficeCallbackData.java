@@ -6,19 +6,19 @@ package com.locksdk.bean;
  */
 
 public class NoficeCallbackData {
-    private byte mFunctionCode;
-    private byte[] data;
+    private byte mRespondCode;          //掉包或数据有误的时候用到此“响应码”，做判断是哪个接口写入，将数据返回哪个接口
+    private byte[] data;                //数据用包好响应码，如果数据正常的话，优先用data中的响应码，做接口判断
     private boolean isFinish;
 
     public NoficeCallbackData() {
     }
 
-    public byte getFunctionCode() {
-        return mFunctionCode;
+    public byte getRespondCode() {
+        return mRespondCode;
     }
 
-    public void setFunctionCode(byte functionCode) {
-        mFunctionCode = functionCode;
+    public void setRespondCode(byte respondCode) {
+        mRespondCode = respondCode;
     }
 
     public byte[] getData() {

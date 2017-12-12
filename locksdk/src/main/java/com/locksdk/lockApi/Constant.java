@@ -1,4 +1,4 @@
-package com.locksdk;
+package com.locksdk.lockApi;
 
 /**
  * Created by Sujiayong on 2017/11/14.
@@ -79,7 +79,7 @@ public class Constant {
 
         public static final String MSG_WRITE_FAIL = "数据写入失败";
 
-        public static final String MSG_NOTIFY_FAIL = "数据接受失败";
+        public static final String MSG_NOTIFY_FAIL = "硬件数据存在掉包或数据有误现象";
 
         public static final String MSG_START_END_FAIL = "起始序号小于结束序号";
 
@@ -90,6 +90,8 @@ public class Constant {
         public static final String MSG_ACTIVE_SUCCESS = "激活锁具成功";
 
         public static final String MSG_QUERY_LOGS_SUCCESS = "查询日志成功";
+
+        public static final String MSG_QUERY_LOGS_FAIL = "查询日志失败";
 
         public static final String MSG_OPEN_LOCk_FAIL = "开锁时数据加密失败";
 

@@ -1,14 +1,12 @@
-package com.locksdk;
+package com.locksdk.lockApi;
 
 import android.text.TextUtils;
 import android.util.Log;
 
 import com.locksdk.bean.LockLog;
-import com.locksdk.bean.RandomAttr;
 import com.locksdk.bean.WriteCallbackData;
 import com.locksdk.listener.QueryLogsListener;
 import com.locksdk.listener.WriteDataListener;
-import com.locksdk.util.LockSDKHexUtil;
 import com.locksdk.util.LogUtil;
 import com.locksdk.util.RegexUtil;
 import com.locksdk.util.WriteAndNoficeUtil;
@@ -45,24 +43,24 @@ public class QueryLogsUtil {
             logsListener.queryLogsCallback(result);
             return;
         }
-        if (startSeqNum > endSeqNum) {
-            LogUtil.i(TAG, Constant.MSG.MSG_START_END_FAIL);
-            Result<List<LockLog>> result = new Result<>();
-            result.setCode(Constant.CODE.QUERY_LOGS_FAIL);
-            result.setMsg(Constant.MSG.MSG_START_END_FAIL);
-            result.setData(null);
-            logsListener.queryLogsCallback(result);
-            return;
-        }
-        if (endSeqNum > 10) {
-            LogUtil.i(TAG, Constant.MSG.MSG_END_FAIL);
-            Result<List<LockLog>> result = new Result<>();
-            result.setCode(Constant.CODE.QUERY_LOGS_FAIL);
-            result.setMsg(Constant.MSG.MSG_END_FAIL);
-            result.setData(null);
-            logsListener.queryLogsCallback(result);
-            return;
-        }
+//        if (startSeqNum > endSeqNum) {
+//            LogUtil.i(TAG, Constant.MSG.MSG_START_END_FAIL);
+//            Result<List<LockLog>> result = new Result<>();
+//            result.setCode(Constant.CODE.QUERY_LOGS_FAIL);
+//            result.setMsg(Constant.MSG.MSG_START_END_FAIL);
+//            result.setData(null);
+//            logsListener.queryLogsCallback(result);
+//            return;
+//        }
+//        if ((endSeqNum-startSeqNum+1) > 10) {
+//            LogUtil.i(TAG, Constant.MSG.MSG_END_FAIL);
+//            Result<List<LockLog>> result = new Result<>();
+//            result.setCode(Constant.CODE.QUERY_LOGS_FAIL);
+//            result.setMsg(Constant.MSG.MSG_END_FAIL);
+//            result.setData(null);
+//            logsListener.queryLogsCallback(result);
+//            return;
+//        }
         byte[] btStartSeq = intToBytes2(startSeqNum);
         byte[] btEndSeq = intToBytes2(endSeqNum);
         LogUtil.i(TAG, HexUtil.encodeHexStr(btStartSeq));

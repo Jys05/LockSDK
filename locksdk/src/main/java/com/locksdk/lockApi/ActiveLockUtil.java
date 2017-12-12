@@ -1,13 +1,11 @@
-package com.locksdk;
+package com.locksdk.lockApi;
 
 import android.text.TextUtils;
-import android.util.Log;
 
 import com.locksdk.bean.WriteCallbackData;
 import com.locksdk.listener.ActiveLockListener;
 import com.locksdk.listener.WriteDataListener;
 import com.locksdk.util.BCDCodeUtil;
-import com.locksdk.util.DateUtil;
 import com.locksdk.util.DealtByteUtil;
 import com.locksdk.util.LogUtil;
 import com.locksdk.util.WriteAndNoficeUtil;

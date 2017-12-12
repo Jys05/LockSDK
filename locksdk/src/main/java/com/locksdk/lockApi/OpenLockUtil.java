@@ -1,20 +1,16 @@
-package com.locksdk;
+package com.locksdk.lockApi;
 
-import android.os.Handler;
 import android.text.TextUtils;
-import android.util.Log;
 
 import com.locksdk.bean.WriteCallbackData;
 import com.locksdk.listener.OpenLockListener;
 import com.locksdk.listener.WriteDataListener;
 import com.locksdk.util.BCDCodeUtil;
-import com.locksdk.util.DateUtil;
 import com.locksdk.util.DealtByteUtil;
 import com.locksdk.util.LogUtil;
 import com.locksdk.util.WriteAndNoficeUtil;
 import com.locksdk.baseble.utils.HexUtil;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 

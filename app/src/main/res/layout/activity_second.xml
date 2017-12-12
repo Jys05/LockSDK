@@ -107,7 +107,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:paddingLeft="8dp"
-            android:text="P:123456"
+            android:text="P:123456开头，就可以开锁成功"
             android:textSize="12sp"/>
 
         <Button

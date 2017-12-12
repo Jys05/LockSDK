@@ -1,6 +1,6 @@
 package com.locksdk.listener;
 
-import com.locksdk.Result;
+import com.locksdk.lockApi.Result;
 import com.locksdk.baseble.model.BluetoothLeDevice;
 
 import java.util.List;

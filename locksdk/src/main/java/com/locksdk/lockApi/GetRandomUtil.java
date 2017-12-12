@@ -1,13 +1,10 @@
-package com.locksdk;
+package com.locksdk.lockApi;
 
 import android.text.TextUtils;
-import android.util.Log;
 
-import com.locksdk.bean.NoficeCallbackData;
 import com.locksdk.bean.RandomAttr;
 import com.locksdk.bean.WriteCallbackData;
 import com.locksdk.listener.GetRandomListener;
-import com.locksdk.listener.NoficeDataListener;
 import com.locksdk.listener.WriteDataListener;
 import com.locksdk.util.DealtByteUtil;
 import com.locksdk.util.LogUtil;

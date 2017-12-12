@@ -1,6 +1,5 @@
-package com.locksdk;
+package com.locksdk.lockApi;
 
-import android.app.Activity;
 import android.content.Context;
 
 /**
