@@ -63,7 +63,7 @@ public class LogsDataUtil {
                 lockLog.setOptType(strOptType);
                 lockLog.setOptTime(strOptTime);
                 lockLog.setUserId(strUserId);
-                lockLog.setLogNo(logNoStr);
+                lockLog.setSeq(logNoStr);
                 logsDataLists.add(lockLog);
             }
             deatedLogsData.setLockLogList(logsDataLists);

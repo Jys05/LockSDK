@@ -19,6 +19,7 @@ import com.library.base.util.ToastUtil;
 import com.library.base.util.recyclerview.BaseAdapterHelper;
 import com.library.base.util.recyclerview.OnItemClickListener;
 import com.library.base.util.recyclerview.QuickAdapter;
+import com.locksdk.baseble.utils.HexUtil;
 import com.locksdk.lockApi.LockAPI;
 import com.locksdk.lockApi.LockApiBleUtil;
 import com.locksdk.lockApi.Result;
@@ -36,7 +37,9 @@ import com.locksdk.listener.OpenLockListener;
 import com.locksdk.listener.QueryLogsListener;
 import com.locksdk.listener.ScannerListener;
 import com.locksdk.util.DateUtil;
+import com.locksdk.util.LogUtil;
 
+import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -81,6 +84,11 @@ public class MainActivity extends FrameActivity {
         super.initComponent();
         mLockAPI = LockAPI.getInstance().init(MainActivity.this);
         initRecyclerView();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
     }
 
     @Override
@@ -274,7 +282,7 @@ public class MainActivity extends FrameActivity {
                 } else {
                     String log = "\n日志条数：" + lockLogs.size() + "\n\n";
                     for (int i = 0; i < lockLogs.size(); i++) {
-                        log = log + "日志序号：" + lockLogs.get(i).getLogNo() + "\n"
+                        log = log + "日志序号：" + lockLogs.get(i).getSeq() + "\n"
                                 + "操作类型：" + lockLogs.get(i).getOptType() + "\n"
                                 + "操作时间：" + lockLogs.get(i).getOptTime() + "\n"
                                 + "操作用户ID：" + lockLogs.get(i).getUserId() + "\n\n";
@@ -339,7 +347,7 @@ public class MainActivity extends FrameActivity {
             BluetoothLeDevice bluetoothLeDevice = mQuickAdapter.getItem(i);
             if (!ViseBle.getInstance().isConnect(bluetoothLeDevice)) {
                 Log.e("======>", "没有连接，装备连接" + bluetoothLeDevice.getName());
-                mLockAPI.setSleepModel(true).openConnection(bluetoothLeDevice, 10000, mConnectListener);
+                mLockAPI.openConnection(bluetoothLeDevice, 10000, mConnectListener);
             } else {
                 Log.e("======>", "已连接，准备断开连接");
                 mLockAPI.closeConnection();
