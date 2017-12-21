@@ -101,6 +101,10 @@ public class LogsDataUtil {
             case (byte) 0x27:
                 strOptType = "开箱超时";
                 break;
+            default:
+                LogUtil.e(TAG , "目前没有增加的操作类型——码");
+                strOptType = (btOptType & 0xFF) + "";
+                break;
         }
         return strOptType;
     }
