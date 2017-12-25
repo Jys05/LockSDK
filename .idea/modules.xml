@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/Lock.iml" filepath="$PROJECT_DIR$/Lock.iml" />
+      <module fileurl="file://$PROJECT_DIR$/LockSDK.iml" filepath="$PROJECT_DIR$/LockSDK.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
       <module fileurl="file://$PROJECT_DIR$/locksdk/locksdk.iml" filepath="$PROJECT_DIR$/locksdk/locksdk.iml" />
     </modules>
