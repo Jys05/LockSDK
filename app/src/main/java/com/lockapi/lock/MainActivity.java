@@ -387,7 +387,7 @@ public class MainActivity extends FrameActivity {
         public void onFail(String uuid, String msg) {
             mMsg = msg;
             LoadingUtil.hidden();
-//            mHandler.sendEmptyMessage(0x00);
+//            mAllowSleepHandler.sendEmptyMessage(0x00);
             mHandler.sendEmptyMessage(0x03);
             Log.i(TAG, "连接错误:" + msg);
         }

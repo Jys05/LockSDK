@@ -4,6 +4,7 @@ import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattService;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.Message;
 
 import com.locksdk.lockApi.Constant;
 import com.locksdk.lockApi.DealDataUtil;
@@ -44,6 +45,22 @@ public class WriteAndNoficeUtil {
     private static WriteAndNoficeUtil instantce;
     private NoficeCallbackData mNoficeCallbackData;
     private WriteCallbackData mWriteCallbackData;
+    private boolean isWriteAndNotifyStart = false;           //写入开始，并开始写入和Notify的时间倒计时3.5秒（2500）
+    private WriteDataListener mWriteDataListener;
+    private Handler mWriteNotifyHandler = new Handler(new Handler.Callback() {
+        @Override
+        public boolean handleMessage(Message message) {
+            if (isWriteAndNotifyStart) {
+                //证明写入后，3.5秒后没有数据返回，所以断开连接，在Activity的Eventbus执行clear
+                isWriteAndNotifyStart = false;
+                LogUtil.e(TAG + "====", "handleMessage：写入后的notify超时3.5秒");
+                mWriteDataListener.onWriteTimout();
+            } else {
+                mWriteNotifyHandler.removeCallbacksAndMessages(null);
+            }
+            return false;
+        }
+    });
 
     private WriteAndNoficeUtil() {
 
@@ -60,6 +77,18 @@ public class WriteAndNoficeUtil {
         return instantce;
     }
 
+    private void clearmWriteNotifyHandler() {
+        if (mWriteNotifyHandler != null) {
+            LogUtil.e(TAG + "====", "清理mWriteNotifyHandler：");
+            mWriteNotifyHandler.removeCallbacksAndMessages(null);
+        }
+    }
+
+    public void clearIsWriteAndNotifyStart() {
+        isWriteAndNotifyStart = false;
+        clearmWriteNotifyHandler();
+    }
+
     /**
      * 根据功能码写入数据
      *
@@ -67,7 +96,7 @@ public class WriteAndNoficeUtil {
      *                     。例如功能码：0x02——funcationCode为2。
      * @param data
      */
-    public void writeFunctionCode(byte functionCode, byte[] data, final WriteDataListener listener) {
+    public void writeFunctionCode(byte functionCode, byte[] data, final WriteDataListener listener, boolean isWriteSecond) {
         if (LockApiBleUtil.getInstance().getGatt() == null) return;
         if (LockApiBleUtil.getInstance().getConnectedBoxDevice() == null) return;
         connectedDevice = LockApiBleUtil.getInstance().getConnectedBoxDevice();
@@ -76,6 +105,7 @@ public class WriteAndNoficeUtil {
         UUID characteristicUUID = bluetoothGattService.getCharacteristic(UUID.fromString(Constant.WRITE_UUID)).getUuid();
         UUID mServiceUUID = bluetoothGattService.getUuid();
         mDeviceMirrorPool = ViseBle.getInstance().getDeviceMirrorPool();
+        //对入参的保存，用于第二次发送用；
         mWriteDataListener = listener;
         //        DeviceMirror deviceMirror = mDeviceMirrorPool.getDeviceMirror(connectedDevice);
         final DeviceMirror deviceMirror = LockApiBleUtil.getInstance().getDeviceMirror();
@@ -96,9 +126,14 @@ public class WriteAndNoficeUtil {
         LockAPI lockAPI = LockAPI.getInstance();
         lockAPI.setWriting(true);
         deviceMirror.writeData(data);
+        if(!isWriteSecond){          //不是第二次写入就，开始倒计时
+            isWriteAndNotifyStart = true;
+            LogUtil.e(TAG + "====", "写入刚开始的计时2500");
+            clearmWriteNotifyHandler();
+            mWriteNotifyHandler.sendEmptyMessageDelayed(0x00, 2500);
+        }
     }
 
-    private WriteDataListener mWriteDataListener;
 
     /**
      * 根据功能码写入数据
@@ -107,7 +142,7 @@ public class WriteAndNoficeUtil {
      *                     。例如功能码：0x02——funcationCode为2。
      * @param data
      */
-    public void writeFunctionCode2(byte functionCode, byte[] data, final WriteDataListener listener) {
+    public void writeFunctionCode2(byte functionCode, byte[] data, final WriteDataListener listener, boolean isWriteSecond) {
         if (LockApiBleUtil.getInstance().getGatt() == null) return;
         if (LockApiBleUtil.getInstance().getConnectedBoxDevice() == null) return;
         connectedDevice = LockApiBleUtil.getInstance().getConnectedBoxDevice();
@@ -117,6 +152,7 @@ public class WriteAndNoficeUtil {
         UUID characteristicUUID = bluetoothGattService.getCharacteristic(UUID.fromString(Constant.WRITE_UUID)).getUuid();
         UUID mServiceUUID = bluetoothGattService.getUuid();
         mDeviceMirrorPool = ViseBle.getInstance().getDeviceMirrorPool();
+        //对入参的保存，用于第二次发送用；
         mWriteDataListener = listener;
 //        DeviceMirror deviceMirror = mDeviceMirrorPool.getDeviceMirror(connectedDevice);
         final DeviceMirror deviceMirror = LockApiBleUtil.getInstance().getDeviceMirror();
@@ -137,6 +173,12 @@ public class WriteAndNoficeUtil {
         LockAPI lockAPI = LockAPI.getInstance();
         lockAPI.setWriting(true);
         write(data);
+       if(!isWriteSecond){          //不是第二次写入就，开始倒计时
+           isWriteAndNotifyStart = true;
+           LogUtil.e(TAG + "====", "写入刚开始的计时2500");
+           clearmWriteNotifyHandler();
+           mWriteNotifyHandler.sendEmptyMessageDelayed(0x00, 2500);
+       }
     }
 
 
@@ -314,6 +356,11 @@ public class WriteAndNoficeUtil {
                 DeviceMirror deviceMirror = LockApiBleUtil.getInstance().getDeviceMirror();
                 deviceMirror.setNotifyListener(bluetoothGattInfo.getGattInfoKey(), receiveCallback);
             } else if (bluetoothGattInfo.getPropertyType() == PropertyType.PROPERTY_WRITE) {
+                //这里的isWriteStart是代表写入成功，接着发起3.5秒的计时，如果没有Notify就会执行Handler
+                isWriteAndNotifyStart = true;
+                clearmWriteNotifyHandler();
+                LogUtil.e(TAG + "====", "写入成功后的计时2500");
+                mWriteNotifyHandler.sendEmptyMessageDelayed(0x00, 2500);
                 mWriteCallbackData.setData(data);
                 mWriteDataListener.onWirteSuccess(mWriteCallbackData);
             } else if (bluetoothGattInfo.getPropertyType() == PropertyType.PROPERTY_READ) {
@@ -323,6 +370,7 @@ public class WriteAndNoficeUtil {
 
         @Override
         public void onFailure(BleException exception) {
+            clearIsWriteAndNotifyStart();
             if (mReadListener != null) {
                 mReadListener.onReadListener(null);
             }
@@ -343,6 +391,7 @@ public class WriteAndNoficeUtil {
         public void onSuccess(byte[] data, BluetoothGattChannel bluetoothGattChannel, BluetoothLeDevice bluetoothLeDevice) {
             LogUtil.i(TAG, "监听通知成功：长度—" + data.length + "；数据16进制—" + HexUtil.encodeHexStr(data));
             byte[] callBlck;
+            clearIsWriteAndNotifyStart();
             DealDataUtil.DealtSituation situation = DealDataUtil.dealtDealData(data);
             mNoficeCallbackData.setFinish(situation.isFinish());
             if (situation.isFinish()) {
@@ -364,6 +413,7 @@ public class WriteAndNoficeUtil {
         @Override
         public void onFailure(BleException exception) {
             LogUtil.i(TAG, "监听通知失败");
+            clearIsWriteAndNotifyStart();
             mNoficeCallbackData.setData(null);
             if (noficeDataListener == null) return;
             noficeDataListener.onNoficeFail(mNoficeCallbackData);

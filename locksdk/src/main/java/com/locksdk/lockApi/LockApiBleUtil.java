@@ -29,7 +29,6 @@ import com.locksdk.listener.GetLockIdListener;
 import com.locksdk.listener.ReadListener;
 import com.locksdk.listener.ScannerListener;
 import com.locksdk.listener.WriteDataListener;
-import com.locksdk.util.LockStatusUtil;
 import com.locksdk.util.LogUtil;
 import com.locksdk.util.WriteAndNoficeUtil;
 import com.locksdk.baseble.ViseBle;
@@ -356,7 +355,7 @@ public class LockApiBleUtil {
     private static boolean isConnectSuccess = false;
     public int mDeviceSleepTime = LockAPI.getInstance().getDeviceSleepTime();          //在连接成功之后也赋值了
     private boolean isAllowSleep = false;           //false为允许休眠，true为不允许休眠
-    public Handler mHandler = new Handler(new Handler.Callback() {
+    public Handler mAllowSleepHandler = new Handler(new Handler.Callback() {
         @Override
         public boolean handleMessage(Message message) {
             if (isAllowSleep) {
@@ -376,18 +375,23 @@ public class LockApiBleUtil {
                             WriteAndNoficeUtil.getInstantce().writeForDeviceSleep(new WriteDataListener() {
                                 @Override
                                 public void onWirteSuccess(WriteCallbackData data) {
-                                    mHandler.removeCallbacksAndMessages(null);
+                                    mAllowSleepHandler.removeCallbacksAndMessages(null);
                                     mDeviceSleepTime = LockAPI.getInstance().getDeviceSleepTime();
                                 }
 
                                 @Override
                                 public void onWriteFail(WriteCallbackData data) {
-                                    mHandler.removeCallbacksAndMessages(null);
+                                    mAllowSleepHandler.removeCallbacksAndMessages(null);
+                                }
+
+                                @Override
+                                public void onWriteTimout() {
+
                                 }
                             });
                         }
                     }
-                    mHandler.sendEmptyMessageDelayed(0x00, 100);
+                    mAllowSleepHandler.sendEmptyMessageDelayed(0x00, 100);
                 }
             }
             return false;
@@ -405,9 +409,9 @@ public class LockApiBleUtil {
 
     //清理Handler
     public void clearHandler() {
-        if (mHandler != null) {
+        if (mAllowSleepHandler != null) {
             mDeviceSleepTime = LockAPI.getInstance().getDeviceSleepTime();
-            mHandler.removeCallbacksAndMessages(null);
+            mAllowSleepHandler.removeCallbacksAndMessages(null);
         }
     }
 
@@ -466,10 +470,12 @@ public class LockApiBleUtil {
      */
     public boolean closeConnection() {
         //断开连接，将连接成功的box的Mac地址，赋值为空
+        WriteAndNoficeUtil.getInstantce().unregisterNotify();
         mBoxMac = null;
         mBoxName = null;
         isConnecting = false;
         isConnectSuccess = false;
+        WriteAndNoficeUtil.getInstantce().clearIsWriteAndNotifyStart();
         //清理获取的锁具ID
         LockApiBleUtil.getInstance().clearLockId();
         //清理Handler
@@ -522,7 +528,7 @@ public class LockApiBleUtil {
                     mConnectListener.onSuccess(mConnectedBoxDevice, Constant.SERVICE_UUID, mBoxName);
                     //防止设备休眠，时间计算12秒后发数据给板子
                     mDeviceSleepTime = lockAPI.getDeviceSleepTime();
-                    mHandler.sendEmptyMessageDelayed(0x00, 100);
+                    mAllowSleepHandler.sendEmptyMessageDelayed(0x00, 100);
                 } else {
                     LogUtil.e(TAG, "假连接");
                     closeConnection();

@@ -27,6 +27,7 @@ public class ActiveLockUtil {
     private static int position;
     private static ActiveLockListener activeLockListener;
     private static final String TAG = "ActiveLockUtil";
+    private static byte[] data;
 
     public static void activeLock(Map<String, String> param, ActiveLockListener lockListener) {
         activeLockListener = lockListener;
@@ -58,7 +59,7 @@ public class ActiveLockUtil {
         byte[] btDpKeyChkCode = DealtByteUtil.dataAdd0(HexUtil.decodeHex(dpKeyChkCode.toCharArray()), 16);
         byte[] btDpCommChkCode = DealtByteUtil.dataAdd0(HexUtil.decodeHex(dpCommChkCode.toCharArray()), 16);
         byte[] btBoxName = DealtByteUtil.dataAdd0(boxName.getBytes(), 16);
-        byte[] data = new byte[1 + 7 + 12 + 16 + 16 + 36 + 36 + 16 + 16 + 16];
+        data = new byte[1 + 7 + 12 + 16 + 16 + 36 + 36 + 16 + 16 + 16];
         data[0] = 0x10; //功能码
         System.arraycopy(btTime, 0, data, 1, btTime.length);
         System.arraycopy(btLockId, 0, data, 8, btLockId.length);
@@ -70,7 +71,7 @@ public class ActiveLockUtil {
         System.arraycopy(btDpCommChkCode, 0, data, 140, btDpCommChkCode.length);
         System.arraycopy(btBoxName, 0, data, 156, btBoxName.length);
         //首次写入数据，写入data的第一个，剩下的在监听中完成
-        WriteAndNoficeUtil.getInstantce().writeFunctionCode2(data[0], data, writeDataListener);
+        WriteAndNoficeUtil.getInstantce().writeFunctionCode2(data[0], data, writeDataListener ,false);
     }
 
 
@@ -90,6 +91,15 @@ public class ActiveLockUtil {
             result.setMsg(Constant.MSG.MSG_WRITE_FAIL);
             result.setData(null);
             activeLockListener.activeLockCallback(result);
+        }
+
+        @Override
+        public void onWriteTimout() {
+            if(data != null){
+                //首次写入数据，写入data的第一个，剩下的在监听中完成
+                LogUtil.i(TAG , "第二次");
+                WriteAndNoficeUtil.getInstantce().writeFunctionCode2(data[0], data, writeDataListener , true);
+            }
         }
     };
 

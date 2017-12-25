@@ -366,7 +366,7 @@ public class LockAPI {
         }
         setWriting(false);
         LockApiBleUtil.getInstance().setDeviceSleepTime(mDeviceSleepTime);
-        LockApiBleUtil.getInstance().mHandler.sendEmptyMessage(0x00);
+        LockApiBleUtil.getInstance().mAllowSleepHandler.sendEmptyMessage(0x00);
     }
 
     private void dealtNotifyCallBackDataForFail(NoficeCallbackData callbackData) {
@@ -410,6 +410,6 @@ public class LockAPI {
         }
         setWriting(false);
         LockApiBleUtil.getInstance().setDeviceSleepTime(mDeviceSleepTime);
-        LockApiBleUtil.getInstance().mHandler.sendEmptyMessageDelayed(0x00, 100);
+        LockApiBleUtil.getInstance().mAllowSleepHandler.sendEmptyMessageDelayed(0x00, 100);
     }
 }

@@ -8,7 +8,10 @@ import com.locksdk.bean.WriteCallbackData;
  */
 
 public interface WriteDataListener {
+
     void onWirteSuccess(WriteCallbackData data);
 
     void onWriteFail(WriteCallbackData data);       //错误时，数据为null
+
+    void onWriteTimout();           //写入或监听Notify超时
 }

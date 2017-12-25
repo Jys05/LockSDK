@@ -22,8 +22,7 @@ import java.util.Map;
 public class OpenLockUtil {
     private static final String TAG = "OpenLockUtil";
     private static OpenLockListener openLockListener;
-    private static List<byte[]> data;
-    private static int position;
+    private static byte[] writeData;
 
     public static void opnenLock(Map<String, String> param, OpenLockListener lockListener) {
         openLockListener = lockListener;
@@ -43,14 +42,15 @@ public class OpenLockUtil {
         byte[] btBoxName = DealtByteUtil.dataAdd0(boxName.getBytes(), 16);
         byte[] btDynamicPwd = DealtByteUtil.dataAdd0(dynamicPwd.getBytes(), 6);
         byte[] btUserId = DealtByteUtil.dataAdd0(userId.getBytes(), 16);
-        byte[] writeData = new byte[1 + 7 + 16 + 6 + 16];        //写入的数据
+        //写入的数据
+        writeData = new byte[1 + 7 + 16 + 6 + 16];
         writeData[0] = 0x12;
         System.arraycopy(btTime, 0, writeData, 1, 7);
         System.arraycopy(btBoxName, 0, writeData, 8, 16);
         System.arraycopy(btDynamicPwd, 0, writeData, 24, 6);
         System.arraycopy(btUserId, 0, writeData, 30, 16);
         //首次写入数据，写入data的第一个，剩下的在监听中完成
-        WriteAndNoficeUtil.getInstantce().writeFunctionCode2(writeData[0], writeData, writeDataListener);
+        WriteAndNoficeUtil.getInstantce().writeFunctionCode2(writeData[0], writeData, writeDataListener , false);
     }
 
     private static WriteDataListener writeDataListener = new WriteDataListener() {
@@ -70,6 +70,14 @@ public class OpenLockUtil {
             result.setMsg(Constant.MSG.MSG_WRITE_FAIL);
             result.setData(null);
             openLockListener.openLockCallback(result);
+        }
+
+        @Override
+        public void onWriteTimout() {
+            if(writeData != null){
+                //首次写入数据，写入data的第一个，剩下的在监听中完成
+                WriteAndNoficeUtil.getInstantce().writeFunctionCode2(writeData[0], writeData, writeDataListener, true);
+            }
         }
     };
 

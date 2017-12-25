@@ -20,6 +20,7 @@ public class GetRandomUtil {
 
     private static GetRandomListener getRandomListener;
     private static final String TAG = "GetRandomUtil";
+    private static byte[] data;
 
     public static void getRandom(String boxName, GetRandomListener listener) {
         getRandomListener = listener;
@@ -31,13 +32,13 @@ public class GetRandomUtil {
             listener.getRandomCallback(result);
             return;
         }
-        byte[] data = new byte[18];
+        data = new byte[18];
         data[0] = 0x00;
         data[1] = 0x11;
         byte[] boxNameForByte = boxName.getBytes();
         byte[] boxNameForByte2 = DealtByteUtil.dataAdd0(boxNameForByte, 16);        //补零后的
         System.arraycopy(boxNameForByte2, 0, data, 2, boxNameForByte2.length);
-        WriteAndNoficeUtil.getInstantce().writeFunctionCode(data[1], data, writeDataListener);
+        WriteAndNoficeUtil.getInstantce().writeFunctionCode(data[1], data, writeDataListener , false);
     }
 
     private static WriteDataListener writeDataListener = new WriteDataListener() {
@@ -55,6 +56,14 @@ public class GetRandomUtil {
             randomAttrResult.setMsg(Constant.MSG.MSG_WRITE_FAIL);
             randomAttrResult.setData(null);
             getRandomListener.getRandomCallback(randomAttrResult);
+        }
+
+        @Override
+        public void onWriteTimout() {
+            if(data != null){
+                //首次写入数据，写入data的第一个，剩下的在监听中完成
+                WriteAndNoficeUtil.getInstantce().writeFunctionCode(data[1], data, writeDataListener, true);
+            }
         }
     };
 }

@@ -24,6 +24,7 @@ public class QueryLogsUtil {
 
     private static QueryLogsListener queryLogsListener;
     private static final String TAG = "QueryLogsUtil";
+    private static byte[] data;
 
     public static void queryLogs(Map<String, String> param, QueryLogsListener logsListener) {
         queryLogsListener = logsListener;
@@ -65,12 +66,12 @@ public class QueryLogsUtil {
         byte[] btEndSeq = intToBytes2(endSeqNum);
         LogUtil.i(TAG, HexUtil.encodeHexStr(btStartSeq));
         LogUtil.i(TAG, HexUtil.encodeHexStr(btEndSeq));
-        byte[] data = new byte[2 + btEndSeq.length + btStartSeq.length];
+        data = new byte[2 + btEndSeq.length + btStartSeq.length];
         data[0] = 0x00;
         data[1] = 0x13;
         System.arraycopy(btStartSeq, 0, data, 2, btStartSeq.length);
         System.arraycopy(btEndSeq, 0, data, 2 + btStartSeq.length, btEndSeq.length);
-        WriteAndNoficeUtil.getInstantce().writeFunctionCode(data[1], data, writeDataListener);
+        WriteAndNoficeUtil.getInstantce().writeFunctionCode(data[1], data, writeDataListener , false);
     }
 
     /**
@@ -108,6 +109,14 @@ public class QueryLogsUtil {
             result.setMsg(Constant.MSG.MSG_WRITE_FAIL);
             result.setData(null);
             queryLogsListener.queryLogsCallback(result);
+        }
+
+        @Override
+        public void onWriteTimout() {
+            if(data != null){
+                //首次写入数据，写入data的第一个，剩下的在监听中完成
+                WriteAndNoficeUtil.getInstantce().writeFunctionCode(data[1], data, writeDataListener, true);
+            }
         }
     };
 
