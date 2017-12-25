@@ -256,33 +256,55 @@ public class LockApiBleUtil {
     }
 
     private void sannerSettingForJELLY_BEAN() {
-        UUID[] uuids = new UUID[]{UUID.fromString(Constant.SERVICE_UUID)};
+        final String uuidFilterStr = getUuidFilter();
         if (mLeScanCallback == null) {
             mLeScanCallback = new BluetoothAdapter.LeScanCallback() {
                 @Override
                 public void onLeScan(BluetoothDevice device, int rssi, byte[] scanRecord) {
                     if (device != null) {
-                        mBluetoothLeDeviceStore.addDevice(new BluetoothLeDevice(device, rssi
-                                , scanRecord, 0000));
-                        if (!mLockIdMap.containsValue(device.getAddress())) {
-                            mLockIdMap.put(device.getName(), device.getAddress());
+                        String scanRecordStr = HexUtil.encodeHexStr(scanRecord);
+                        if (scanRecordStr.contains(uuidFilterStr)) {
+                            mBluetoothLeDeviceStore.addDevice(new BluetoothLeDevice(device, rssi
+                                    , scanRecord, System.currentTimeMillis()));
+                            if (!mLockIdMap.containsValue(device.getAddress())) {
+                                mLockIdMap.put(device.getName(), device.getAddress());
+                            }
+                            if (!mScanenrBoxNames.contains(device.getName())) {
+                                mScanenrBoxNames.add(device.getName());
+                            }
+                            mScanneredResult.setMsg(Constant.MSG.MSG_SCANNERED);
+                            mScanneredResult.setCode(Constant.CODE.CODE_SUCCESS);
+                            mScanneredResult.setData(mBluetoothLeDeviceStore.getDeviceList());
+                            scannerBoxNamesResult.setCode(Constant.CODE.CODE_SUCCESS);
+                            scannerBoxNamesResult.setMsg(Constant.MSG.MSG_SCANNERED);
+                            scannerBoxNamesResult.setData(mScanenrBoxNames);
+                            mScannerListener.onBoxFoundScanning(mScanneredResult, scannerBoxNamesResult);
                         }
-                        if (!mScanenrBoxNames.contains(device.getName())) {
-                            mScanenrBoxNames.add(device.getName());
-                        }
-                        mScanneredResult.setMsg(Constant.MSG.MSG_SCANNERED);
-                        mScanneredResult.setCode(Constant.CODE.CODE_SUCCESS);
-                        mScanneredResult.setData(mBluetoothLeDeviceStore.getDeviceList());
-                        scannerBoxNamesResult.setCode(Constant.CODE.CODE_SUCCESS);
-                        scannerBoxNamesResult.setMsg(Constant.MSG.MSG_SCANNERED);
-                        scannerBoxNamesResult.setData(mScanenrBoxNames);
-                        mScannerListener.onBoxFoundScanning(mScanneredResult, scannerBoxNamesResult);
                     }
                 }
             };
         }
-        ViseBle.getInstance().getBluetoothAdapter().startLeScan(uuids, mLeScanCallback);
+        ViseBle.getInstance().getBluetoothAdapter().startLeScan(mLeScanCallback);
     }
+
+    /**
+     * 4.4版本中的处理过滤UUID
+     *
+     * @return
+     */
+    private String getUuidFilter() {
+        String uuidStr = Constant.SERVICE_UUID.replace("-", "");
+        LogUtil.e(TAG + "0", uuidStr);
+        byte[] uuidByt = HexUtil.decodeHex(uuidStr.toCharArray());
+        byte[] uuidByt2 = new byte[uuidByt.length];
+        LogUtil.e(TAG + "1", HexUtil.encodeHexStr(uuidByt, true));
+        for (int i = 0; i < uuidByt2.length; i++) {
+            uuidByt2[i] = uuidByt[(uuidByt2.length - 1) - i];
+        }
+        String uuidFilterStr = HexUtil.encodeHexStr(uuidByt2, true);
+        return uuidFilterStr;
+    }
+
 
     /**
      * 停止扫描
@@ -337,9 +359,9 @@ public class LockApiBleUtil {
     public Handler mHandler = new Handler(new Handler.Callback() {
         @Override
         public boolean handleMessage(Message message) {
-            if(isAllowSleep){
+            if (isAllowSleep) {
                 clearHandler();
-            }else {
+            } else {
                 LockAPI lockAPI = LockAPI.getInstance();
                 if (lockAPI.isWriting()) {      //正在写入
                     mDeviceSleepTime = lockAPI.getDeviceSleepTime();

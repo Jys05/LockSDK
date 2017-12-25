@@ -87,7 +87,7 @@ public class WriteAndNoficeUtil {
                 .setDescriptorUUID(null)
                 .builder();
         //将功能码设进回调数据中。
-         mNoficeCallbackData = new NoficeCallbackData();
+        mNoficeCallbackData = new NoficeCallbackData();
         mWriteCallbackData.setFunctionCode(functionCode);
         resCode = FunCode2RespCode.funCode2RespCode(functionCode);
         mNoficeCallbackData.setRespondCode(resCode);
@@ -287,6 +287,16 @@ public class WriteAndNoficeUtil {
                     .setDescriptorUUID(descriptorUUID)
                     .builder();
             deviceMirror.bindChannel(bleCallback, bluetoothGattChannel);
+        }
+    }
+
+
+    /**
+     * 取消注册的Notify
+     */
+    public void unregisterNotify() {
+        if (LockApiBleUtil.getInstance().getDeviceMirror() != null) {
+            LockApiBleUtil.getInstance().getDeviceMirror().unregisterNotify(false);
         }
     }
 
