@@ -79,6 +79,56 @@ public class LockApiBleUtil {
     private BluetoothAdapter.LeScanCallback mLeScanCallback;//安卓版本在4.4以上的扫描回调
     private boolean IsScannering = false;
     private DeviceMirror mDeviceMirror;
+    // TODO: 2017/12/26 暂时注释掉二次写入 （下述）
+    private boolean isWriteAndNotifyStart = false;           //写入开始，并开始写入和Notify的时间倒计时3.5秒（2500）
+    private WriteDataListener mWriteDataListener;
+    private long mWriteSecondTime = 3500;
+    private Handler mWriteNotifyHandler = new Handler(new Handler.Callback() {
+        @Override
+        public boolean handleMessage(Message message) {
+            if (isWriteAndNotifyStart) {
+                //证明写入后，3.5秒后没有数据返回，所以断开连接，在Activity的Eventbus执行clear
+                isWriteAndNotifyStart = false;
+                LogUtil.e(TAG + "====", "handleMessage：写入后的notify超时3.5秒");
+                if (mWriteDataListener != null) {
+                    mWriteDataListener.onWriteTimout();
+                }
+            } else {
+                mWriteNotifyHandler.removeCallbacksAndMessages(null);
+            }
+            return false;
+        }
+    });
+
+    public void setIisWriteAndNotifyStart(boolean isWriteAndNotifyStart) {
+        this.isWriteAndNotifyStart = isWriteAndNotifyStart;
+    }
+
+    //设置多少时间后第二次写入
+    public void setWriteSecondTime(long writeSecondTime) {
+        mWriteSecondTime = writeSecondTime;
+    }
+
+    public void sendWriteSecondHandler(WriteDataListener writeDataListener) {
+        mWriteDataListener = writeDataListener;
+        setIisWriteAndNotifyStart(true);
+        LogUtil.e(TAG + "====", "写入刚开始的计时2500");
+        clearmWriteNotifyHandler();
+        mWriteNotifyHandler.sendEmptyMessageDelayed(0x00, mWriteSecondTime);
+    }
+
+    public void clearmWriteNotifyHandler() {
+        if (mWriteNotifyHandler != null) {
+            LogUtil.e(TAG + "====", "清理mWriteNotifyHandler：");
+            mWriteNotifyHandler.removeCallbacksAndMessages(null);
+        }
+    }
+
+    public void clearIsWriteAndNotifyStart() {
+        setIisWriteAndNotifyStart(false);
+        clearmWriteNotifyHandler();
+    }
+    // TODO: 2017/12/26 暂时注释掉二次写入（上述）
 
     //TOdo 之后需要整理
     public void clearLockId() {
@@ -475,11 +525,10 @@ public class LockApiBleUtil {
         mBoxName = null;
         isConnecting = false;
         isConnectSuccess = false;
-        WriteAndNoficeUtil.getInstantce().clearIsWriteAndNotifyStart();
+        clearIsWriteAndNotifyStart();
+        clearHandler();
         //清理获取的锁具ID
         LockApiBleUtil.getInstance().clearLockId();
-        //清理Handler
-        clearHandler();
         if (mConnectedBoxDevice != null) {
             ViseBle.getInstance().disconnect(mConnectedBoxDevice);
             mConnectedBoxDevice = null;
@@ -510,6 +559,7 @@ public class LockApiBleUtil {
         public void onConnectSuccess(DeviceMirror deviceMirror) {
             if (mConnectListener != null) {
                 if (isConnecting) {
+                    LogUtil.e(TAG, "连接成功");          //防止设备休眠，时间计算12秒后发数据给板子
                     isConnecting = false;
                     isConnectSuccess = true;
                     //再次获取连接的款箱名、锁具ID(款箱Mac)
@@ -522,13 +572,15 @@ public class LockApiBleUtil {
                     mBluetoothGattService = mGatt.getService(UUID.fromString(Constant.SERVICE_UUID));
                     LockAPI lockAPI = LockAPI.getInstance();
                     lockAPI.resigeterNotify();      //注册通知监听
+                    LogUtil.e(TAG, "开始心跳计时");          //防止设备休眠，时间计算12秒后发数据给板子
+                    mDeviceSleepTime = lockAPI.getDeviceSleepTime();
+                    clearmWriteNotifyHandler();
+                    clearHandler();
+                    mAllowSleepHandler.sendEmptyMessageDelayed(0x00, 100);
                     //获取锁具ID
                     getLockIdByBoxName(null);
                     //调用连接成功接口
                     mConnectListener.onSuccess(mConnectedBoxDevice, Constant.SERVICE_UUID, mBoxName);
-                    //防止设备休眠，时间计算12秒后发数据给板子
-                    mDeviceSleepTime = lockAPI.getDeviceSleepTime();
-                    mAllowSleepHandler.sendEmptyMessageDelayed(0x00, 100);
                 } else {
                     LogUtil.e(TAG, "假连接");
                     closeConnection();
@@ -539,27 +591,10 @@ public class LockApiBleUtil {
         @Override
         public void onConnectFailure(BleException exception) {
             mConnectRetryCount--;
-            if (mConnectRetryCount == 0) {
-                mConnectRetryCount = BleConfig.getInstance().getConnectRetryCount();
-                mConnectBoxDevice = null;
-                isConnecting = false;
-                //清理获取的锁具ID
-                LockApiBleUtil.getInstance().clearLockId();
-                if (exception instanceof TimeoutException) {
-                    mConnectListener.onTimeout(Constant.SERVICE_UUID, BleConfig.getInstance().getConnectTimeout() * 3);
-                    //清理Handler
-                    clearHandler();
-                } else {
-                    if (mConnectListener != null) {
-                        mConnectListener.onFail(Constant.SERVICE_UUID, Constant.MSG.MSG_CONNECT_FAIL);
-                    }
-                    //清理Handler
-                    clearHandler();
-                }
-
-            }
+            LogUtil.e(TAG, "连接失败次数" + mConnectRetryCount);
             if (isConnectSuccess) {
                 if (exception instanceof ConnectException) {
+                    LogUtil.e(TAG, "连接成功后的异常" + mConnectRetryCount);
                     if (mConnectListener != null) {
                         //清理获取的锁具ID
                         LockApiBleUtil.getInstance().clearLockId();
@@ -569,7 +604,29 @@ public class LockApiBleUtil {
                     LockAPI.getInstance().closeConnection();
                 }
                 isConnectSuccess = false;
-
+                return;
+            }
+            if (isConnecting) {
+                if (mConnectRetryCount == 0) {
+                    LogUtil.e(TAG, "连接中的异常" + mConnectRetryCount);
+                    LogUtil.e(TAG, "连接失败次数" + mConnectRetryCount);
+                    mConnectRetryCount = BleConfig.getInstance().getConnectRetryCount();
+                    mConnectBoxDevice = null;
+                    isConnecting = false;
+                    //清理获取的锁具ID
+                    LockApiBleUtil.getInstance().clearLockId();
+                    if (exception instanceof TimeoutException) {
+                        mConnectListener.onTimeout(Constant.SERVICE_UUID, BleConfig.getInstance().getConnectTimeout() * 3);
+                        //清理Handler
+                        clearHandler();
+                    } else {
+                        if (mConnectListener != null) {
+                            mConnectListener.onFail(Constant.SERVICE_UUID, Constant.MSG.MSG_CONNECT_FAIL);
+                        }
+                        //清理Handler
+                        clearHandler();
+                    }
+                }
             }
             LogUtil.i(TAG, exception.getDescription() + "失败从重连次数：" + mConnectRetryCount);
         }

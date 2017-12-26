@@ -175,6 +175,8 @@ public class LockAPI {
     public void activeLock(Map<String, String> param, ActiveLockListener lockListener) {
         LogUtil.i(TAG, "激活");
         removeCallbacksAndMessages();
+        LogUtil.i(TAG , "设置多少时间后第二次写入");
+        LockApiBleUtil.getInstance().setWriteSecondTime(6500);
         mActiveLockListener = lockListener;
         ActiveLockUtil.activeLock(param, lockListener);
     }
@@ -192,6 +194,8 @@ public class LockAPI {
         LogUtil.i(TAG, "开锁");
         removeCallbacksAndMessages();
         mOpenLockListener = lockListener;
+        LogUtil.i(TAG , "设置多少时间后第二次写入");
+        LockApiBleUtil.getInstance().setWriteSecondTime(3500);
         OpenLockUtil.opnenLock(param, lockListener);
     }
 
@@ -199,6 +203,8 @@ public class LockAPI {
     public void getRandom(String boxName, GetRandomListener listener) {
         LogUtil.i(TAG, "获取随机数（开箱触发）");
         removeCallbacksAndMessages();
+        LogUtil.i(TAG , "设置多少时间后第二次写入");
+        LockApiBleUtil.getInstance().setWriteSecondTime(3500);
         mGetRandomListener = listener;
         GetRandomUtil.getRandom(boxName, listener);
     }
@@ -208,6 +214,8 @@ public class LockAPI {
     public void queryLockStatus(String lockId) {
         LogUtil.i(TAG, "查询锁状态");
         removeCallbacksAndMessages();
+        LogUtil.i(TAG , "设置多少时间后第二次写入");
+        LockApiBleUtil.getInstance().setWriteSecondTime(3500);
         QueryLockStatusUtil.queryLockStatus(lockId, mLockStatusListener);
     }
 
@@ -215,6 +223,8 @@ public class LockAPI {
     public void queryLogs(Map<String, String> param, QueryLogsListener logsListener) {
         LogUtil.i(TAG, "查询日志");
         removeCallbacksAndMessages();
+        LogUtil.i(TAG , "设置多少时间后第二次写入");
+        LockApiBleUtil.getInstance().setWriteSecondTime(3500);
         mQueryLogsListener = logsListener;
         QueryLogsUtil.queryLogs(param, logsListener);
     }

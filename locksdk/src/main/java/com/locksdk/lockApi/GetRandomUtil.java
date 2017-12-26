@@ -62,6 +62,7 @@ public class GetRandomUtil {
         public void onWriteTimout() {
             if(data != null){
                 //首次写入数据，写入data的第一个，剩下的在监听中完成
+                LogUtil.i(TAG , "获取随机数第二次");
                 WriteAndNoficeUtil.getInstantce().writeFunctionCode(data[1], data, writeDataListener, true);
             }
         }
