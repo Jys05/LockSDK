@@ -71,6 +71,7 @@ public class WriteAndNoficeUtil {
         return writeData;
     }
 
+    //填写null,表示清除接口写入的数据，使得其他接口也可写入（当其中一个接口写入，另一个接口会用writeData判断是否在写入）
     public void setWriteData(byte[] writeData) {
         this.writeData = writeData;
     }
@@ -120,6 +121,8 @@ public class WriteAndNoficeUtil {
         if (tryAgainCount != 0) {          //不是第二次写入就，开始倒计时
             LogUtil.e(TAG, "第一次写入计时，超时进行第二次写入");
             LockApiBleUtil.getInstance().sendWriteSecondHandler(writeDataListener);
+        }else {
+            LockApiBleUtil.getInstance().sendNotifyTimeoutHandler();
         }
     }
 
@@ -167,6 +170,8 @@ public class WriteAndNoficeUtil {
         this.mTryAgainCount = tryAgainCount;
         if (tryAgainCount != 0) {            //不是第二次写入就，开始倒计时
             LockApiBleUtil.getInstance().sendWriteSecondHandler(writeDataListener);
+        }else {
+            LockApiBleUtil.getInstance().sendNotifyTimeoutHandler();
         }
     }
 
@@ -350,6 +355,8 @@ public class WriteAndNoficeUtil {
                 if (mTryAgainCount != 0) {
                     LogUtil.e(TAG, "的第二次写入计时,此刻为写入成功后的，重新计时（意义为：如果在这段时间没有数据返回，证明蓝牙链路异常）");
                     LockApiBleUtil.getInstance().sendWriteSecondHandler(mWriteDataListener);
+                }else {
+                    LockApiBleUtil.getInstance().sendNotifyTimeoutHandler();
                 }
                 mWriteCallbackData.setData(data);
                 mWriteDataListener.onWirteSuccess(mWriteCallbackData);

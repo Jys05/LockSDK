@@ -91,10 +91,17 @@ public class LockApiBleUtil {
                 //证明写入后，3.5秒后没有数据返回，所以断开连接，在Activity的Eventbus执行clear
                 isWriteAndNotifyStart = false;
                 LogUtil.e(TAG + "====", "mTryAgainCount重发次数还剩：" + mTryAgainCount);
-                if (mTryAgainCount != 0) {
-                    mTryAgainCount = mTryAgainCount - 1;
-                    mWriteDataListener.onWriteTimout();
-                }
+               switch (message.what){
+                   case 0x00:
+                       if (mTryAgainCount != 0) {
+                           mTryAgainCount = mTryAgainCount - 1;
+                           mWriteDataListener.onWriteTimout();
+                       }
+                       break;
+                   case 0x01:
+                       WriteAndNoficeUtil.getInstantce().setWriteData(null);
+                       break;
+               }
             } else {
                 mWriteNotifyHandler.removeCallbacksAndMessages(null);
             }
@@ -118,6 +125,13 @@ public class LockApiBleUtil {
         LogUtil.e(TAG + "====", "写入刚开始的计时" + mWriteSecondTime);
         clearmWriteNotifyHandler();
         mWriteNotifyHandler.sendEmptyMessageDelayed(0x00, mWriteSecondTime);
+    }
+
+    public void sendNotifyTimeoutHandler() {
+        setIisWriteAndNotifyStart(true);
+        LogUtil.e(TAG + "====", "第二次写入后Notify通知开始的计时" + mWriteSecondTime);
+        clearmWriteNotifyHandler();
+        mWriteNotifyHandler.sendEmptyMessageDelayed(0x01, mWriteSecondTime);
     }
 
     public void clearmWriteNotifyHandler() {
