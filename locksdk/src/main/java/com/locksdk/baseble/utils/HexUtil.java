@@ -1,11 +1,16 @@
 package com.locksdk.baseble.utils;
 
+//import com.locksdk.log.ViseLog;
+
+import com.locksdk.util.LogUtil;
+
 /**
  * @Description: 十六进制转换类
  * @author: <a href="http://www.xiaoyaoyou1212.com">DAWI</a>
  * @date: 16/8/7 21:57.
  */
 public class HexUtil {
+     private static final String TAG = "HexUtil";
     /**
      * 用于建立十六进制字符的输出的小写字符数组
      */
@@ -84,7 +89,25 @@ public class HexUtil {
      * @return 十六进制String
      */
     protected static String encodeHexStr(byte[] data, char[] toDigits) {
+        if (data == null) {
+            LogUtil.e(TAG,"this data is null.");
+            return "";
+        }
         return new String(encodeHex(data, toDigits));
+    }
+
+    /**
+     * 将十六进制字符串转换为字节数组
+     *
+     * @param data
+     * @return
+     */
+    public static byte[] decodeHex(String data) {
+        if (data == null) {
+            LogUtil.e(TAG,"this data is null.");
+            return new byte[0];
+        }
+        return decodeHex(data.toCharArray());
     }
 
     /**

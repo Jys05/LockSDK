@@ -1,6 +1,5 @@
 package com.locksdk.baseble.core;
 
-
 import com.locksdk.baseble.common.BleConfig;
 import com.locksdk.baseble.common.ConnectState;
 import com.locksdk.baseble.model.BluetoothLeDevice;

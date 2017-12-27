@@ -5,6 +5,8 @@ import com.locksdk.baseble.exception.GattException;
 import com.locksdk.baseble.exception.InitiatedException;
 import com.locksdk.baseble.exception.OtherException;
 import com.locksdk.baseble.exception.TimeoutException;
+import com.locksdk.util.LogUtil;
+//import com.locksdk.log.ViseLog;
 
 /**
  * @Description: 异常默认处理
@@ -12,28 +14,29 @@ import com.locksdk.baseble.exception.TimeoutException;
  * @date: 16/8/14 10:35.
  */
 public class DefaultBleExceptionHandler extends BleExceptionHandler {
+     private static final String TAG = "DefaultBleExceptionHandler";
     @Override
     protected void onConnectException(ConnectException e) {
-//        ViseLog.e(e.getDescription());
+        LogUtil.e(TAG , e.getDescription());
     }
 
     @Override
     protected void onGattException(GattException e) {
-//        ViseLog.e(e.getDescription());
+        LogUtil.e(TAG , e.getDescription());
     }
 
     @Override
     protected void onTimeoutException(TimeoutException e) {
-//        ViseLog.e(e.getDescription());
+        LogUtil.e(TAG , e.getDescription());
     }
 
     @Override
     protected void onInitiatedException(InitiatedException e) {
-//        ViseLog.e(e.getDescription());
+        LogUtil.e(TAG , e.getDescription());
     }
 
     @Override
     protected void onOtherException(OtherException e) {
-//        ViseLog.e(e.getDescription());
+        LogUtil.e(TAG , e.getDescription());
     }
 }

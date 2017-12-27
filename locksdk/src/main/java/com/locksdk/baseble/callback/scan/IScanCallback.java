@@ -1,6 +1,7 @@
 package com.locksdk.baseble.callback.scan;
 
 
+import com.locksdk.baseble.model.BluetoothLeDevice;
 import com.locksdk.baseble.model.BluetoothLeDeviceStore;
 
 /**
@@ -10,7 +11,7 @@ import com.locksdk.baseble.model.BluetoothLeDeviceStore;
  */
 public interface IScanCallback {
     //发现设备
-    void onDeviceFound(BluetoothLeDeviceStore bluetoothLeDeviceStore);
+    void onDeviceFound(BluetoothLeDevice bluetoothLeDevice);
 
     //扫描完成
     void onScanFinish(BluetoothLeDeviceStore bluetoothLeDeviceStore);

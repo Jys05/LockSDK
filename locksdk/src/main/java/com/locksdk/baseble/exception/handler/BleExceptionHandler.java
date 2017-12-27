@@ -1,6 +1,5 @@
 package com.locksdk.baseble.exception.handler;
 
-
 import com.locksdk.baseble.exception.BleException;
 import com.locksdk.baseble.exception.ConnectException;
 import com.locksdk.baseble.exception.GattException;

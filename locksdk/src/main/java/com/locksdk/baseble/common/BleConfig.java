@@ -7,7 +7,6 @@ import static com.locksdk.baseble.common.BleConstant.DEFAULT_RETRY_COUNT;
 import static com.locksdk.baseble.common.BleConstant.DEFAULT_RETRY_INTERVAL;
 import static com.locksdk.baseble.common.BleConstant.DEFAULT_SCAN_TIME;
 
-
 /**
  * @Description: 蓝牙通信相关配置
  * @author: <a href="http://xiaoyaoyou1212.360doc.com">DAWI</a>

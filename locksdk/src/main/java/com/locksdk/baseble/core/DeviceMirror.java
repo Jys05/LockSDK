@@ -22,10 +22,11 @@ import com.locksdk.baseble.exception.GattException;
 import com.locksdk.baseble.exception.TimeoutException;
 import com.locksdk.baseble.model.BluetoothLeDevice;
 import com.locksdk.baseble.utils.HexUtil;
+import com.locksdk.util.LogUtil;
+//import com.locksdk.log.ViseLog;
 
 import java.lang.reflect.Method;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.UUID;
 
@@ -44,6 +45,7 @@ import static com.locksdk.baseble.common.BleConstant.MSG_WRITE_DATA_TIMEOUT;
  * @date: 17/8/1 23:11.
  */
 public class DeviceMirror {
+     private static final String TAG = "DeviceMirror";
     private final DeviceMirror deviceMirror;
     private final String uniqueSymbol;//唯一符号
     private final BluetoothLeDevice bluetoothLeDevice;//设备基础信息
@@ -59,7 +61,7 @@ public class DeviceMirror {
     private boolean isIndication;//是否是指示器方式
     private boolean enable;//是否设置使能
     private byte[] writeData;//写入数据
-    private ConnectState connectState = ConnectState.CONNECT_DISCONNECT;//设备状态描述
+    private ConnectState connectState = ConnectState.CONNECT_INIT;//设备状态描述
     private volatile HashMap<String, BluetoothGattChannel> writeInfoMap = new HashMap<>();//写入数据GATT信息集合
     private volatile HashMap<String, BluetoothGattChannel> readInfoMap = new HashMap<>();//读取数据GATT信息集合
     private volatile HashMap<String, BluetoothGattChannel> enableInfoMap = new HashMap<>();//设置使能GATT信息集合
@@ -74,15 +76,15 @@ public class DeviceMirror {
             } else if (msg.what == MSG_CONNECT_RETRY) {
                 connect();
             } else if (msg.what == MSG_WRITE_DATA_TIMEOUT) {
-                writeFailure(new TimeoutException(), false, false);
+                writeFailure(new TimeoutException(), true);
             } else if (msg.what == MSG_WRITE_DATA_RETRY) {
                 write(writeData);
             } else if (msg.what == MSG_READ_DATA_TIMEOUT) {
-                readFailure(new TimeoutException(), false, true);
+                readFailure(new TimeoutException(), true);
             } else if (msg.what == MSG_READ_DATA_RETRY) {
                 read();
             } else if (msg.what == MSG_RECEIVE_DATA_TIMEOUT) {
-                enableFailure(new TimeoutException(), false, false);
+                enableFailure(new TimeoutException(), true);
             } else if (msg.what == MSG_RECEIVE_DATA_RETRY) {
                 enable(enable, isIndication);
             }
@@ -102,18 +104,22 @@ public class DeviceMirror {
          */
         @Override
         public void onConnectionStateChange(final BluetoothGatt gatt, final int status, final int newState) {
-//            ViseLog.i("onConnectionStateChange  status: " + status + " ,newState: " + newState +
-//                    "  ,thread: " + Thread.currentThread());
+            LogUtil.i(TAG , "onConnectionStateChange  status: " + status + " ,newState: " + newState +
+                    "  ,thread: " + Thread.currentThread());
             if (newState == BluetoothGatt.STATE_CONNECTED) {
                 gatt.discoverServices();
             } else if (newState == BluetoothGatt.STATE_DISCONNECTED) {
-                connectState = ConnectState.CONNECT_DISCONNECT;
                 close();
                 if (connectCallback != null) {
+                    if (handler != null) {
+                        handler.removeCallbacksAndMessages(null);
+                    }
                     ViseBle.getInstance().getDeviceMirrorPool().removeDeviceMirror(deviceMirror);
                     if (status == BluetoothGatt.GATT_SUCCESS) {
+                        connectState = ConnectState.CONNECT_DISCONNECT;
                         connectCallback.onDisconnect(isActiveDisconnect);
                     } else {
+                        connectState = ConnectState.CONNECT_FAILURE;
                         connectCallback.onConnectFailure(new ConnectException(gatt, status));
                     }
                 }
@@ -129,12 +135,12 @@ public class DeviceMirror {
          */
         @Override
         public void onServicesDiscovered(final BluetoothGatt gatt, final int status) {
-//            ViseLog.i("onServicesDiscovered  status: " + status + "  ,thread: " + Thread.currentThread());
+            LogUtil.i(TAG , "onServicesDiscovered  status: " + status + "  ,thread: " + Thread.currentThread());
             if (handler != null) {
                 handler.removeMessages(MSG_CONNECT_TIMEOUT);
             }
             if (status == 0) {
-//                ViseLog.i("onServicesDiscovered connectSuccess.");
+                LogUtil.i(TAG , "onServicesDiscovered connectSuccess.");
                 bluetoothGatt = gatt;
                 connectState = ConnectState.CONNECT_SUCCESS;
                 if (connectCallback != null) {
@@ -155,12 +161,12 @@ public class DeviceMirror {
          */
         @Override
         public void onCharacteristicRead(BluetoothGatt gatt, final BluetoothGattCharacteristic characteristic, final int status) {
-//            ViseLog.i("onCharacteristicRead  status: " + status + ", data:" + HexUtil.encodeHexStr(characteristic.getValue()) +
-//                    "  ,thread: " + Thread.currentThread());
+            LogUtil.i(TAG , "onCharacteristicRead  status: " + status + ", data:" + HexUtil.encodeHexStr(characteristic.getValue()) +
+                    "  ,thread: " + Thread.currentThread());
             if (status == BluetoothGatt.GATT_SUCCESS) {
-                handleSuccessData(readInfoMap, characteristic.getValue(), status, false, true);
+                handleSuccessData(readInfoMap, characteristic.getValue(), status, true);
             } else {
-                readFailure(new GattException(status), false, true);
+                readFailure(new GattException(status), true);
             }
         }
 
@@ -172,12 +178,12 @@ public class DeviceMirror {
          */
         @Override
         public void onCharacteristicWrite(BluetoothGatt gatt, final BluetoothGattCharacteristic characteristic, final int status) {
-//            ViseLog.i("onCharacteristicWrite  status: " + status + ", data:" + HexUtil.encodeHexStr(characteristic.getValue()) +
-//                    "  ,thread: " + Thread.currentThread());
+            LogUtil.i(TAG , "onCharacteristicWrite  status: " + status + ", data:" + HexUtil.encodeHexStr(characteristic.getValue()) +
+                    "  ,thread: " + Thread.currentThread());
             if (status == BluetoothGatt.GATT_SUCCESS) {
-                handleSuccessData(writeInfoMap, characteristic.getValue(), status, false, false);
+                handleSuccessData(writeInfoMap, characteristic.getValue(), status, false);
             } else {
-                writeFailure(new GattException(status), false, false);
+                writeFailure(new GattException(status), true);
             }
         }
 
@@ -188,16 +194,19 @@ public class DeviceMirror {
          */
         @Override
         public void onCharacteristicChanged(BluetoothGatt gatt, final BluetoothGattCharacteristic characteristic) {
-//            ViseLog.i("onCharacteristicChanged data:" + HexUtil.encodeHexStr(characteristic.getValue()) +
-//                    "  ,thread: " + Thread.currentThread());
-            for (Map.Entry<String, IBleCallback> entry : receiveCallbackMap.entrySet()) {
-                String bleCallbackKey = entry.getKey();
-                IBleCallback bleCallbackValue = entry.getValue();
-                if (bleCallbackValue != null) {
-                    bleCallbackValue.onSuccess(characteristic.getValue(), enableInfoMap.get(bleCallbackKey), bluetoothLeDevice);
+            LogUtil.i(TAG , "onCharacteristicChanged data:" + HexUtil.encodeHexStr(characteristic.getValue()) +
+                    "  ,thread: " + Thread.currentThread());
+            for (Map.Entry<String, IBleCallback> receiveEntry : receiveCallbackMap.entrySet()) {
+                String receiveKey = receiveEntry.getKey();
+                IBleCallback receiveValue = receiveEntry.getValue();
+                for (Map.Entry<String, BluetoothGattChannel> gattInfoEntry : enableInfoMap.entrySet()) {
+                    String bluetoothGattInfoKey = gattInfoEntry.getKey();
+                    BluetoothGattChannel bluetoothGattInfoValue = gattInfoEntry.getValue();
+                    if (receiveKey.equals(bluetoothGattInfoKey)) {
+                        receiveValue.onSuccess(characteristic.getValue(), bluetoothGattInfoValue, bluetoothLeDevice);
+                    }
                 }
             }
-            super.onCharacteristicChanged(gatt,characteristic);
         }
 
         /**
@@ -208,12 +217,12 @@ public class DeviceMirror {
          */
         @Override
         public void onDescriptorRead(BluetoothGatt gatt, final BluetoothGattDescriptor descriptor, final int status) {
-//            ViseLog.i("onDescriptorRead  status: " + status + ", data:" + HexUtil.encodeHexStr(descriptor.getValue()) +
-//                    "  ,thread: " + Thread.currentThread());
+            LogUtil.i(TAG , "onDescriptorRead  status: " + status + ", data:" + HexUtil.encodeHexStr(descriptor.getValue()) +
+                    "  ,thread: " + Thread.currentThread());
             if (status == BluetoothGatt.GATT_SUCCESS) {
-                handleSuccessData(readInfoMap, descriptor.getValue(), status, true, true);
+                handleSuccessData(readInfoMap, descriptor.getValue(), status, true);
             } else {
-                writeFailure(new GattException(status), true, true);
+                readFailure(new GattException(status), true);
             }
         }
 
@@ -225,17 +234,17 @@ public class DeviceMirror {
          */
         @Override
         public void onDescriptorWrite(BluetoothGatt gatt, final BluetoothGattDescriptor descriptor, final int status) {
-//            ViseLog.i("onDescriptorWrite  status: " + status + ", data:" + HexUtil.encodeHexStr(descriptor.getValue()) +
-//                    "  ,thread: " + Thread.currentThread());
+            LogUtil.i(TAG , "onDescriptorWrite  status: " + status + ", data:" + HexUtil.encodeHexStr(descriptor.getValue()) +
+                    "  ,thread: " + Thread.currentThread());
             if (status == BluetoothGatt.GATT_SUCCESS) {
-                handleSuccessData(writeInfoMap, descriptor.getValue(), status, true, false);
+                handleSuccessData(writeInfoMap, descriptor.getValue(), status, false);
             } else {
-                writeFailure(new GattException(status), true, false);
+                writeFailure(new GattException(status), true);
             }
             if (status == BluetoothGatt.GATT_SUCCESS) {
-                handleSuccessData(enableInfoMap, descriptor.getValue(), status, true, false);
+                handleSuccessData(enableInfoMap, descriptor.getValue(), status, false);
             } else {
-                enableFailure(new GattException(status), true, false);
+                enableFailure(new GattException(status), true);
             }
         }
 
@@ -247,8 +256,8 @@ public class DeviceMirror {
          */
         @Override
         public void onReadRemoteRssi(BluetoothGatt gatt, int rssi, int status) {
-//            ViseLog.i("onReadRemoteRssi  status: " + status + ", rssi:" + rssi +
-//                    "  ,thread: " + Thread.currentThread());
+            LogUtil.i(TAG , "onReadRemoteRssi  status: " + status + ", rssi:" + rssi +
+                    "  ,thread: " + Thread.currentThread());
             if (status == BluetoothGatt.GATT_SUCCESS) {
                 if (rssiCallback != null) {
                     rssiCallback.onSuccess(rssi);
@@ -272,7 +281,12 @@ public class DeviceMirror {
      *
      * @param connectCallback
      */
-    public void connect(IConnectCallback connectCallback) {
+    public synchronized void connect(IConnectCallback connectCallback) {
+        if (connectState == ConnectState.CONNECT_SUCCESS || connectState == ConnectState.CONNECT_PROCESS
+                || (connectState == ConnectState.CONNECT_INIT && connectRetryCount != 0)) {
+            LogUtil.e(TAG , "this connect state is connecting, connectSuccess or current retry count less than config connect retry count.");
+            return;
+        }
         if (handler != null) {
             handler.removeCallbacksAndMessages(null);
         }
@@ -315,13 +329,34 @@ public class DeviceMirror {
     }
 
     /**
+     * 解绑通道
+     *
+     * @param bluetoothGattChannel
+     */
+    public synchronized void unbindChannel(BluetoothGattChannel bluetoothGattChannel) {
+        if (bluetoothGattChannel != null) {
+            String key = bluetoothGattChannel.getGattInfoKey();
+            if (bleCallbackMap.containsKey(key)) {
+                bleCallbackMap.remove(key);
+            }
+            if (readInfoMap.containsKey(key)) {
+                readInfoMap.remove(key);
+            } else if (writeInfoMap.containsKey(key)) {
+                writeInfoMap.remove(key);
+            } else if (enableInfoMap.containsKey(key)) {
+                enableInfoMap.remove(key);
+            }
+        }
+    }
+
+    /**
      * 写入数据
      *
      * @param data
      */
     public void writeData(byte[] data) {
         if (data == null || data.length > 20) {
-//            ViseLog.e("this data is null or length beyond 20 byte.");
+            LogUtil.e(TAG , "this data is null or length beyond 20 byte.");
             return;
         }
         if (!checkBluetoothGattInfo(writeInfoMap)) {
@@ -411,6 +446,42 @@ public class DeviceMirror {
     }
 
     /**
+     * 获取当前连接失败重试次数
+     *
+     * @return
+     */
+    public int getConnectRetryCount() {
+        return connectRetryCount;
+    }
+
+    /**
+     * 获取当前读取数据失败重试次数
+     *
+     * @return
+     */
+    public int getReadDataRetryCount() {
+        return readDataRetryCount;
+    }
+
+    /**
+     * 获取当前使能数据失败重试次数
+     *
+     * @return
+     */
+    public int getReceiveDataRetryCount() {
+        return receiveDataRetryCount;
+    }
+
+    /**
+     * 获取当前写入数据失败重试次数
+     *
+     * @return
+     */
+    public int getWriteDataRetryCount() {
+        return writeDataRetryCount;
+    }
+
+    /**
      * 获取设备唯一标识
      *
      * @return
@@ -495,11 +566,11 @@ public class DeviceMirror {
             final Method refresh = BluetoothGatt.class.getMethod("refresh");
             if (refresh != null && bluetoothGatt != null) {
                 final boolean success = (Boolean) refresh.invoke(getBluetoothGatt());
-//                ViseLog.i("Refreshing result: " + success);
+                LogUtil.i(TAG , "Refreshing result: " + success);
                 return success;
             }
         } catch (Exception e) {
-//            ViseLog.e("An exception occured while refreshing device" + e);
+            LogUtil.e(TAG , "An exception occured while refreshing device" + e);
         }
         return false;
     }
@@ -508,6 +579,8 @@ public class DeviceMirror {
      * 主动断开设备连接
      */
     public synchronized void disconnect() {
+        connectState = ConnectState.CONNECT_INIT;
+        connectRetryCount = 0;
         if (bluetoothGatt != null) {
             isActiveDisconnect = true;
             bluetoothGatt.disconnect();
@@ -538,7 +611,7 @@ public class DeviceMirror {
      * 清除设备资源，在不使用该设备时调用
      */
     public synchronized void clear() {
-//        ViseLog.i("deviceMirror clear.");
+        LogUtil.i(TAG , "deviceMirror clear.");
         disconnect();
         refreshDeviceCache();
         close();
@@ -580,7 +653,7 @@ public class DeviceMirror {
      */
     private boolean checkBluetoothGattInfo(HashMap<String, BluetoothGattChannel> bluetoothGattInfoHashMap) {
         if (bluetoothGattInfoHashMap == null || bluetoothGattInfoHashMap.size() == 0) {
-//            ViseLog.e("this bluetoothGattInfo map is not value.");
+            LogUtil.e(TAG , "this bluetoothGattInfo map is not value.");
             return false;
         }
         return true;
@@ -623,26 +696,32 @@ public class DeviceMirror {
             if (bluetoothGattInfoValue.getCharacteristic() != null && bluetoothGattInfoValue.getDescriptor() != null) {
                 bluetoothGattDescriptor = bluetoothGattInfoValue.getDescriptor();
             } else if (bluetoothGattInfoValue.getCharacteristic() != null && bluetoothGattInfoValue.getDescriptor() == null) {
-                bluetoothGattDescriptor = bluetoothGattInfoValue.getCharacteristic()
-                        .getDescriptor(UUID.fromString(BleConstant.CLIENT_CHARACTERISTIC_CONFIG));
-            }
-            bluetoothGattInfoValue.setDescriptor(bluetoothGattDescriptor);
-            bluetoothGattInfoKey = bluetoothGattInfoKey + bluetoothGattDescriptor.getUuid().toString();
-            if (isIndication) {
-                if (enable) {
-                    bluetoothGattDescriptor.setValue(BluetoothGattDescriptor.ENABLE_INDICATION_VALUE);
+                if (bluetoothGattInfoValue.getCharacteristic().getDescriptors() != null
+                        && bluetoothGattInfoValue.getCharacteristic().getDescriptors().size() == 1) {
+                    bluetoothGattDescriptor = bluetoothGattInfoValue.getCharacteristic().getDescriptors().get(0);
                 } else {
-                    bluetoothGattDescriptor.setValue(BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE);
-                }
-            } else {
-                if (enable) {
-                    bluetoothGattDescriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
-                } else {
-                    bluetoothGattDescriptor.setValue(BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE);
+                    bluetoothGattDescriptor = bluetoothGattInfoValue.getCharacteristic()
+                            .getDescriptor(UUID.fromString(BleConstant.CLIENT_CHARACTERISTIC_CONFIG));
                 }
             }
-            if (bluetoothGatt != null) {
-                bluetoothGatt.writeDescriptor(bluetoothGattDescriptor);
+            if (bluetoothGattDescriptor != null) {
+                bluetoothGattInfoValue.setDescriptor(bluetoothGattDescriptor);
+                if (isIndication) {
+                    if (enable) {
+                        bluetoothGattDescriptor.setValue(BluetoothGattDescriptor.ENABLE_INDICATION_VALUE);
+                    } else {
+                        bluetoothGattDescriptor.setValue(BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE);
+                    }
+                } else {
+                    if (enable) {
+                        bluetoothGattDescriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
+                    } else {
+                        bluetoothGattDescriptor.setValue(BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE);
+                    }
+                }
+                if (bluetoothGatt != null) {
+                    bluetoothGatt.writeDescriptor(bluetoothGattDescriptor);
+                }
             }
         }
         return success;
@@ -709,7 +788,7 @@ public class DeviceMirror {
                 handler.removeMessages(MSG_CONNECT_TIMEOUT);
                 handler.sendEmptyMessageDelayed(MSG_CONNECT_RETRY, BleConfig.getInstance().getConnectRetryInterval());
             }
-//            ViseLog.i("connectFailure connectRetryCount is " + connectRetryCount);
+            LogUtil.i(TAG , "connectFailure connectRetryCount is " + connectRetryCount);
         } else {
             if (bleException instanceof TimeoutException) {
                 connectState = ConnectState.CONNECT_TIMEOUT;
@@ -720,7 +799,7 @@ public class DeviceMirror {
             if (connectCallback != null) {
                 connectCallback.onConnectFailure(bleException);
             }
-//            ViseLog.i("connectFailure " + bleException);
+            LogUtil.i(TAG , "connectFailure " + bleException);
         }
     }
 
@@ -728,20 +807,19 @@ public class DeviceMirror {
      * 使能失败
      *
      * @param bleException
-     * @param isDescriptor
      * @param isRemoveCall
      */
-    private void enableFailure(BleException bleException, boolean isDescriptor, boolean isRemoveCall) {
+    private void enableFailure(BleException bleException, boolean isRemoveCall) {
         if (receiveDataRetryCount < BleConfig.getInstance().getOperateRetryCount()) {
             receiveDataRetryCount++;
             if (handler != null) {
                 handler.removeMessages(MSG_RECEIVE_DATA_TIMEOUT);
                 handler.sendEmptyMessageDelayed(MSG_RECEIVE_DATA_RETRY, BleConfig.getInstance().getOperateRetryInterval());
             }
-//            ViseLog.i("enableFailure receiveDataRetryCount is " + receiveDataRetryCount);
+            LogUtil.i(TAG , "enableFailure receiveDataRetryCount is " + receiveDataRetryCount);
         } else {
-            handleFailureData(enableInfoMap, bleException, isDescriptor, isRemoveCall);
-//            ViseLog.i("enableFailure " + bleException);
+            handleFailureData(enableInfoMap, bleException, isRemoveCall);
+            LogUtil.i(TAG , "enableFailure " + bleException);
         }
     }
 
@@ -749,20 +827,19 @@ public class DeviceMirror {
      * 读取数据失败
      *
      * @param bleException
-     * @param isDescriptor
      * @param isRemoveCall
      */
-    private void readFailure(BleException bleException, boolean isDescriptor, boolean isRemoveCall) {
+    private void readFailure(BleException bleException, boolean isRemoveCall) {
         if (readDataRetryCount < BleConfig.getInstance().getOperateRetryCount()) {
             readDataRetryCount++;
             if (handler != null) {
                 handler.removeMessages(MSG_READ_DATA_TIMEOUT);
                 handler.sendEmptyMessageDelayed(MSG_READ_DATA_RETRY, BleConfig.getInstance().getOperateRetryInterval());
             }
-//            ViseLog.i("readFailure readDataRetryCount is " + readDataRetryCount);
+            LogUtil.i(TAG , "readFailure readDataRetryCount is " + readDataRetryCount);
         } else {
-            handleFailureData(readInfoMap, bleException, isDescriptor, isRemoveCall);
-//            ViseLog.i("readFailure " + bleException);
+            handleFailureData(readInfoMap, bleException, isRemoveCall);
+            LogUtil.i(TAG , "readFailure " + bleException);
         }
     }
 
@@ -770,20 +847,19 @@ public class DeviceMirror {
      * 写入数据失败
      *
      * @param bleException
-     * @param isDescriptor
      * @param isRemoveCall
      */
-    private void writeFailure(BleException bleException, boolean isDescriptor, boolean isRemoveCall) {
+    private void writeFailure(BleException bleException, boolean isRemoveCall) {
         if (writeDataRetryCount < BleConfig.getInstance().getOperateRetryCount()) {
             writeDataRetryCount++;
             if (handler != null) {
                 handler.removeMessages(MSG_WRITE_DATA_TIMEOUT);
                 handler.sendEmptyMessageDelayed(MSG_WRITE_DATA_RETRY, BleConfig.getInstance().getOperateRetryInterval());
             }
-//            ViseLog.i("writeFailure writeDataRetryCount is " + writeDataRetryCount);
+            LogUtil.i(TAG , "writeFailure writeDataRetryCount is " + writeDataRetryCount);
         } else {
-            handleFailureData(writeInfoMap, bleException, isDescriptor, isRemoveCall);
-//            ViseLog.i("writeFailure " + bleException);
+            handleFailureData(writeInfoMap, bleException, isRemoveCall);
+            LogUtil.i(TAG , "writeFailure " + bleException);
         }
     }
 
@@ -793,11 +869,10 @@ public class DeviceMirror {
      * @param bluetoothGattInfoHashMap
      * @param value                    待发送数据
      * @param status                   发送数据状态
-     * @param isDescriptor             是否有描述值
      * @param isRemoveCall             是否需要移除回调
      */
     private synchronized void handleSuccessData(HashMap<String, BluetoothGattChannel> bluetoothGattInfoHashMap, byte[] value, int status,
-                                   boolean isDescriptor, boolean isRemoveCall) {
+                                                boolean isRemoveCall) {
         if (handler != null) {
             handler.removeCallbacksAndMessages(null);
         }
@@ -809,18 +884,10 @@ public class DeviceMirror {
             for (Map.Entry<String, BluetoothGattChannel> gattInfoEntry : bluetoothGattInfoHashMap.entrySet()) {
                 String bluetoothGattInfoKey = gattInfoEntry.getKey();
                 BluetoothGattChannel bluetoothGattInfoValue = gattInfoEntry.getValue();
-                if (isDescriptor) {
-                    if (bleCallbackKey.equals(bluetoothGattInfoKey) && bluetoothGattInfoValue.getDescriptor() != null) {
-                        bleCallbackValue.onSuccess(value, bluetoothGattInfoValue, bluetoothLeDevice);
-                        removeBleCallbackKey = bleCallbackKey;
-                        removeBluetoothGattInfoKey = bluetoothGattInfoKey;
-                    }
-                } else {
-                    if (bleCallbackKey.equals(bluetoothGattInfoKey) && bluetoothGattInfoValue.getDescriptor() == null) {
-                        bleCallbackValue.onSuccess(value, bluetoothGattInfoValue, bluetoothLeDevice);
-                        removeBleCallbackKey = bleCallbackKey;
-                        removeBluetoothGattInfoKey = bluetoothGattInfoKey;
-                    }
+                if (bleCallbackKey.equals(bluetoothGattInfoKey)) {
+                    bleCallbackValue.onSuccess(value, bluetoothGattInfoValue, bluetoothLeDevice);
+                    removeBleCallbackKey = bleCallbackKey;
+                    removeBluetoothGattInfoKey = bluetoothGattInfoKey;
                 }
             }
         }
@@ -837,11 +904,10 @@ public class DeviceMirror {
      *
      * @param bluetoothGattInfoHashMap
      * @param bleExceprion             回调异常
-     * @param isDescriptor             是否有描述值
      * @param isRemoveCall             是否需要移除回调
      */
     private synchronized void handleFailureData(HashMap<String, BluetoothGattChannel> bluetoothGattInfoHashMap, BleException bleExceprion,
-                                   boolean isDescriptor, boolean isRemoveCall) {
+                                                boolean isRemoveCall) {
         if (handler != null) {
             handler.removeCallbacksAndMessages(null);
         }
@@ -852,19 +918,10 @@ public class DeviceMirror {
             IBleCallback bleCallbackValue = callbackEntry.getValue();
             for (Map.Entry<String, BluetoothGattChannel> gattInfoEntry : bluetoothGattInfoHashMap.entrySet()) {
                 String bluetoothGattInfoKey = gattInfoEntry.getKey();
-                BluetoothGattChannel bluetoothGattInfoValue = gattInfoEntry.getValue();
-                if (isDescriptor) {
-                    if (bleCallbackKey.equals(bluetoothGattInfoKey) && bluetoothGattInfoValue.getDescriptor() != null) {
-                        bleCallbackValue.onFailure(bleExceprion);
-                        removeBleCallbackKey = bleCallbackKey;
-                        removeBluetoothGattInfoKey = bluetoothGattInfoKey;
-                    }
-                } else {
-                    if (bleCallbackKey.equals(bluetoothGattInfoKey) && bluetoothGattInfoValue.getDescriptor() == null) {
-                        bleCallbackValue.onFailure(bleExceprion);
-                        removeBleCallbackKey = bleCallbackKey;
-                        removeBluetoothGattInfoKey = bluetoothGattInfoKey;
-                    }
+                if (bleCallbackKey.equals(bluetoothGattInfoKey)) {
+                    bleCallbackValue.onFailure(bleExceprion);
+                    removeBleCallbackKey = bleCallbackKey;
+                    removeBluetoothGattInfoKey = bluetoothGattInfoKey;
                 }
             }
         }

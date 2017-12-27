@@ -5,6 +5,7 @@ import android.bluetooth.BluetoothManager;
 import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
+import android.text.TextUtils;
 
 import com.locksdk.baseble.callback.IConnectCallback;
 import com.locksdk.baseble.callback.scan.IScanCallback;
@@ -17,6 +18,8 @@ import com.locksdk.baseble.core.DeviceMirrorPool;
 import com.locksdk.baseble.exception.TimeoutException;
 import com.locksdk.baseble.model.BluetoothLeDevice;
 import com.locksdk.baseble.model.BluetoothLeDeviceStore;
+import com.locksdk.util.LogUtil;
+
 
 /**
  * @Description: BLE设备操作入口
@@ -24,10 +27,12 @@ import com.locksdk.baseble.model.BluetoothLeDeviceStore;
  * @date: 17/8/1 22:24.
  */
 public class ViseBle {
+     private static final String TAG = "ViseBle";
     private Context context;//上下文
     private BluetoothManager bluetoothManager;//蓝牙管理
     private BluetoothAdapter bluetoothAdapter;//蓝牙适配器
     private DeviceMirrorPool deviceMirrorPool;//设备连接池
+    private DeviceMirror lastDeviceMirror;//上次操作设备镜像
 
     private static ViseBle instance;//入口操作管理
     private static BleConfig bleConfig = BleConfig.getInstance();
@@ -77,35 +82,13 @@ public class ViseBle {
     /**
      * 开始扫描
      *
-     * @param leScanCallback 回调
-     */
-    public void startLeScan(BluetoothAdapter.LeScanCallback leScanCallback) {
-        if (bluetoothAdapter != null) {
-            bluetoothAdapter.startLeScan(leScanCallback);
-        }
-    }
-
-    /**
-     * 停止扫描
-     *
-     * @param leScanCallback 回调
-     */
-    public void stopLeScan(BluetoothAdapter.LeScanCallback leScanCallback) {
-        if (bluetoothAdapter != null) {
-            bluetoothAdapter.stopLeScan(leScanCallback);
-        }
-    }
-
-    /**
-     * 开始扫描
-     *
      * @param scanCallback 自定义回调
      */
     public void startScan(ScanCallback scanCallback) {
         if (scanCallback == null) {
             throw new IllegalArgumentException("this ScanCallback is Null!");
         }
-        scanCallback.setScan(true).setScanTimeout(BleConfig.getInstance().getScanTimeout()).scan();
+        scanCallback.setScan(true).scan();
     }
 
     /**
@@ -128,14 +111,19 @@ public class ViseBle {
      */
     public void connect(BluetoothLeDevice bluetoothLeDevice, IConnectCallback connectCallback) {
         if (bluetoothLeDevice == null || connectCallback == null) {
-//            ViseLog.e("This bluetoothLeDevice or connectCallback is null.");
+            LogUtil.i(TAG,"This bluetoothLeDevice or connectCallback is null.");
             return;
         }
         if (deviceMirrorPool != null && !deviceMirrorPool.isContainDevice(bluetoothLeDevice)) {
             DeviceMirror deviceMirror = new DeviceMirror(bluetoothLeDevice);
+            if (lastDeviceMirror != null && !TextUtils.isEmpty(lastDeviceMirror.getUniqueSymbol())
+                    && lastDeviceMirror.getUniqueSymbol().equals(deviceMirror.getUniqueSymbol())) {
+                deviceMirror = lastDeviceMirror;//防止重复创建设备镜像
+            }
             deviceMirror.connect(connectCallback);
+            lastDeviceMirror = deviceMirror;
         } else {
-//            ViseLog.i("This device is connected.");
+            LogUtil.i(TAG,"This device is connected.");
         }
     }
 
@@ -147,12 +135,12 @@ public class ViseBle {
      */
     public void connectByMac(String mac, final IConnectCallback connectCallback) {
         if (mac == null || connectCallback == null) {
-//            ViseLog.e("This mac or connectCallback is null.");
+            LogUtil.e(TAG,"This mac or connectCallback is null.");
             return;
         }
         startScan(new SingleFilterScanCallback(new IScanCallback() {
             @Override
-            public void onDeviceFound(BluetoothLeDeviceStore bluetoothLeDeviceStore) {
+            public void onDeviceFound(BluetoothLeDevice bluetoothLeDevice) {
 
             }
 
@@ -185,12 +173,12 @@ public class ViseBle {
      */
     public void connectByName(String name, final IConnectCallback connectCallback) {
         if (name == null || connectCallback == null) {
-//            ViseLog.e("This name or connectCallback is null.");
+            LogUtil.e(TAG,"This name or connectCallback is null.");
             return;
         }
         startScan(new SingleFilterScanCallback(new IScanCallback() {
             @Override
-            public void onDeviceFound(BluetoothLeDeviceStore bluetoothLeDeviceStore) {
+            public void onDeviceFound(BluetoothLeDevice bluetoothLeDevice) {
 
             }
 
@@ -317,5 +305,53 @@ public class ViseBle {
      */
     public DeviceMirrorPool getDeviceMirrorPool() {
         return deviceMirrorPool;
+    }
+
+    /**
+     * 获取当前连接失败重试次数
+     *
+     * @return
+     */
+    public int getConnectRetryCount() {
+        if (lastDeviceMirror == null) {
+            return 0;
+        }
+        return lastDeviceMirror.getConnectRetryCount();
+    }
+
+    /**
+     * 获取当前读取数据失败重试次数
+     *
+     * @return
+     */
+    public int getReadDataRetryCount() {
+        if (lastDeviceMirror == null) {
+            return 0;
+        }
+        return lastDeviceMirror.getReadDataRetryCount();
+    }
+
+    /**
+     * 获取当前使能数据失败重试次数
+     *
+     * @return
+     */
+    public int getReceiveDataRetryCount() {
+        if (lastDeviceMirror == null) {
+            return 0;
+        }
+        return lastDeviceMirror.getReceiveDataRetryCount();
+    }
+
+    /**
+     * 获取当前写入数据失败重试次数
+     *
+     * @return
+     */
+    public int getWriteDataRetryCount() {
+        if (lastDeviceMirror == null) {
+            return 0;
+        }
+        return lastDeviceMirror.getWriteDataRetryCount();
     }
 }

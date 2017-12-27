@@ -1,9 +1,7 @@
 package com.locksdk.baseble.callback.scan;
 
-
 import com.locksdk.baseble.ViseBle;
 import com.locksdk.baseble.model.BluetoothLeDevice;
-import com.locksdk.baseble.model.BluetoothLeDeviceStore;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -23,18 +21,17 @@ public class SingleFilterScanCallback extends ScanCallback {
 
     public ScanCallback setDeviceName(String deviceName) {
         this.deviceName = deviceName;
-        bluetoothLeDeviceStore.clear();
         return this;
     }
 
     public ScanCallback setDeviceMac(String deviceMac) {
         this.deviceMac = deviceMac;
-        bluetoothLeDeviceStore.clear();
         return this;
     }
 
     @Override
-    public BluetoothLeDeviceStore onFilter(BluetoothLeDevice bluetoothLeDevice) {
+    public BluetoothLeDevice onFilter(BluetoothLeDevice bluetoothLeDevice) {
+        BluetoothLeDevice tempDevice = null;
         if (!hasFound.get()) {
             if (bluetoothLeDevice != null && bluetoothLeDevice.getAddress() != null && deviceMac != null
                     && deviceMac.equalsIgnoreCase(bluetoothLeDevice.getAddress().trim())) {
@@ -42,6 +39,7 @@ public class SingleFilterScanCallback extends ScanCallback {
                 isScanning = false;
                 removeHandlerMsg();
                 ViseBle.getInstance().stopScan(SingleFilterScanCallback.this);
+                tempDevice = bluetoothLeDevice;
                 bluetoothLeDeviceStore.addDevice(bluetoothLeDevice);
                 scanCallback.onScanFinish(bluetoothLeDeviceStore);
             } else if (bluetoothLeDevice != null && bluetoothLeDevice.getName() != null && deviceName != null
@@ -50,10 +48,11 @@ public class SingleFilterScanCallback extends ScanCallback {
                 isScanning = false;
                 removeHandlerMsg();
                 ViseBle.getInstance().stopScan(SingleFilterScanCallback.this);
+                tempDevice = bluetoothLeDevice;
                 bluetoothLeDeviceStore.addDevice(bluetoothLeDevice);
                 scanCallback.onScanFinish(bluetoothLeDeviceStore);
             }
         }
-        return bluetoothLeDeviceStore;
+        return tempDevice;
     }
 }

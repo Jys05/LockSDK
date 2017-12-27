@@ -2,11 +2,10 @@ package com.locksdk.baseble.callback.scan;
 
 import android.text.TextUtils;
 
+import com.locksdk.baseble.model.BluetoothLeDevice;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import com.locksdk.baseble.model.BluetoothLeDevice;
-import com.locksdk.baseble.model.BluetoothLeDeviceStore;
 
 /**
  * @Description: 根据正则过滤扫描设备，这里设置的是根据一定信号范围内指定正则设备名称的过滤
@@ -29,32 +28,31 @@ public class RegularFilterScanCallback extends ScanCallback {
         if (!TextUtils.isEmpty(this.regularDeviceName)) {
             pattern = Pattern.compile(this.regularDeviceName);
         }
-        bluetoothLeDeviceStore.clear();
         return this;
     }
 
     public RegularFilterScanCallback setDeviceRssi(int deviceRssi) {
         this.deviceRssi = deviceRssi;
-        bluetoothLeDeviceStore.clear();
         return this;
     }
 
     @Override
-    public BluetoothLeDeviceStore onFilter(BluetoothLeDevice bluetoothLeDevice) {
+    public BluetoothLeDevice onFilter(BluetoothLeDevice bluetoothLeDevice) {
+        BluetoothLeDevice tempDevice = null;
         String tempName = bluetoothLeDevice.getName();
         int tempRssi = bluetoothLeDevice.getRssi();
-        matcher = pattern.matcher(tempName);
-        if (this.deviceRssi < 0) {
-            if (matcher.matches() && tempRssi >= this.deviceRssi) {
-                bluetoothLeDeviceStore.addDevice(bluetoothLeDevice);
-            } else if (matcher.matches() && tempRssi < this.deviceRssi) {
-                bluetoothLeDeviceStore.removeDevice(bluetoothLeDevice);
-            }
-        } else {
-            if (matcher.matches()) {
-                bluetoothLeDeviceStore.addDevice(bluetoothLeDevice);
+        if (!TextUtils.isEmpty(tempName)) {
+            matcher = pattern.matcher(tempName);
+            if (this.deviceRssi < 0) {
+                if (matcher.matches() && tempRssi >= this.deviceRssi) {
+                    tempDevice = bluetoothLeDevice;
+                }
+            } else {
+                if (matcher.matches()) {
+                    tempDevice = bluetoothLeDevice;
+                }
             }
         }
-        return bluetoothLeDeviceStore;
+        return tempDevice;
     }
 }

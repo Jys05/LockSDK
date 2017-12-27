@@ -1,6 +1,5 @@
 package com.locksdk.baseble.callback;
 
-
 import com.locksdk.baseble.exception.BleException;
 
 /**
