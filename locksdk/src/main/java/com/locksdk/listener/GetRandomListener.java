@@ -10,4 +10,6 @@ import com.locksdk.bean.RandomAttr;
 
 public interface GetRandomListener {
     void getRandomCallback(Result<RandomAttr> randomAttrResult);
+
+    void oprTimoutTryAgain();
 }

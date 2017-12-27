@@ -80,79 +80,80 @@ public class LockApiBleUtil {
     private boolean IsScannering = false;
     private DeviceMirror mDeviceMirror;
     // TODO: 2017/12/26 暂时注释掉二次写入 （下述）
-    private boolean isWriteAndNotifyStart = false;           //写入开始，并开始写入和Notify的时间倒计时3.5秒（2500）
-    private WriteDataListener mWriteDataListener;
-    private long mWriteSecondTime = 3500;
-    private int mTryAgainCount = 1;     //重发次数
-    private Handler mWriteNotifyHandler = new Handler(new Handler.Callback() {
-        @Override
-        public boolean handleMessage(Message message) {
-            if (isWriteAndNotifyStart) {
-                //证明写入后，3.5秒后没有数据返回，所以断开连接，在Activity的Eventbus执行clear
-                isWriteAndNotifyStart = false;
-                LogUtil.e(TAG + "====", "mTryAgainCount重发次数还剩：" + mTryAgainCount);
-               switch (message.what){
-                   case 0x00:
-                       if (mTryAgainCount != 0) {
-                           mTryAgainCount = mTryAgainCount - 1;
-                           mWriteDataListener.onWriteTimout();
-                       }
-                       break;
-                   case 0x01:
-                       WriteAndNoficeUtil.getInstantce().setWriteData(null);
-                       break;
-               }
-            } else {
-                mWriteNotifyHandler.removeCallbacksAndMessages(null);
-            }
-            return false;
-        }
-    });
+//    private boolean isWriteAndNotifyStart = false;           //写入开始，并开始写入和Notify的时间倒计时3.5秒（2500）
     private byte[] mWriteData;
+    private WriteDataListener mWriteDataListener;
+//    private long mWriteSecondTime = 3500;
+//    private int mTryAgainCount = 1;     //重发次数
+//    private Handler mWriteNotifyHandler = new Handler(new Handler.Callback() {
+//        @Override
+//        public boolean handleMessage(Message message) {
+//            if (isWriteAndNotifyStart) {
+//                //证明写入后，3.5秒后没有数据返回，所以断开连接，在Activity的Eventbus执行clear
+//                isWriteAndNotifyStart = false;
+//                LogUtil.e(TAG + "====", "mTryAgainCount重发次数还剩：" + mTryAgainCount);
+//               switch (message.what){
+//                   case 0x00:
+//                       if (mTryAgainCount != 0) {
+//                           mTryAgainCount = mTryAgainCount - 1;
+//                           mWriteDataListener.onWriteTimout();
+//                       }
+//                       break;
+//                   case 0x01:
+//                       WriteAndNoficeUtil.getInstantce().setWriteData(null);
+//                       break;
+//               }
+//            } else {
+//                mWriteNotifyHandler.removeCallbacksAndMessages(null);
+//            }
+//            return false;
+//        }
+//    });
 
-    public void setIisWriteAndNotifyStart(boolean isWriteAndNotifyStart) {
-        this.isWriteAndNotifyStart = isWriteAndNotifyStart;
-    }
-
-    //设置多少时间后第二次写入
-    public void setWriteSecondTime(long writeSecondTime) {
-        mWriteSecondTime = writeSecondTime;
-    }
-
-    public void sendWriteSecondHandler(WriteDataListener writeDataListener) {
-        mWriteDataListener = writeDataListener;
-        setIisWriteAndNotifyStart(true);
-        LogUtil.e(TAG + "====", "写入刚开始的计时" + mWriteSecondTime);
-        clearmWriteNotifyHandler();
-        mWriteNotifyHandler.sendEmptyMessageDelayed(0x00, mWriteSecondTime);
-    }
-
-    public void sendNotifyTimeoutHandler() {
-        setIisWriteAndNotifyStart(true);
-        LogUtil.e(TAG + "====", "第二次写入后Notify通知开始的计时" + mWriteSecondTime);
-        clearmWriteNotifyHandler();
-        mWriteNotifyHandler.sendEmptyMessageDelayed(0x01, mWriteSecondTime);
-    }
-
-    public void clearmWriteNotifyHandler() {
-        if (mWriteNotifyHandler != null) {
-            LogUtil.e(TAG + "====", "清理mWriteNotifyHandler：");
-            mWriteNotifyHandler.removeCallbacksAndMessages(null);
-        }
-    }
-
-    public void clearIsWriteAndNotifyStart() {
-        setIisWriteAndNotifyStart(false);
-        clearmWriteNotifyHandler();
-    }
-
-    public int getTryAgainCount() {
-        return mTryAgainCount;
-    }
-
-    public void setTryAgainCount(int tryAgainCount) {
-        mTryAgainCount = tryAgainCount;
-    }
+//
+//    public void setIisWriteAndNotifyStart(boolean isWriteAndNotifyStart) {
+//        this.isWriteAndNotifyStart = isWriteAndNotifyStart;
+//    }
+//
+//    //设置多少时间后第二次写入
+//    public void setWriteSecondTime(long writeSecondTime) {
+//        mWriteSecondTime = writeSecondTime;
+//    }
+//
+//    public void sendWriteSecondHandler(WriteDataListener writeDataListener) {
+//        mWriteDataListener = writeDataListener;
+//        setIisWriteAndNotifyStart(true);
+//        LogUtil.e(TAG + "====", "写入刚开始的计时" + mWriteSecondTime);
+//        clearmWriteNotifyHandler();
+//        mWriteNotifyHandler.sendEmptyMessageDelayed(0x00, mWriteSecondTime);
+//    }
+//
+//    public void sendNotifyTimeoutHandler() {
+//        setIisWriteAndNotifyStart(true);
+//        LogUtil.e(TAG + "====", "第二次写入后Notify通知开始的计时" + mWriteSecondTime);
+//        clearmWriteNotifyHandler();
+//        mWriteNotifyHandler.sendEmptyMessageDelayed(0x01, mWriteSecondTime);
+//    }
+//
+//    public void clearmWriteNotifyHandler() {
+//        if (mWriteNotifyHandler != null) {
+//            LogUtil.e(TAG + "====", "清理mWriteNotifyHandler：");
+//            mWriteNotifyHandler.removeCallbacksAndMessages(null);
+//        }
+//    }
+//
+//    public void clearIsWriteAndNotifyStart() {
+//        setIisWriteAndNotifyStart(false);
+//        clearmWriteNotifyHandler();
+//    }
+//
+//    public int getTryAgainCount() {
+//        return mTryAgainCount;
+//    }
+//
+//    public void setTryAgainCount(int tryAgainCount) {
+//        mTryAgainCount = tryAgainCount;
+//    }
     // TODO: 2017/12/26 暂时注释掉二次写入（上述）
 
     //TOdo 之后需要整理
@@ -472,7 +473,7 @@ public class LockApiBleUtil {
             mDeviceSleepTime = LockAPI.getInstance().getDeviceSleepTime();
             mAllowSleepHandler.removeCallbacksAndMessages(null);
         }
-        clearIsWriteAndNotifyStart();
+//        clearIsWriteAndNotifyStart();
     }
 
     /**
@@ -482,9 +483,9 @@ public class LockApiBleUtil {
         mWriteData = new byte[2];
         mWriteData[0] = 0x00;
         mWriteData[1] = 0x14;
-        LockApiBleUtil.getInstance().setWriteSecondTime(3500);
-        LogUtil.i(TAG, "重发次数" + LockApiBleUtil.getInstance().getTryAgainCount());
-        WriteAndNoficeUtil.getInstantce().writeFunctionCode(mWriteData[1], mWriteData, mWriteDataListener2, LockApiBleUtil.getInstance().getTryAgainCount());
+//        LockApiBleUtil.getInstance().setWriteSecondTime(3500);
+//        LogUtil.i(TAG, "重发次数" + LockApiBleUtil.getInstance().getTryAgainCount());
+        WriteAndNoficeUtil.getInstantce().writeFunctionCode(mWriteData[1], mWriteData, mWriteDataListener2);
     }
 
     private WriteDataListener mWriteDataListener2 = new WriteDataListener() {
@@ -499,13 +500,13 @@ public class LockApiBleUtil {
             mAllowSleepHandler.removeCallbacksAndMessages(null);
         }
 
-        @Override
-        public void onWriteTimout() {
-            if (mWriteData != null) {
-                LogUtil.i(TAG, "重发剩余次数" + LockApiBleUtil.getInstance().getTryAgainCount());
-                WriteAndNoficeUtil.getInstantce().writeFunctionCode(mWriteData[1], mWriteData, mWriteDataListener2, LockApiBleUtil.getInstance().getTryAgainCount());
-            }
-        }
+//        @Override
+//        public void onWriteTimout() {
+//            if (mWriteData != null) {
+////                LogUtil.i(TAG, "重发剩余次数" + LockApiBleUtil.getInstance().getTryAgainCount());
+//                WriteAndNoficeUtil.getInstantce().writeFunctionCode(mWriteData[1], mWriteData, mWriteDataListener2);
+//            }
+//        }
     };
 
     /**
@@ -568,7 +569,7 @@ public class LockApiBleUtil {
         mBoxName = null;
         isConnecting = false;
         isConnectSuccess = false;
-        clearIsWriteAndNotifyStart();
+//        clearIsWriteAndNotifyStart();
         WriteAndNoficeUtil.getInstantce().setWriteData(null);
         clearHandler();
         //清理获取的锁具ID
@@ -602,28 +603,28 @@ public class LockApiBleUtil {
         @Override
         public void onConnectSuccess(DeviceMirror deviceMirror) {
             if (mConnectListener != null) {
-                LogUtil.i(TAG ,"onConnectSuccess的isConnecting:"+isConnecting);
+                LogUtil.i(TAG, "onConnectSuccess的isConnecting:" + isConnecting);
 //                if (isConnecting) {
-                    LogUtil.e(TAG, "连接成功");          //防止设备休眠，时间计算12秒后发数据给板子
-                    isConnecting = false;
-                    isConnectSuccess = true;
-                    //再次获取连接的款箱名、锁具ID(款箱Mac)
-                    mDeviceMirror = deviceMirror;
-                    mConnectRetryCount = BleConfig.getInstance().getConnectRetryCount();
-                    mBoxName = deviceMirror.getBluetoothLeDevice().getDevice().getName();
-                    mBoxMac = deviceMirror.getBluetoothLeDevice().getDevice().getAddress();
-                    mConnectedBoxDevice = deviceMirror.getBluetoothLeDevice();
-                    mGatt = deviceMirror.getBluetoothGatt();
-                    mBluetoothGattService = mGatt.getService(UUID.fromString(Constant.SERVICE_UUID));
-                    LockAPI lockAPI = LockAPI.getInstance();
-                    lockAPI.resigeterNotify();      //注册通知监听
-                    LogUtil.e(TAG, "开始心跳计时");          //防止设备休眠，时间计算12秒后发数据给板子
-                    mDeviceSleepTime = lockAPI.getDeviceSleepTime();
-                    LogUtil.i(TAG , "心跳计时时长："+mDeviceSleepTime);
-                    clearHandler();
-                    mAllowSleepHandler.sendEmptyMessageDelayed(0x00, 100);
-                    //调用连接成功接口
-                    mConnectListener.onSuccess(mConnectedBoxDevice, Constant.SERVICE_UUID, mBoxName);
+                LogUtil.e(TAG, "连接成功");          //防止设备休眠，时间计算12秒后发数据给板子
+                isConnecting = false;
+                isConnectSuccess = true;
+                //再次获取连接的款箱名、锁具ID(款箱Mac)
+                mDeviceMirror = deviceMirror;
+                mConnectRetryCount = BleConfig.getInstance().getConnectRetryCount();
+                mBoxName = deviceMirror.getBluetoothLeDevice().getDevice().getName();
+                mBoxMac = deviceMirror.getBluetoothLeDevice().getDevice().getAddress();
+                mConnectedBoxDevice = deviceMirror.getBluetoothLeDevice();
+                mGatt = deviceMirror.getBluetoothGatt();
+                mBluetoothGattService = mGatt.getService(UUID.fromString(Constant.SERVICE_UUID));
+                LockAPI lockAPI = LockAPI.getInstance();
+                lockAPI.resigeterNotify();      //注册通知监听
+                LogUtil.e(TAG, "开始心跳计时");          //防止设备休眠，时间计算12秒后发数据给板子
+                mDeviceSleepTime = lockAPI.getDeviceSleepTime();
+                LogUtil.i(TAG, "心跳计时时长：" + mDeviceSleepTime);
+                clearHandler();
+                mAllowSleepHandler.sendEmptyMessageDelayed(0x00, 100);
+                //调用连接成功接口
+                mConnectListener.onSuccess(mConnectedBoxDevice, Constant.SERVICE_UUID, mBoxName);
 //                } else {
 //                    LogUtil.e(TAG, "假连接");
 //                    closeConnection();

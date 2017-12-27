@@ -178,7 +178,7 @@ public class LockAPI {
 
     public void setTryAgainCount(int tryAgainCount) {
         this.mTryAgainCount = tryAgainCount;
-        LockApiBleUtil.getInstance().setTryAgainCount(tryAgainCount);
+//        LockApiBleUtil.getInstance().setTryAgainCount(tryAgainCount);
     }
 
     //激活
@@ -190,8 +190,8 @@ public class LockAPI {
             LogUtil.i(TAG, "激活");
             removeCallbacksAndMessages();
             LogUtil.i(TAG, "设置多少时间后重发和设置重发次数");
-            LockApiBleUtil.getInstance().setTryAgainCount(mTryAgainCount);
-            LockApiBleUtil.getInstance().setWriteSecondTime(6500);
+//            LockApiBleUtil.getInstance().setTryAgainCount(mTryAgainCount);
+//            LockApiBleUtil.getInstance().setWriteSecondTime(6500);
             mActiveLockListener = activeLockListener;
             ActiveLockUtil.activeLock(param, activeLockListener);
         } else {
@@ -221,9 +221,6 @@ public class LockAPI {
             LogUtil.i(TAG, "开锁");
             removeCallbacksAndMessages();
             mOpenLockListener = openLockListener;
-            LogUtil.i(TAG, "设置多少时间后重发和设置重发次数");
-            LockApiBleUtil.getInstance().setTryAgainCount(mTryAgainCount);
-            LockApiBleUtil.getInstance().setWriteSecondTime(3500);
             OpenLockUtil.opnenLock(param, openLockListener);
         } else {
             if (openLockListener != null) {
@@ -243,9 +240,6 @@ public class LockAPI {
         if (WriteAndNoficeUtil.getInstantce().getWriteData() == null) {
             LogUtil.i(TAG, "获取随机数（开箱触发）");
             removeCallbacksAndMessages();
-            LogUtil.i(TAG, "设置多少时间后重发和设置重发次数");
-            LockApiBleUtil.getInstance().setTryAgainCount(mTryAgainCount);
-            LockApiBleUtil.getInstance().setWriteSecondTime(3500);
             mGetRandomListener = getRandomListener;
             GetRandomUtil.getRandom(boxName, getRandomListener);
         } else {
@@ -267,9 +261,6 @@ public class LockAPI {
         if (WriteAndNoficeUtil.getInstantce().getWriteData() == null) {
             LogUtil.i(TAG, "查询锁状态");
             removeCallbacksAndMessages();
-            LogUtil.i(TAG, "设置多少时间后重发和设置重发次数");
-            LockApiBleUtil.getInstance().setTryAgainCount(mTryAgainCount);
-            LockApiBleUtil.getInstance().setWriteSecondTime(3500);
             QueryLockStatusUtil.queryLockStatus(lockId, mLockStatusListener);
         } else {
             if (mLockStatusListener != null) {
@@ -285,9 +276,6 @@ public class LockAPI {
         if (WriteAndNoficeUtil.getInstantce().getWriteData() == null) {
             LogUtil.i(TAG, "查询日志");
             removeCallbacksAndMessages();
-            LogUtil.i(TAG, "设置多少时间后重发和设置重发次数");
-            LockApiBleUtil.getInstance().setTryAgainCount(mTryAgainCount);
-            LockApiBleUtil.getInstance().setWriteSecondTime(3500);
             mQueryLogsListener = logsListener;
             QueryLogsUtil.queryLogs(param, logsListener);
         } else {
@@ -312,15 +300,12 @@ public class LockAPI {
         LogUtil.i(TAG, "清理LockApiBleUtil中防止设备休眠的Handler");
         //清理Handler
         LockApiBleUtil.getInstance().clearHandler();
-        LockApiBleUtil.getInstance().clearmWriteNotifyHandler();
     }
 
     private NoficeDataListener mNoficeDataListener = new NoficeDataListener() {
         @Override
         public void onNoficeSuccess(NoficeCallbackData callbackData) {
             if (callbackData.isFinish()) {
-                LogUtil.i(TAG, "关闭二次重发机制，以及允许其他接口写入");
-                LockApiBleUtil.getInstance().clearIsWriteAndNotifyStart();
                 if (callbackData.getData() != null) {
                     LogUtil.i(TAG, callbackData.getData().length + "---" + HexUtil.encodeHexStr(callbackData.getData()));
                     dealtNotifyCallBackDataForSuccess(callbackData);

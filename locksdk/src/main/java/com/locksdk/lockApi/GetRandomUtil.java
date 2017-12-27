@@ -38,8 +38,8 @@ public class GetRandomUtil {
         byte[] boxNameForByte = boxName.getBytes();
         byte[] boxNameForByte2 = DealtByteUtil.dataAdd0(boxNameForByte, 16);        //补零后的
         System.arraycopy(boxNameForByte2, 0, data, 2, boxNameForByte2.length);
-        LogUtil.i(TAG, "重发次数" + LockApiBleUtil.getInstance().getTryAgainCount());
-        WriteAndNoficeUtil.getInstantce().writeFunctionCode(data[1], data, writeDataListener, LockApiBleUtil.getInstance().getTryAgainCount());
+//        LogUtil.i(TAG, "重发次数" + LockApiBleUtil.getInstance().getTryAgainCount());
+        WriteAndNoficeUtil.getInstantce().writeFunctionCode(data[1], data, writeDataListener);
     }
 
     private static WriteDataListener writeDataListener = new WriteDataListener() {
@@ -58,15 +58,15 @@ public class GetRandomUtil {
             randomAttrResult.setData(null);
             getRandomListener.getRandomCallback(randomAttrResult);
         }
-
-        @Override
-        public void onWriteTimout() {
-            if (data != null) {
-                //首次写入数据，写入data的第一个，剩下的在监听中完成
-                LogUtil.i(TAG, "获取随机数第二次");
-                LogUtil.i(TAG, "重发剩余次数" + LockApiBleUtil.getInstance().getTryAgainCount());
-                WriteAndNoficeUtil.getInstantce().writeFunctionCode(data[1], data, writeDataListener, LockApiBleUtil.getInstance().getTryAgainCount());
-            }
-        }
+//
+//        @Override
+//        public void onWriteTimout() {
+//            if (data != null) {
+//                //首次写入数据，写入data的第一个，剩下的在监听中完成
+//                LogUtil.i(TAG, "获取随机数第二次");
+//                LogUtil.i(TAG, "重发剩余次数" + LockApiBleUtil.getInstance().getTryAgainCount());
+//                WriteAndNoficeUtil.getInstantce().writeFunctionCode(data[1], data, writeDataListener, LockApiBleUtil.getInstance().getTryAgainCount());
+//            }
+//        }
     };
 }

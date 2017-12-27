@@ -209,24 +209,32 @@ public class MainActivity extends FrameActivity {
             return;
         }
         //LoadingUtil.showTipText("写入数据中");
-        mLockAPI.getRandom(mBoxName, new GetRandomListener() {
-            @Override
-            public void getRandomCallback(Result<RandomAttr> randomAttrResult) {
-                if (randomAttrResult.getData() != null) {
-                    mMsg = "返回信息：" + randomAttrResult.getMsg() +
-                            "\n款箱名：" + randomAttrResult.getData().getBoxName()
-                            + "\n随机数：" + randomAttrResult.getData().getRandom()
-                            + "\n闭锁码：" + randomAttrResult.getData().getCloseCode()
-                            + "\n动态密码传输密钥版本" + randomAttrResult.getData().getDpCommKeyVer()
-                            + "\n动态密码密钥版本" + randomAttrResult.getData().getDpKeyVer();
-                } else {
-                    mMsg = "返回信息：" + randomAttrResult.getMsg();
-                }
-                mHandler.sendEmptyMessage(0x02);
-
-            }
-        });
+        mLockAPI.getRandom(mBoxName, mGetRandomListener);
     }
+
+
+    private GetRandomListener mGetRandomListener = new GetRandomListener() {
+        @Override
+        public void getRandomCallback(Result<RandomAttr> randomAttrResult) {
+            if (randomAttrResult.getData() != null) {
+                mMsg = "返回信息：" + randomAttrResult.getMsg() +
+                        "\n款箱名：" + randomAttrResult.getData().getBoxName()
+                        + "\n随机数：" + randomAttrResult.getData().getRandom()
+                        + "\n闭锁码：" + randomAttrResult.getData().getCloseCode()
+                        + "\n动态密码传输密钥版本" + randomAttrResult.getData().getDpCommKeyVer()
+                        + "\n动态密码密钥版本" + randomAttrResult.getData().getDpKeyVer();
+            } else {
+                mMsg = "返回信息：" + randomAttrResult.getMsg();
+            }
+            mHandler.sendEmptyMessage(0x02);
+
+        }
+
+        @Override
+        public void oprTimoutTryAgain() {
+            mLockAPI.getRandom(mBoxName, mGetRandomListener);
+        }
+    };
 
     //查询状态
     public void onQueryLockStatusClick(View view) {

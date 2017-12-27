@@ -13,5 +13,5 @@ public interface WriteDataListener {
 
     void onWriteFail(WriteCallbackData data);       //错误时，数据为null
 
-    void onWriteTimout();           //写入或监听Notify超时
+//    void onWriteTimout();           //写入或监听Notify超时
 }
