@@ -71,7 +71,8 @@ public class ActiveLockUtil {
         System.arraycopy(btDpCommChkCode, 0, data, 140, btDpCommChkCode.length);
         System.arraycopy(btBoxName, 0, data, 156, btBoxName.length);
         //首次写入数据，写入data的第一个，剩下的在监听中完成
-        WriteAndNoficeUtil.getInstantce().writeFunctionCode2(data[0], data, writeDataListener ,false);
+        LogUtil.i(TAG , "重发次数"+LockApiBleUtil.getInstance().getTryAgainCount());
+        WriteAndNoficeUtil.getInstantce().writeFunctionCode2(data[0], data, writeDataListener ,LockApiBleUtil.getInstance().getTryAgainCount());
     }
 
 
@@ -98,7 +99,8 @@ public class ActiveLockUtil {
             if(data != null){
                 //首次写入数据，写入data的第一个，剩下的在监听中完成
                 LogUtil.i(TAG , "第二次");
-                WriteAndNoficeUtil.getInstantce().writeFunctionCode2(data[0], data, writeDataListener , true);
+                LogUtil.i(TAG , "重发剩余次数"+LockApiBleUtil.getInstance().getTryAgainCount());
+                WriteAndNoficeUtil.getInstantce().writeFunctionCode2(data[0], data, writeDataListener , LockApiBleUtil.getInstance().getTryAgainCount());
             }
         }
     };

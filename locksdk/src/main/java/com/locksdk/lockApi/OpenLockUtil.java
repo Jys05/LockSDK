@@ -50,7 +50,8 @@ public class OpenLockUtil {
         System.arraycopy(btDynamicPwd, 0, writeData, 24, 6);
         System.arraycopy(btUserId, 0, writeData, 30, 16);
         //首次写入数据，写入data的第一个，剩下的在监听中完成
-        WriteAndNoficeUtil.getInstantce().writeFunctionCode2(writeData[0], writeData, writeDataListener , false);
+        LogUtil.i(TAG , "重发次数"+LockApiBleUtil.getInstance().getTryAgainCount());
+        WriteAndNoficeUtil.getInstantce().writeFunctionCode2(writeData[0], writeData, writeDataListener , LockApiBleUtil.getInstance().getTryAgainCount());
     }
 
     private static WriteDataListener writeDataListener = new WriteDataListener() {
@@ -76,7 +77,8 @@ public class OpenLockUtil {
         public void onWriteTimout() {
             if(writeData != null){
                 //首次写入数据，写入data的第一个，剩下的在监听中完成
-                WriteAndNoficeUtil.getInstantce().writeFunctionCode2(writeData[0], writeData, writeDataListener, true);
+                LogUtil.i(TAG , "重发剩余次数"+LockApiBleUtil.getInstance().getTryAgainCount());
+                WriteAndNoficeUtil.getInstantce().writeFunctionCode2(writeData[0], writeData, writeDataListener, LockApiBleUtil.getInstance().getTryAgainCount());
             }
         }
     };

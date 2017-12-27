@@ -46,7 +46,8 @@ public class WriteAndNoficeUtil {
     private WriteCallbackData mWriteCallbackData;
 
     private WriteDataListener mWriteDataListener;
-    private boolean isWriterSecond;
+    private int mTryAgainCount;
+    //    private boolean isWriterSecond;
 
     private WriteAndNoficeUtil() {
 
@@ -64,16 +65,30 @@ public class WriteAndNoficeUtil {
     }
 
 
+    public byte[] writeData;
+
+    public byte[] getWriteData() {
+        return writeData;
+    }
+
+    public void setWriteData(byte[] writeData) {
+        this.writeData = writeData;
+    }
+
     /**
      * 根据功能码写入数据
      *
-     * @param functionCode 功能码：是作为监听回调的一个依据，判断目前是写入的那个功能码（哪一步）
-     *                     。例如功能码：0x02——funcationCode为2。
-     * @param data
+     * @param functionCode      功能码：是作为监听回调的一个依据，判断目前是写入的那个功能码（哪一步）
+     *                          。例如功能码：0x02——funcationCode为2。
+     * @param writerData
+     * @param writeDataListener
+     * @param tryAgainCount     重发剩余次数
      */
-    public void writeFunctionCode(byte functionCode, byte[] data, final WriteDataListener writeDataListener, boolean isWriteSecond) {
+    public void writeFunctionCode(byte functionCode, byte[] writerData, final WriteDataListener writeDataListener, int tryAgainCount) {
         if (LockApiBleUtil.getInstance().getGatt() == null) return;
         if (LockApiBleUtil.getInstance().getConnectedBoxDevice() == null) return;
+        //简单用对象保存写入数据
+        this.writeData = writerData;
         connectedDevice = LockApiBleUtil.getInstance().getConnectedBoxDevice();
         mWriteCallbackData = new WriteCallbackData();      //写入数据的回调
         BluetoothGattService bluetoothGattService = LockApiBleUtil.getInstance().getBluetoothGattService();
@@ -100,10 +115,10 @@ public class WriteAndNoficeUtil {
         //设置为正在写入
         LockAPI lockAPI = LockAPI.getInstance();
         lockAPI.setWriting(true);
-        deviceMirror.writeData(data);
-        this.isWriterSecond = isWriteSecond;
-        if (!isWriteSecond) {          //不是第二次写入就，开始倒计时
-            LogUtil.e(TAG , "LogUtil.e(TAG , writeFunctionCode);的第二次写入计时");
+        deviceMirror.writeData(writerData);
+        this.mTryAgainCount = tryAgainCount;
+        if (tryAgainCount != 0) {          //不是第二次写入就，开始倒计时
+            LogUtil.e(TAG, "第一次写入计时，超时进行第二次写入");
             LockApiBleUtil.getInstance().sendWriteSecondHandler(writeDataListener);
         }
     }
@@ -114,11 +129,13 @@ public class WriteAndNoficeUtil {
      *
      * @param functionCode 功能码：是作为监听回调的一个依据，判断目前是写入的那个功能码（哪一步）
      *                     。例如功能码：0x02——funcationCode为2。
-     * @param data
+     * @param writerData
      */
-    public void writeFunctionCode2(byte functionCode, byte[] data, final WriteDataListener writeDataListener, boolean isWriteSecond) {
+    public void writeFunctionCode2(byte functionCode, byte[] writerData, final WriteDataListener writeDataListener, int tryAgainCount) {
         if (LockApiBleUtil.getInstance().getGatt() == null) return;
         if (LockApiBleUtil.getInstance().getConnectedBoxDevice() == null) return;
+        //简单用对象保存写入数据
+        this.writeData = writerData;
         connectedDevice = LockApiBleUtil.getInstance().getConnectedBoxDevice();
         //写入数据的回调
         mWriteCallbackData = new WriteCallbackData();
@@ -146,9 +163,9 @@ public class WriteAndNoficeUtil {
         //设置为正在写入
         LockAPI lockAPI = LockAPI.getInstance();
         lockAPI.setWriting(true);
-        write(data);
-        this.isWriterSecond = isWriteSecond;
-        if (!isWriteSecond) {          //不是第二次写入就，开始倒计时
+        write(writerData);
+        this.mTryAgainCount = tryAgainCount;
+        if (tryAgainCount != 0) {            //不是第二次写入就，开始倒计时
             LockApiBleUtil.getInstance().sendWriteSecondHandler(writeDataListener);
         }
     }
@@ -329,8 +346,9 @@ public class WriteAndNoficeUtil {
                 deviceMirror.setNotifyListener(bluetoothGattInfo.getGattInfoKey(), receiveCallback);
             } else if (bluetoothGattInfo.getPropertyType() == PropertyType.PROPERTY_WRITE) {
                 //这里的isWriteStart是代表写入成功，接着发起3.5秒的计时，如果没有Notify就会执行Handler
-                LogUtil.e(TAG , "                LogUtil.e(TAG , IBleCallback);的第二次写入");
-                if(!isWriterSecond){
+                LogUtil.i(TAG, "剩余重发次数：" + mTryAgainCount);
+                if (mTryAgainCount != 0) {
+                    LogUtil.e(TAG, "的第二次写入计时,此刻为写入成功后的，重新计时（意义为：如果在这段时间没有数据返回，证明蓝牙链路异常）");
                     LockApiBleUtil.getInstance().sendWriteSecondHandler(mWriteDataListener);
                 }
                 mWriteCallbackData.setData(data);
@@ -363,7 +381,6 @@ public class WriteAndNoficeUtil {
         public void onSuccess(byte[] data, BluetoothGattChannel bluetoothGattChannel, BluetoothLeDevice bluetoothLeDevice) {
             LogUtil.i(TAG, "监听通知成功：长度—" + data.length + "；数据16进制—" + HexUtil.encodeHexStr(data));
             byte[] callBlck;
-            LockApiBleUtil.getInstance().clearIsWriteAndNotifyStart();
             DealDataUtil.DealtSituation situation = DealDataUtil.dealtDealData(data);
             mNoficeCallbackData.setFinish(situation.isFinish());
             if (situation.isFinish()) {

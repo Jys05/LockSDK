@@ -71,7 +71,8 @@ public class QueryLogsUtil {
         data[1] = 0x13;
         System.arraycopy(btStartSeq, 0, data, 2, btStartSeq.length);
         System.arraycopy(btEndSeq, 0, data, 2 + btStartSeq.length, btEndSeq.length);
-        WriteAndNoficeUtil.getInstantce().writeFunctionCode(data[1], data, writeDataListener , false);
+        LogUtil.i(TAG, "重发次数" + LockApiBleUtil.getInstance().getTryAgainCount());
+        WriteAndNoficeUtil.getInstantce().writeFunctionCode(data[1], data, writeDataListener, LockApiBleUtil.getInstance().getTryAgainCount());
     }
 
     /**
@@ -113,9 +114,10 @@ public class QueryLogsUtil {
 
         @Override
         public void onWriteTimout() {
-            if(data != null){
+            if (data != null) {
                 //首次写入数据，写入data的第一个，剩下的在监听中完成
-                WriteAndNoficeUtil.getInstantce().writeFunctionCode(data[1], data, writeDataListener, true);
+                LogUtil.i(TAG, "重发剩余次数" + LockApiBleUtil.getInstance().getTryAgainCount());
+                WriteAndNoficeUtil.getInstantce().writeFunctionCode(data[1], data, writeDataListener, LockApiBleUtil.getInstance().getTryAgainCount());
             }
         }
     };

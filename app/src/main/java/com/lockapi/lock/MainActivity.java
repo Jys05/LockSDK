@@ -84,6 +84,7 @@ public class MainActivity extends FrameActivity {
         super.initComponent();
         mLockAPI = LockAPI.getInstance().init(MainActivity.this);
         mLockAPI.setLogsUtil(true);
+        mLockAPI.setTryAgainCount(1);
         initRecyclerView();
     }
 
@@ -151,7 +152,7 @@ public class MainActivity extends FrameActivity {
 
     //获取锁具ID
     public void onGetLockIdByBoxNameClick(View view) {
-        LoadingUtil.showTipText("写入数据中");
+        //LoadingUtil.showTipText("写入数据中");
         mLockAPI.getLockIdByBoxName(new GetLockIdListener() {
             @Override
             public void onGetLockIDListener(Result<String> lockId) {
@@ -185,7 +186,7 @@ public class MainActivity extends FrameActivity {
         } else {
             param.put("boxName", boxName);
         }
-        LoadingUtil.showTipText("写入数据中");
+        //LoadingUtil.showTipText("写入数据中");
         mLockAPI.activeLock(param, new ActiveLockListener() {
             @Override
             public void activeLockCallback(Result<String> result) {
@@ -207,7 +208,7 @@ public class MainActivity extends FrameActivity {
             ToastUtil.show("款箱名为空，未初始化");
             return;
         }
-        LoadingUtil.showTipText("写入数据中");
+        //LoadingUtil.showTipText("写入数据中");
         mLockAPI.getRandom(mBoxName, new GetRandomListener() {
             @Override
             public void getRandomCallback(Result<RandomAttr> randomAttrResult) {
@@ -233,10 +234,10 @@ public class MainActivity extends FrameActivity {
             ToastUtil.show("款箱名为空，未初始化");
             return;
         }
-        LoadingUtil.showTipText("写入数据中");
+        //LoadingUtil.showTipText("写入数据中");
         mLockAPI.registerLockStatusListener(new LockStatusListener() {
             @Override
-            public void onChange(String boxName, String lockId, LockStatus newStatus) {
+            public void onChange(String boxName, String lockId, LockStatus newStatus, String errorMsg) {
                 if (newStatus != null) {
                     mMsg = "款箱名：" + boxName
                             + "\n锁具ID：" + lockId
@@ -250,7 +251,7 @@ public class MainActivity extends FrameActivity {
                             + "\n上下架状态：" + newStatus.getShelfStatus()
                             + "\n电池电量：" + newStatus.getBatteryLevel();
                 } else {
-                    mMsg = "款箱获取锁具状态数据有误";
+                    mMsg = errorMsg;
                 }
                 mHandler.sendEmptyMessage(0x02);
             }
@@ -268,7 +269,7 @@ public class MainActivity extends FrameActivity {
         String strEnd = mEtQueryLogEnd.getText().toString().trim();
         if (!checkNum(strStart)) return;
         if (!checkNum(strEnd)) return;
-        LoadingUtil.showTipText("写入数据中");
+        //LoadingUtil.showTipText("写入数据中");
         Map<String, String> param = new HashMap<>();
         param.put("lockId", LockApiBleUtil.getInstance().getLockIDStr());
         param.put("startSeq", strStart);
@@ -307,7 +308,7 @@ public class MainActivity extends FrameActivity {
             ToastUtil.show("请输入密码");
             return;
         }
-        LoadingUtil.showTipText("写入数据中");
+        //LoadingUtil.showTipText("写入数据中");
         Map<String, String> param = new HashMap<>();
         param.put("trTime", DateUtil.format(DateUtil.yyyyMMddHHmmss_not, System.currentTimeMillis()));
         param.put("boxName", mBoxName);
@@ -432,7 +433,7 @@ public class MainActivity extends FrameActivity {
                 mQuickAdapter.clear();
                 mLockAPI.getBoxList(MainActivity.this, null, mScannerListener);
             } else {
-                LoadingUtil.hidden();
+                //LoadingUtil.hidden();
                 tv_Result.setText(mMsg + " ");
             }
             return false;

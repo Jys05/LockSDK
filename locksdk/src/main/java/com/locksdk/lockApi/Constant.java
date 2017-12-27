@@ -40,6 +40,8 @@ public class Constant {
 
         public static final String QUERY_LOGS_FAIL = "0009";          //查询日志有误
 
+        public static final String DEVICE_BUSY = "1111";          //款箱正在写入
+
     }
 
     public static final class MSG {
@@ -96,6 +98,9 @@ public class Constant {
         public static final String MSG_OPEN_LOCk_FAIL = "开锁时数据加密失败";
 
         public static final String MSG_OPEN_LOCk_FAIL2 = "开锁时用户名传入为空";
+
+
+        public static final String MSG_DEVICE_BUSY = "设备繁忙";
 
 
     }

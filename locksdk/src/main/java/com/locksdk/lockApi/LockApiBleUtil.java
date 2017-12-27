@@ -83,14 +83,16 @@ public class LockApiBleUtil {
     private boolean isWriteAndNotifyStart = false;           //写入开始，并开始写入和Notify的时间倒计时3.5秒（2500）
     private WriteDataListener mWriteDataListener;
     private long mWriteSecondTime = 3500;
+    private int mTryAgainCount = 1;     //重发次数
     private Handler mWriteNotifyHandler = new Handler(new Handler.Callback() {
         @Override
         public boolean handleMessage(Message message) {
             if (isWriteAndNotifyStart) {
                 //证明写入后，3.5秒后没有数据返回，所以断开连接，在Activity的Eventbus执行clear
                 isWriteAndNotifyStart = false;
-                LogUtil.e(TAG + "====", "handleMessage：写入后的notify超时3.5秒");
-                if (mWriteDataListener != null) {
+                LogUtil.e(TAG + "====", "mTryAgainCount重发次数还剩：" + mTryAgainCount);
+                if (mTryAgainCount != 0) {
+                    mTryAgainCount = mTryAgainCount - 1;
                     mWriteDataListener.onWriteTimout();
                 }
             } else {
@@ -99,6 +101,7 @@ public class LockApiBleUtil {
             return false;
         }
     });
+    private byte[] mWriteData;
 
     public void setIisWriteAndNotifyStart(boolean isWriteAndNotifyStart) {
         this.isWriteAndNotifyStart = isWriteAndNotifyStart;
@@ -112,7 +115,7 @@ public class LockApiBleUtil {
     public void sendWriteSecondHandler(WriteDataListener writeDataListener) {
         mWriteDataListener = writeDataListener;
         setIisWriteAndNotifyStart(true);
-        LogUtil.e(TAG + "====", "写入刚开始的计时2500");
+        LogUtil.e(TAG + "====", "写入刚开始的计时" + mWriteSecondTime);
         clearmWriteNotifyHandler();
         mWriteNotifyHandler.sendEmptyMessageDelayed(0x00, mWriteSecondTime);
     }
@@ -127,6 +130,14 @@ public class LockApiBleUtil {
     public void clearIsWriteAndNotifyStart() {
         setIisWriteAndNotifyStart(false);
         clearmWriteNotifyHandler();
+    }
+
+    public int getTryAgainCount() {
+        return mTryAgainCount;
+    }
+
+    public void setTryAgainCount(int tryAgainCount) {
+        mTryAgainCount = tryAgainCount;
     }
     // TODO: 2017/12/26 暂时注释掉二次写入（上述）
 
@@ -189,10 +200,10 @@ public class LockApiBleUtil {
         ViseBle.config()
                 .setScanTimeout(-1)//扫描超时时间，这里设置为永久扫描
                 .setConnectTimeout((int) connectTimeout)//连接超时时间
-                .setOperateTimeout(5 * 1000)//设置数据操作超时时间
+                .setOperateTimeout(7000)//设置数据操作超时时间
                 .setConnectRetryCount(3)//设置连接失败重试次数
                 .setConnectRetryInterval(1000)//设置连接失败重试间隔时间
-                .setOperateRetryCount(3)//设置数据操作失败重试次数
+                .setOperateRetryCount(1)//设置数据操作失败重试次数
                 .setOperateRetryInterval(1000)//设置数据操作失败重试间隔时间
                 .setMaxConnectCount(1);//设置最大连接设备数量
         //蓝牙信息初始化，全局唯一，必须在应用初始化时调用
@@ -225,6 +236,7 @@ public class LockApiBleUtil {
             ViseBle.getInstance().getBluetoothAdapter().enable();
             return;
         }
+        clearHandler();
         clearScannerResult();
         stopScanner();
         //开始扫描
@@ -421,24 +433,7 @@ public class LockApiBleUtil {
                         if (isConnectSuccess) {
                             LogUtil.i(TAG, mDeviceSleepTime + "防止休眠给板子发指令");
                             mDeviceSleepTime = lockAPI.getDeviceSleepTime();
-//                        lockAPI.queryLockStatus(mLockIDStr);
-                            WriteAndNoficeUtil.getInstantce().writeForDeviceSleep(new WriteDataListener() {
-                                @Override
-                                public void onWirteSuccess(WriteCallbackData data) {
-                                    mAllowSleepHandler.removeCallbacksAndMessages(null);
-                                    mDeviceSleepTime = LockAPI.getInstance().getDeviceSleepTime();
-                                }
-
-                                @Override
-                                public void onWriteFail(WriteCallbackData data) {
-                                    mAllowSleepHandler.removeCallbacksAndMessages(null);
-                                }
-
-                                @Override
-                                public void onWriteTimout() {
-
-                                }
-                            });
+                            sendQueryLockState();
                         }
                     }
                     mAllowSleepHandler.sendEmptyMessageDelayed(0x00, 100);
@@ -463,7 +458,41 @@ public class LockApiBleUtil {
             mDeviceSleepTime = LockAPI.getInstance().getDeviceSleepTime();
             mAllowSleepHandler.removeCallbacksAndMessages(null);
         }
+        clearIsWriteAndNotifyStart();
     }
+
+    /**
+     * 为了防止休眠的写入
+     */
+    private void sendQueryLockState() {
+        mWriteData = new byte[2];
+        mWriteData[0] = 0x00;
+        mWriteData[1] = 0x14;
+        LockApiBleUtil.getInstance().setWriteSecondTime(3500);
+        LogUtil.i(TAG, "重发次数" + LockApiBleUtil.getInstance().getTryAgainCount());
+        WriteAndNoficeUtil.getInstantce().writeFunctionCode(mWriteData[1], mWriteData, mWriteDataListener2, LockApiBleUtil.getInstance().getTryAgainCount());
+    }
+
+    private WriteDataListener mWriteDataListener2 = new WriteDataListener() {
+        @Override
+        public void onWirteSuccess(WriteCallbackData data) {
+            mAllowSleepHandler.removeCallbacksAndMessages(null);
+            mDeviceSleepTime = LockAPI.getInstance().getDeviceSleepTime();
+        }
+
+        @Override
+        public void onWriteFail(WriteCallbackData data) {
+            mAllowSleepHandler.removeCallbacksAndMessages(null);
+        }
+
+        @Override
+        public void onWriteTimout() {
+            if (mWriteData != null) {
+                LogUtil.i(TAG, "重发剩余次数" + LockApiBleUtil.getInstance().getTryAgainCount());
+                WriteAndNoficeUtil.getInstantce().writeFunctionCode(mWriteData[1], mWriteData, mWriteDataListener2, LockApiBleUtil.getInstance().getTryAgainCount());
+            }
+        }
+    };
 
     /**
      * 开始连接
@@ -526,6 +555,7 @@ public class LockApiBleUtil {
         isConnecting = false;
         isConnectSuccess = false;
         clearIsWriteAndNotifyStart();
+        WriteAndNoficeUtil.getInstantce().setWriteData(null);
         clearHandler();
         //清理获取的锁具ID
         LockApiBleUtil.getInstance().clearLockId();
@@ -558,7 +588,8 @@ public class LockApiBleUtil {
         @Override
         public void onConnectSuccess(DeviceMirror deviceMirror) {
             if (mConnectListener != null) {
-                if (isConnecting) {
+                LogUtil.i(TAG ,"onConnectSuccess的isConnecting:"+isConnecting);
+//                if (isConnecting) {
                     LogUtil.e(TAG, "连接成功");          //防止设备休眠，时间计算12秒后发数据给板子
                     isConnecting = false;
                     isConnectSuccess = true;
@@ -574,30 +605,29 @@ public class LockApiBleUtil {
                     lockAPI.resigeterNotify();      //注册通知监听
                     LogUtil.e(TAG, "开始心跳计时");          //防止设备休眠，时间计算12秒后发数据给板子
                     mDeviceSleepTime = lockAPI.getDeviceSleepTime();
-                    clearmWriteNotifyHandler();
+                    LogUtil.i(TAG , "心跳计时时长："+mDeviceSleepTime);
                     clearHandler();
                     mAllowSleepHandler.sendEmptyMessageDelayed(0x00, 100);
-                    //获取锁具ID
-                    getLockIdByBoxName(null);
                     //调用连接成功接口
                     mConnectListener.onSuccess(mConnectedBoxDevice, Constant.SERVICE_UUID, mBoxName);
-                } else {
-                    LogUtil.e(TAG, "假连接");
-                    closeConnection();
-                }
+//                } else {
+//                    LogUtil.e(TAG, "假连接");
+//                    closeConnection();
+//                }
             }
         }
 
         @Override
         public void onConnectFailure(BleException exception) {
             mConnectRetryCount--;
-            LogUtil.e(TAG, "连接失败次数" + mConnectRetryCount);
+            LogUtil.e(TAG, "onConnectFailure连接失败次数" + mConnectRetryCount);
             if (isConnectSuccess) {
                 if (exception instanceof ConnectException) {
                     LogUtil.e(TAG, "连接成功后的异常" + mConnectRetryCount);
                     if (mConnectListener != null) {
                         //清理获取的锁具ID
                         LockApiBleUtil.getInstance().clearLockId();
+                        LogUtil.e(TAG, Constant.MSG.MSG_CONNECT_FAIL2);
                         mConnectListener.onFail(Constant.SERVICE_UUID, Constant.MSG.MSG_CONNECT_FAIL2);
                     }
                     //款箱自动断开，SDK内部调用断开连接
@@ -608,8 +638,8 @@ public class LockApiBleUtil {
             }
             if (isConnecting) {
                 if (mConnectRetryCount == 0) {
-                    LogUtil.e(TAG, "连接中的异常" + mConnectRetryCount);
-                    LogUtil.e(TAG, "连接失败次数" + mConnectRetryCount);
+                    LogUtil.e(TAG, "onConnectFailure连接中的异常" + mConnectRetryCount);
+                    LogUtil.e(TAG, "onConnectFailure连接失败次数" + mConnectRetryCount);
                     mConnectRetryCount = BleConfig.getInstance().getConnectRetryCount();
                     mConnectBoxDevice = null;
                     isConnecting = false;
@@ -628,7 +658,7 @@ public class LockApiBleUtil {
                     }
                 }
             }
-            LogUtil.i(TAG, exception.getDescription() + "失败从重连次数：" + mConnectRetryCount);
+            LogUtil.i(TAG, exception.getDescription() + "onConnectFailure失败从重连次数：" + mConnectRetryCount);
         }
 
         @Override
@@ -651,8 +681,8 @@ public class LockApiBleUtil {
         WriteAndNoficeUtil.getInstantce().read(new ReadListener() {
             @Override
             public void onReadListener(byte[] data) {
+                LogUtil.i(TAG + "-getLockIdByBoxName", data.length + "---" + HexUtil.encodeHexStr(data));
                 if (data != null) {
-                    LogUtil.i(TAG + "-getLockIdByBoxName", data.length + "---" + HexUtil.encodeHexStr(data));
                     LockApiBleUtil.getInstance().setLockID(data);
                     LockApiBleUtil.getInstance().setLockIDStr(HexUtil.encodeHexStr(data));
                     if (lockIdListener != null) {

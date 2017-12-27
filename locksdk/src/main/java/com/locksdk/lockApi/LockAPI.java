@@ -118,6 +118,7 @@ public class LockAPI {
         if (!TextUtils.isEmpty(uuid)) {
             Constant.SERVICE_UUID = uuid;
         }
+        removeCallbacksAndMessages();
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             if (ContextCompat.checkSelfPermission(activiy, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                 String[] permissions = new String[]{Manifest.permission.ACCESS_COARSE_LOCATION};
@@ -171,14 +172,37 @@ public class LockAPI {
         LockApiBleUtil.getInstance().getLockIdByBoxName(lockIdListener);
     }
 
+    private String deviceBusyCode = Constant.CODE.DEVICE_BUSY;
+    private String deviceBusyMsg = Constant.MSG.MSG_DEVICE_BUSY;
+    private int mTryAgainCount = 1;         //相当于用于保存设置后的TryAgainCount值，然后在每一个接口赋值给LockApiBleUtil中的
+
+    public void setTryAgainCount(int tryAgainCount) {
+        this.mTryAgainCount = tryAgainCount;
+        LockApiBleUtil.getInstance().setTryAgainCount(tryAgainCount);
+    }
+
     //激活
-    public void activeLock(Map<String, String> param, ActiveLockListener lockListener) {
-        LogUtil.i(TAG, "激活");
-        removeCallbacksAndMessages();
-        LogUtil.i(TAG , "设置多少时间后第二次写入");
-        LockApiBleUtil.getInstance().setWriteSecondTime(6500);
-        mActiveLockListener = lockListener;
-        ActiveLockUtil.activeLock(param, lockListener);
+    public void activeLock(Map<String, String> param, ActiveLockListener activeLockListener) {
+        LogUtil.i(TAG, (WriteAndNoficeUtil.getInstantce().getWriteData() == null) ? "空" : "不为空");
+        LogUtil.i(TAG, "isWriting:" + isWriting);
+        if (WriteAndNoficeUtil.getInstantce().getWriteData() == null) {
+
+            LogUtil.i(TAG, "激活");
+            removeCallbacksAndMessages();
+            LogUtil.i(TAG, "设置多少时间后重发和设置重发次数");
+            LockApiBleUtil.getInstance().setTryAgainCount(mTryAgainCount);
+            LockApiBleUtil.getInstance().setWriteSecondTime(6500);
+            mActiveLockListener = activeLockListener;
+            ActiveLockUtil.activeLock(param, activeLockListener);
+        } else {
+            if (activeLockListener != null) {
+                Result<String> activiteResult = new Result<>();
+                activiteResult.setCode(deviceBusyCode);
+                activiteResult.setMsg(deviceBusyMsg);
+                activiteResult.setData(null);
+                activeLockListener.activeLockCallback(activiteResult);
+            }
+        }
     }
 
     //注册锁具状态
@@ -190,43 +214,91 @@ public class LockAPI {
     }
 
     //开锁
-    public void openLock(Map<String, String> param, OpenLockListener lockListener) {
-        LogUtil.i(TAG, "开锁");
-        removeCallbacksAndMessages();
-        mOpenLockListener = lockListener;
-        LogUtil.i(TAG , "设置多少时间后第二次写入");
-        LockApiBleUtil.getInstance().setWriteSecondTime(3500);
-        OpenLockUtil.opnenLock(param, lockListener);
+    public void openLock(Map<String, String> param, OpenLockListener openLockListener) {
+        LogUtil.i(TAG, (WriteAndNoficeUtil.getInstantce().getWriteData() == null) ? "空" : "不为空");
+        LogUtil.i(TAG, "isWriting:" + isWriting);
+        if (WriteAndNoficeUtil.getInstantce().getWriteData() == null) {
+            LogUtil.i(TAG, "开锁");
+            removeCallbacksAndMessages();
+            mOpenLockListener = openLockListener;
+            LogUtil.i(TAG, "设置多少时间后重发和设置重发次数");
+            LockApiBleUtil.getInstance().setTryAgainCount(mTryAgainCount);
+            LockApiBleUtil.getInstance().setWriteSecondTime(3500);
+            OpenLockUtil.opnenLock(param, openLockListener);
+        } else {
+            if (openLockListener != null) {
+                Result<String> openLockResult = new Result<>();
+                openLockResult.setCode(deviceBusyCode);
+                openLockResult.setMsg(deviceBusyMsg);
+                openLockResult.setData(null);
+                openLockListener.openLockCallback(openLockResult);
+            }
+        }
     }
 
     //获取随机数（开箱触发）
-    public void getRandom(String boxName, GetRandomListener listener) {
-        LogUtil.i(TAG, "获取随机数（开箱触发）");
-        removeCallbacksAndMessages();
-        LogUtil.i(TAG , "设置多少时间后第二次写入");
-        LockApiBleUtil.getInstance().setWriteSecondTime(3500);
-        mGetRandomListener = listener;
-        GetRandomUtil.getRandom(boxName, listener);
+    public void getRandom(String boxName, GetRandomListener getRandomListener) {
+        LogUtil.i(TAG, (WriteAndNoficeUtil.getInstantce().getWriteData() == null) ? "空" : "不为空");
+        LogUtil.i(TAG, "isWriting:" + isWriting);
+        if (WriteAndNoficeUtil.getInstantce().getWriteData() == null) {
+            LogUtil.i(TAG, "获取随机数（开箱触发）");
+            removeCallbacksAndMessages();
+            LogUtil.i(TAG, "设置多少时间后重发和设置重发次数");
+            LockApiBleUtil.getInstance().setTryAgainCount(mTryAgainCount);
+            LockApiBleUtil.getInstance().setWriteSecondTime(3500);
+            mGetRandomListener = getRandomListener;
+            GetRandomUtil.getRandom(boxName, getRandomListener);
+        } else {
+            if (getRandomListener != null) {
+                Result<RandomAttr> randomAttrResult = new Result<>();
+                randomAttrResult.setCode(deviceBusyCode);
+                randomAttrResult.setMsg(deviceBusyMsg);
+                randomAttrResult.setData(null);
+                getRandomListener.getRandomCallback(randomAttrResult);
+            }
+        }
     }
 
 
     //查询锁状态
     public void queryLockStatus(String lockId) {
-        LogUtil.i(TAG, "查询锁状态");
-        removeCallbacksAndMessages();
-        LogUtil.i(TAG , "设置多少时间后第二次写入");
-        LockApiBleUtil.getInstance().setWriteSecondTime(3500);
-        QueryLockStatusUtil.queryLockStatus(lockId, mLockStatusListener);
+        LogUtil.i(TAG, (WriteAndNoficeUtil.getInstantce().getWriteData() == null) ? "空" : "不为空");
+        LogUtil.i(TAG, "isWriting:" + isWriting);
+        if (WriteAndNoficeUtil.getInstantce().getWriteData() == null) {
+            LogUtil.i(TAG, "查询锁状态");
+            removeCallbacksAndMessages();
+            LogUtil.i(TAG, "设置多少时间后重发和设置重发次数");
+            LockApiBleUtil.getInstance().setTryAgainCount(mTryAgainCount);
+            LockApiBleUtil.getInstance().setWriteSecondTime(3500);
+            QueryLockStatusUtil.queryLockStatus(lockId, mLockStatusListener);
+        } else {
+            if (mLockStatusListener != null) {
+                mLockStatusListener.onChange(null, LockApiBleUtil.getInstance().getLockIDStr(), null, deviceBusyMsg);
+            }
+        }
     }
 
     //查询日志
     public void queryLogs(Map<String, String> param, QueryLogsListener logsListener) {
-        LogUtil.i(TAG, "查询日志");
-        removeCallbacksAndMessages();
-        LogUtil.i(TAG , "设置多少时间后第二次写入");
-        LockApiBleUtil.getInstance().setWriteSecondTime(3500);
-        mQueryLogsListener = logsListener;
-        QueryLogsUtil.queryLogs(param, logsListener);
+        LogUtil.i(TAG, (WriteAndNoficeUtil.getInstantce().getWriteData() == null) ? "空" : "不为空");
+        LogUtil.i(TAG, "isWriting:" + isWriting);
+        if (WriteAndNoficeUtil.getInstantce().getWriteData() == null) {
+            LogUtil.i(TAG, "查询日志");
+            removeCallbacksAndMessages();
+            LogUtil.i(TAG, "设置多少时间后重发和设置重发次数");
+            LockApiBleUtil.getInstance().setTryAgainCount(mTryAgainCount);
+            LockApiBleUtil.getInstance().setWriteSecondTime(3500);
+            mQueryLogsListener = logsListener;
+            QueryLogsUtil.queryLogs(param, logsListener);
+        } else {
+            if (logsListener != null) {
+                Result<List<LockLog>> logsResult = new Result<>();
+                logsResult.setCode(deviceBusyCode);
+                logsResult.setMsg(deviceBusyMsg);
+                logsResult.setData(null);
+                logsListener.queryLogsCallback(logsResult);
+            }
+        }
     }
 
     //注册蓝牙通知监听
@@ -240,12 +312,15 @@ public class LockAPI {
         LogUtil.i(TAG, "清理LockApiBleUtil中防止设备休眠的Handler");
         //清理Handler
         LockApiBleUtil.getInstance().clearHandler();
+        LockApiBleUtil.getInstance().clearmWriteNotifyHandler();
     }
 
     private NoficeDataListener mNoficeDataListener = new NoficeDataListener() {
         @Override
         public void onNoficeSuccess(NoficeCallbackData callbackData) {
             if (callbackData.isFinish()) {
+                LogUtil.i(TAG, "关闭二次重发机制，以及允许其他接口写入");
+                LockApiBleUtil.getInstance().clearIsWriteAndNotifyStart();
                 if (callbackData.getData() != null) {
                     LogUtil.i(TAG, callbackData.getData().length + "---" + HexUtil.encodeHexStr(callbackData.getData()));
                     dealtNotifyCallBackDataForSuccess(callbackData);
@@ -370,11 +445,19 @@ public class LockAPI {
                 byte[] btBoxStatus = new byte[2];
                 System.arraycopy(data, data.length - 2, btBoxStatus, 0, btBoxStatus.length);
                 if (mLockStatusListener != null) {
-                    mLockStatusListener.onChange(boxName, LockApiBleUtil.getInstance().getLockIDStr(), LockStatusUtil.getBoxStatus(btBoxStatus[0], btBoxStatus[1]));
+                    mLockStatusListener.onChange(boxName, LockApiBleUtil.getInstance().getLockIDStr(), LockStatusUtil.getBoxStatus(btBoxStatus[0], btBoxStatus[1]), null);
                 }
                 break;
         }
+        LogUtil.i(TAG, (WriteAndNoficeUtil.getInstantce().getWriteData() == null) ? "Success1的空" : "Success1的不为空");
+        LogUtil.i(TAG, "Success1的isWriting:" + isWriting);
+        //清空写入数据，代表开始可以允许其他接口写入数据
+        WriteAndNoficeUtil.getInstantce().setWriteData(null);
+        //心跳计时重新开始
         setWriting(false);
+        LogUtil.i(TAG, (WriteAndNoficeUtil.getInstantce().getWriteData() == null) ? "Success2的空" : "Success2的不为空");
+        LogUtil.i(TAG, "Success2的isWriting:" + isWriting);
+
         LockApiBleUtil.getInstance().setDeviceSleepTime(mDeviceSleepTime);
         LockApiBleUtil.getInstance().mAllowSleepHandler.sendEmptyMessage(0x00);
     }
@@ -414,11 +497,14 @@ public class LockAPI {
                 break;
             case (byte) 0x94:
                 if (mLockStatusListener != null) {
-                    mLockStatusListener.onChange(null, LockApiBleUtil.getInstance().getLockIDStr(), null);
+                    mLockStatusListener.onChange(null, LockApiBleUtil.getInstance().getLockIDStr(), null, Constant.MSG.MSG_NOTIFY_FAIL);
                 }
                 break;
         }
+        //清空写入数据，代表开始可以允许其他接口写入数据
+        WriteAndNoficeUtil.getInstantce().setWriteData(null);
         setWriting(false);
+        //心跳计时重新开始
         LockApiBleUtil.getInstance().setDeviceSleepTime(mDeviceSleepTime);
         LockApiBleUtil.getInstance().mAllowSleepHandler.sendEmptyMessageDelayed(0x00, 100);
     }

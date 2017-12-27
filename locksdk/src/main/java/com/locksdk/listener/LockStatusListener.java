@@ -8,5 +8,5 @@ import com.locksdk.bean.LockStatus;
  */
 
 public interface LockStatusListener {
-    void onChange(String boxName, String lockId, LockStatus newStatus);
+    void onChange(String boxName, String lockId, LockStatus newStatus , String errorMsg);
 }
