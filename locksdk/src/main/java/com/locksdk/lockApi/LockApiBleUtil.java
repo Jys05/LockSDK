@@ -18,7 +18,6 @@ import android.os.Handler;
 import android.os.Message;
 import android.os.ParcelUuid;
 import android.support.annotation.RequiresApi;
-import android.util.Log;
 
 import com.locksdk.baseble.common.BleConfig;
 import com.locksdk.baseble.exception.ConnectException;
@@ -576,7 +575,7 @@ public class LockApiBleUtil {
 //        clearIsWriteAndNotifyStart();
         WriteAndNoficeUtil.getInstantce().setWriteData(null);
         mConnectErrorHandler.removeCallbacksAndMessages(null);
-        WriteAndNoficeUtil.getInstantce().removeHandler();
+        WriteAndNoficeUtil.getInstantce().removeTryAgainHandler();
         clearHandler();
         //清理获取的锁具ID
         LockApiBleUtil.getInstance().clearLockId();

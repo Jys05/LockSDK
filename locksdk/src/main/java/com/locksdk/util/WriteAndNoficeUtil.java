@@ -200,12 +200,6 @@ public class WriteAndNoficeUtil {
         lockAPI.setWriting(true);
         write(writerData);
         tryAgainWrite();
-//        this.mTryAgainCount = tryAgainCount;
-//        if (tryAgainCount != 0) {            //不是第二次写入就，开始倒计时
-//            LockApiBleUtil.getInstance().sendWriteSecondHandler(writeDataListener);
-//        }else {
-//            LockApiBleUtil.getInstance().sendNotifyTimeoutHandler();
-//        }
     }
 
 
@@ -472,7 +466,7 @@ public class WriteAndNoficeUtil {
         deviceMirror.readData();
     }
 
-    public void removeHandler() {
+    public void removeTryAgainHandler() {
         if (mTryAgainHandler != null) {
             mTryAgainHandler.removeCallbacksAndMessages(null);
         }
