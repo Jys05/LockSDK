@@ -46,7 +46,7 @@ public class WriteAndNoficeUtil {
     private WriteCallbackData mWriteCallbackData;
 
     private WriteDataListener mWriteDataListener;
-    private byte mFunCode;
+    private byte mFunCode;          //功能码
     //    private int mTryAgainCount;
     //    private boolean isWriterSecond;
 
@@ -77,12 +77,27 @@ public class WriteAndNoficeUtil {
         this.writeData = writeData;
     }
 
-    private Handler mHandler = new Handler();
-    private Runnable mRunnable = new Runnable() {
+
+    private int mTryAgainCount = 1;             //重发的总次数
+    private long mTryAgainTime = 3500;           //写入后的倒计时，默认3500
+    private int mTryAgainNum = 0;           //用于计算重发次数
+    private Handler mTryAgainHandler = new Handler();
+    private Runnable mTryAgainRunnable = new Runnable() {
         @Override
         public void run() {
-            LogUtil.e(TAG, "第二次写入");
+            LogUtil.e(TAG, "开始第二次写入");
             writeFunctionCode(mFunCode, writeData, mWriteDataListener);
+        }
+    };
+
+    private Runnable mSecondWriteRunnable = new Runnable() {
+        @Override
+        public void run() {
+            LogUtil.e(TAG, "第二次写入后，还没有数据");
+            mNoficeCallbackData.setData(null);
+            if (mNoficeDataListener != null) {
+                mNoficeDataListener.onNoficeFail(mNoficeCallbackData);
+            }
         }
     };
 
@@ -94,7 +109,6 @@ public class WriteAndNoficeUtil {
      *                          。例如功能码：0x02——funcationCode为2。
      * @param writerData
      * @param writeDataListener
-     * @param tryAgainCount     重发剩余次数
      */
     public void writeFunctionCode(byte functionCode, byte[] writerData, final WriteDataListener writeDataListener) {
         if (LockApiBleUtil.getInstance().getGatt() == null) return;
@@ -129,14 +143,17 @@ public class WriteAndNoficeUtil {
         LockAPI lockAPI = LockAPI.getInstance();
         lockAPI.setWriting(true);
         deviceMirror.writeData(writerData);
-        mHandler.postDelayed(mRunnable, 3500);
-//        this.mTryAgainCount = tryAgainCount;
-//        if (tryAgainCount != 0) {          //不是第二次写入就，开始倒计时
-//            LogUtil.e(TAG, "第一次写入计时，超时进行第二次写入");
-//            LockApiBleUtil.getInstance().sendWriteSecondHandler(writeDataListener);
-//        }else {
-//            LockApiBleUtil.getInstance().sendNotifyTimeoutHandler();
-//        }
+        tryAgainWrite();
+    }
+
+    private void tryAgainWrite() {
+        if (mTryAgainNum < mTryAgainCount) {
+            mTryAgainNum++;
+            mTryAgainHandler.removeCallbacksAndMessages(null);
+            mTryAgainHandler.postDelayed(mTryAgainRunnable, mTryAgainTime);
+        } else {
+            mTryAgainHandler.postDelayed(mSecondWriteRunnable, mTryAgainTime);
+        }
     }
 
 
@@ -152,6 +169,7 @@ public class WriteAndNoficeUtil {
         if (LockApiBleUtil.getInstance().getConnectedBoxDevice() == null) return;
         //简单用对象保存写入数据
         this.writeData = writerData;
+        mFunCode = functionCode;
         connectedDevice = LockApiBleUtil.getInstance().getConnectedBoxDevice();
         //写入数据的回调
         mWriteCallbackData = new WriteCallbackData();
@@ -180,6 +198,7 @@ public class WriteAndNoficeUtil {
         LockAPI lockAPI = LockAPI.getInstance();
         lockAPI.setWriting(true);
         write(writerData);
+        tryAgainWrite();
 //        this.mTryAgainCount = tryAgainCount;
 //        if (tryAgainCount != 0) {            //不是第二次写入就，开始倒计时
 //            LockApiBleUtil.getInstance().sendWriteSecondHandler(writeDataListener);
@@ -289,7 +308,7 @@ public class WriteAndNoficeUtil {
         return dataInfoQueue;
     }
 
-    private NoficeDataListener noficeDataListener;
+    private NoficeDataListener mNoficeDataListener;
 
     /**
      * 根据功能码通知数据
@@ -306,7 +325,7 @@ public class WriteAndNoficeUtil {
         mNoficeCallbackData = new NoficeCallbackData();
         mDeviceMirrorPool = ViseBle.getInstance().getDeviceMirrorPool();
         mNoficeCallbackData.setRespondCode(resCode);
-        noficeDataListener = listener;
+        mNoficeDataListener = listener;
 //        final DeviceMirror deviceMirror = mDeviceMirrorPool.getDeviceMirror(connectedDevice);
         final DeviceMirror deviceMirror = LockApiBleUtil.getInstance().getDeviceMirror();
         BluetoothGattChannel bluetoothGattChannel = new BluetoothGattChannel.Builder()
@@ -371,7 +390,7 @@ public class WriteAndNoficeUtil {
 //                }else {
 //                    LockApiBleUtil.getInstance().sendNotifyTimeoutHandler();
 //                }
-                LogUtil.e(TAG , "写入成功");
+                LogUtil.e(TAG, "写入成功");
                 mWriteCallbackData.setData(data);
                 mWriteDataListener.onWirteSuccess(mWriteCallbackData);
             } else if (bluetoothGattInfo.getPropertyType() == PropertyType.PROPERTY_READ) {
@@ -411,13 +430,13 @@ public class WriteAndNoficeUtil {
                     mNoficeCallbackData.setData(callBlck);
                 } else {
                     mNoficeCallbackData.setData(null);
-                    if (noficeDataListener == null) return;
-                    noficeDataListener.onNoficeFail(mNoficeCallbackData);
+                    if (mNoficeDataListener == null) return;
+                    mNoficeDataListener.onNoficeFail(mNoficeCallbackData);
                     LogUtil.i(TAG, "通知Notify返回数据有误或掉包现象，或者数据处理有误");
                 }
             }
-            if (noficeDataListener == null) return;
-            noficeDataListener.onNoficeSuccess(mNoficeCallbackData);
+            if (mNoficeDataListener == null) return;
+            mNoficeDataListener.onNoficeSuccess(mNoficeCallbackData);
         }
 
         @Override
@@ -425,8 +444,8 @@ public class WriteAndNoficeUtil {
             LogUtil.i(TAG, "监听通知失败");
 //            LockApiBleUtil.getInstance().clearIsWriteAndNotifyStart();
             mNoficeCallbackData.setData(null);
-            if (noficeDataListener == null) return;
-            noficeDataListener.onNoficeFail(mNoficeCallbackData);
+            if (mNoficeDataListener == null) return;
+            mNoficeDataListener.onNoficeFail(mNoficeCallbackData);
         }
     };
 
@@ -452,4 +471,29 @@ public class WriteAndNoficeUtil {
         deviceMirror.readData();
     }
 
+
+    public int getTryAgainCount() {
+        return mTryAgainCount;
+    }
+
+    public void setTryAgainCount(int tryAgainCount) {
+        mTryAgainCount = tryAgainCount;
+    }
+
+    public int getTryAgainNum() {
+        return mTryAgainNum;
+    }
+
+    public void setTryAgainNum(int tryAgainNum) {
+        mTryAgainNum = tryAgainNum;
+    }
+
+
+    public long getTryAgainTime() {
+        return mTryAgainTime;
+    }
+
+    public void setTryAgainTime(long tryAgainTime) {
+        this.mTryAgainTime = tryAgainTime;
+    }
 }

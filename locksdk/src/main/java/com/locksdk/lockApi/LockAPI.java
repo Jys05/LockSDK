@@ -450,6 +450,8 @@ public class LockAPI {
     private void dealtNotifyCallBackDataForFail(NoficeCallbackData callbackData) {
         //TODO : 2017/11/23 没有加监听是否为空判断
         if (callbackData.getRespondCode() == 0) return;
+        //清空写入数据，代表开始可以允许其他接口写入数据
+        WriteAndNoficeUtil.getInstantce().setWriteData(null);
         byte responseCode = callbackData.getRespondCode();
         switch (responseCode) {
             case (byte) 0x90:
@@ -486,8 +488,7 @@ public class LockAPI {
                 }
                 break;
         }
-        //清空写入数据，代表开始可以允许其他接口写入数据
-        WriteAndNoficeUtil.getInstantce().setWriteData(null);
+
         setWriting(false);
         //心跳计时重新开始
         LockApiBleUtil.getInstance().setDeviceSleepTime(mDeviceSleepTime);
