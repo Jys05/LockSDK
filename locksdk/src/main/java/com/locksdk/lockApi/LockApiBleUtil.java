@@ -393,7 +393,8 @@ public class LockApiBleUtil {
                 }
             } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
                 if (mLeScanCallback != null) {
-                    ViseBle.getInstance().stopLeScan(mLeScanCallback);
+//                    ViseBle.getInstance().stopLeScan(mLeScanCallback);
+                    ViseBle.getInstance().getBluetoothAdapter().stopLeScan(mLeScanCallback);
                 }
             }
             IsScannering = false;
@@ -696,7 +697,6 @@ public class LockApiBleUtil {
         WriteAndNoficeUtil.getInstantce().read(new ReadListener() {
             @Override
             public void onReadListener(byte[] data) {
-                LogUtil.i(TAG + "-getLockIdByBoxName", data.length + "---" + HexUtil.encodeHexStr(data));
                 if (data != null) {
                     LockApiBleUtil.getInstance().setLockID(data);
                     LockApiBleUtil.getInstance().setLockIDStr(HexUtil.encodeHexStr(data));
