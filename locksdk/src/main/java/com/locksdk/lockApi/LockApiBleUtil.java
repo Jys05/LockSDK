@@ -83,7 +83,8 @@ public class LockApiBleUtil {
 //    private boolean isWriteAndNotifyStart = false;           //写入开始，并开始写入和Notify的时间倒计时3.5秒（2500）
     private byte[] mWriteData;
     private WriteDataListener mWriteDataListener;
-//    private long mWriteSecondTime = 3500;
+    private boolean issSendConnectError;
+    //    private long mWriteSecondTime = 3500;
 //    private int mTryAgainCount = 1;     //重发次数
 //    private Handler mWriteNotifyHandler = new Handler(new Handler.Callback() {
 //        @Override
@@ -218,7 +219,7 @@ public class LockApiBleUtil {
                 .setOperateTimeout(7000)//设置数据操作超时时间
                 .setConnectRetryCount(3)//设置连接失败重试次数
                 .setConnectRetryInterval(1000)//设置连接失败重试间隔时间
-                .setOperateRetryCount(1)//设置数据操作失败重试次数
+                .setOperateRetryCount(2)//设置数据操作失败重试次数
                 .setOperateRetryInterval(1000)//设置数据操作失败重试间隔时间
                 .setMaxConnectCount(1);//设置最大连接设备数量
         //蓝牙信息初始化，全局唯一，必须在应用初始化时调用
@@ -572,6 +573,7 @@ public class LockApiBleUtil {
         isConnectSuccess = false;
 //        clearIsWriteAndNotifyStart();
         WriteAndNoficeUtil.getInstantce().setWriteData(null);
+        mConnectErrorHandler.removeCallbacksAndMessages(null);
         clearHandler();
         //清理获取的锁具ID
         LockApiBleUtil.getInstance().clearLockId();
@@ -588,8 +590,7 @@ public class LockApiBleUtil {
         isConnectSuccess = false;
         if (mConnectBoxDevice != null) {
             //调用“连接中”接口
-            mConnectRetryCount = BleConfig.getInstance().getConnectRetryCount();
-            Log.i(TAG, "失败从重连次数：" + mConnectRetryCount);
+            issSendConnectError = false;
             mConnectListener.onWaiting(Constant.SERVICE_UUID);
             ViseBle.getInstance().connect(mConnectBoxDevice, mIConnectCallback);
         } else {
@@ -598,7 +599,6 @@ public class LockApiBleUtil {
         }
     }
 
-    private int mConnectRetryCount = BleConfig.getInstance().getConnectRetryCount();
 
     private IConnectCallback mIConnectCallback = new IConnectCallback() {
         @Override
@@ -609,9 +609,9 @@ public class LockApiBleUtil {
                 LogUtil.e(TAG, "连接成功");          //防止设备休眠，时间计算12秒后发数据给板子
                 isConnecting = false;
                 isConnectSuccess = true;
+                issSendConnectError = false;
                 //再次获取连接的款箱名、锁具ID(款箱Mac)
                 mDeviceMirror = deviceMirror;
-                mConnectRetryCount = BleConfig.getInstance().getConnectRetryCount();
                 mBoxName = deviceMirror.getBluetoothLeDevice().getDevice().getName();
                 mBoxMac = deviceMirror.getBluetoothLeDevice().getDevice().getAddress();
                 mConnectedBoxDevice = deviceMirror.getBluetoothLeDevice();
@@ -635,53 +635,79 @@ public class LockApiBleUtil {
 
         @Override
         public void onConnectFailure(BleException exception) {
-            mConnectRetryCount--;
-            LogUtil.e(TAG, "onConnectFailure连接失败次数" + mConnectRetryCount);
             if (isConnectSuccess) {
                 if (exception instanceof ConnectException) {
-                    LogUtil.e(TAG, "连接成功后的异常" + mConnectRetryCount);
                     if (mConnectListener != null) {
                         //清理获取的锁具ID
                         LockApiBleUtil.getInstance().clearLockId();
                         LogUtil.e(TAG, Constant.MSG.MSG_CONNECT_FAIL2);
                         mConnectListener.onFail(Constant.SERVICE_UUID, Constant.MSG.MSG_CONNECT_FAIL2);
                     }
-                    //款箱自动断开，SDK内部调用断开连接
-                    LockAPI.getInstance().closeConnection();
+                } else {
+                    if (mConnectListener != null) {
+                        //清理获取的锁具ID
+                        LockApiBleUtil.getInstance().clearLockId();
+                        LogUtil.e(TAG, Constant.MSG.MSG_CONNECT_FAIL3);
+                        mConnectListener.onFail(Constant.SERVICE_UUID, Constant.MSG.MSG_CONNECT_FAIL3);
+                    }
                 }
+                //款箱自动断开，SDK内部调用断开连接
+                LockAPI.getInstance().closeConnection();
                 isConnectSuccess = false;
                 return;
             }
             if (isConnecting) {
-                if (mConnectRetryCount == 0) {
-                    LogUtil.e(TAG, "onConnectFailure连接中的异常" + mConnectRetryCount);
-                    LogUtil.e(TAG, "onConnectFailure连接失败次数" + mConnectRetryCount);
-                    mConnectRetryCount = BleConfig.getInstance().getConnectRetryCount();
-                    mConnectBoxDevice = null;
-                    isConnecting = false;
-                    //清理获取的锁具ID
-                    LockApiBleUtil.getInstance().clearLockId();
-                    if (exception instanceof TimeoutException) {
-                        mConnectListener.onTimeout(Constant.SERVICE_UUID, BleConfig.getInstance().getConnectTimeout() * 3);
-                        //清理Handler
-                        clearHandler();
-                    } else {
-                        if (mConnectListener != null) {
-                            mConnectListener.onFail(Constant.SERVICE_UUID, Constant.MSG.MSG_CONNECT_FAIL);
+                if (!issSendConnectError) {
+                    if (ViseBle.getInstance().getConnectRetryCount() == 2) {
+                        mConnectErrorHandler.removeCallbacksAndMessages(null);
+                        issSendConnectError = true;
+                        mConnectBoxDevice = null;
+                        //清理获取的锁具ID
+                        LockApiBleUtil.getInstance().clearLockId();
+                        if (exception instanceof TimeoutException) {
+                            if (mConnectListener != null) {
+                                mConnectListener.onTimeout(Constant.SERVICE_UUID, BleConfig.getInstance().getConnectTimeout() * 3);
+                            }
+                            //清理Handler
+                            closeConnection();
+                        } else {
+                            if (mConnectListener != null) {
+                                mConnectListener.onFail(Constant.SERVICE_UUID, Constant.MSG.MSG_CONNECT_FAIL);
+                            }
+                            //清理Handler
+                            closeConnection();
                         }
-                        //清理Handler
-                        clearHandler();
+
+
+                    } else if (ViseBle.getInstance().getConnectRetryCount() == 0) {
+                        mConnectErrorHandler.postDelayed(new Runnable() {
+                            @Override
+                            public void run() {
+                                if(!issSendConnectError){
+                                    if (mConnectListener != null) {
+                                        mConnectListener.onTimeout(Constant.SERVICE_UUID, 4000);
+                                    }
+                                    //清理Handler
+                                    closeConnection();
+                                }
+                                mConnectErrorHandler.removeCallbacksAndMessages(null);
+                            }
+                        }, 4000);
+                        issSendConnectError = true;
                     }
                 }
+
             }
-            LogUtil.i(TAG, exception.getDescription() + "onConnectFailure失败从重连次数：" + mConnectRetryCount);
+            LogUtil.i(TAG, exception.getDescription() + "onConnectFailure失败从重连次数：" + ViseBle.getInstance().getConnectRetryCount());
         }
 
         @Override
         public void onDisconnect(boolean isActive) {
+            mConnectErrorHandler.removeCallbacksAndMessages(null);
             mConnectBoxDevice = null;
             isConnecting = false;
             isConnectSuccess = false;
+            issSendConnectError = false;
             //清理获取的锁具ID
             LockApiBleUtil.getInstance().clearLockId();
             //清理Handler
@@ -689,6 +715,8 @@ public class LockApiBleUtil {
             mConnectListener.onClose(Constant.SERVICE_UUID, mBoxName);
         }
     };
+
+    private Handler mConnectErrorHandler = new Handler();
 
 
     /********************************** 获取款箱锁具ID ********************************/

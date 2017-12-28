@@ -83,7 +83,7 @@ public class MainActivity extends FrameActivity {
     protected void initComponent() {
         super.initComponent();
         mLockAPI = LockAPI.getInstance().init(MainActivity.this);
-        mLockAPI.setLogsUtil(false);
+        mLockAPI.setLogsUtil(true);
         mLockAPI.setTryAgainCount(1);
         initRecyclerView();
     }
