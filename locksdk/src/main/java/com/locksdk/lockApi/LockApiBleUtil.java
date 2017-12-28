@@ -576,6 +576,7 @@ public class LockApiBleUtil {
 //        clearIsWriteAndNotifyStart();
         WriteAndNoficeUtil.getInstantce().setWriteData(null);
         mConnectErrorHandler.removeCallbacksAndMessages(null);
+        WriteAndNoficeUtil.getInstantce().removeHandler();
         clearHandler();
         //清理获取的锁具ID
         LockApiBleUtil.getInstance().clearLockId();

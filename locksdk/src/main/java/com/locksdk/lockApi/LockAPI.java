@@ -174,11 +174,13 @@ public class LockAPI {
 
     private String deviceBusyCode = Constant.CODE.DEVICE_BUSY;
     private String deviceBusyMsg = Constant.MSG.MSG_DEVICE_BUSY;
-    private int mTryAgainCount = 1;         //相当于用于保存设置后的TryAgainCount值，然后在每一个接口赋值给LockApiBleUtil中的
+
+    public void setTryAgainTime(long tryAgainTime) {
+        WriteAndNoficeUtil.getInstantce().setTryAgainTime(tryAgainTime);
+    }
 
     public void setTryAgainCount(int tryAgainCount) {
-        this.mTryAgainCount = tryAgainCount;
-//        LockApiBleUtil.getInstance().setTryAgainCount(tryAgainCount);
+        WriteAndNoficeUtil.getInstantce().setTryAgainCount(tryAgainCount);
     }
 
     //激活
@@ -186,10 +188,10 @@ public class LockAPI {
         LogUtil.i(TAG, (WriteAndNoficeUtil.getInstantce().getWriteData() == null) ? "空" : "不为空");
         LogUtil.i(TAG, "isWriting:" + isWriting);
         if (WriteAndNoficeUtil.getInstantce().getWriteData() == null) {
-
             LogUtil.i(TAG, "激活");
             removeCallbacksAndMessages();
             LogUtil.i(TAG, "设置多少时间后重发和设置重发次数");
+            setTryAgainTime(7000);
 //            LockApiBleUtil.getInstance().setTryAgainCount(mTryAgainCount);
 //            LockApiBleUtil.getInstance().setWriteSecondTime(6500);
             mActiveLockListener = activeLockListener;
@@ -215,10 +217,9 @@ public class LockAPI {
 
     //开锁
     public void openLock(Map<String, String> param, OpenLockListener openLockListener) {
-        LogUtil.i(TAG, (WriteAndNoficeUtil.getInstantce().getWriteData() == null) ? "空" : "不为空");
-        LogUtil.i(TAG, "isWriting:" + isWriting);
         if (WriteAndNoficeUtil.getInstantce().getWriteData() == null) {
             LogUtil.i(TAG, "开锁");
+            setTryAgainTime(3500);
             removeCallbacksAndMessages();
             mOpenLockListener = openLockListener;
             OpenLockUtil.opnenLock(param, openLockListener);
@@ -235,10 +236,9 @@ public class LockAPI {
 
     //获取随机数（开箱触发）
     public void getRandom(String boxName, GetRandomListener getRandomListener) {
-        LogUtil.i(TAG, (WriteAndNoficeUtil.getInstantce().getWriteData() == null) ? "空" : "不为空");
-        LogUtil.i(TAG, "isWriting:" + isWriting);
         if (WriteAndNoficeUtil.getInstantce().getWriteData() == null) {
             LogUtil.i(TAG, "获取随机数（开箱触发）");
+            setTryAgainTime(3500);
             removeCallbacksAndMessages();
             mGetRandomListener = getRandomListener;
             GetRandomUtil.getRandom(boxName, getRandomListener);
@@ -256,10 +256,9 @@ public class LockAPI {
 
     //查询锁状态
     public void queryLockStatus(String lockId) {
-        LogUtil.i(TAG, (WriteAndNoficeUtil.getInstantce().getWriteData() == null) ? "空" : "不为空");
-        LogUtil.i(TAG, "isWriting:" + isWriting);
         if (WriteAndNoficeUtil.getInstantce().getWriteData() == null) {
             LogUtil.i(TAG, "查询锁状态");
+            setTryAgainTime(3500);
             removeCallbacksAndMessages();
             QueryLockStatusUtil.queryLockStatus(lockId, mLockStatusListener);
         } else {
@@ -271,10 +270,9 @@ public class LockAPI {
 
     //查询日志
     public void queryLogs(Map<String, String> param, QueryLogsListener logsListener) {
-        LogUtil.i(TAG, (WriteAndNoficeUtil.getInstantce().getWriteData() == null) ? "空" : "不为空");
-        LogUtil.i(TAG, "isWriting:" + isWriting);
         if (WriteAndNoficeUtil.getInstantce().getWriteData() == null) {
             LogUtil.i(TAG, "查询日志");
+            setTryAgainTime(3500);
             removeCallbacksAndMessages();
             mQueryLogsListener = logsListener;
             QueryLogsUtil.queryLogs(param, logsListener);
@@ -300,6 +298,7 @@ public class LockAPI {
         LogUtil.i(TAG, "清理LockApiBleUtil中防止设备休眠的Handler");
         //清理Handler
         LockApiBleUtil.getInstance().clearHandler();
+        WriteAndNoficeUtil.getInstantce().removeHandler();
     }
 
     private NoficeDataListener mNoficeDataListener = new NoficeDataListener() {
@@ -324,6 +323,7 @@ public class LockAPI {
 
     private void dealtNotifyCallBackDataForSuccess(NoficeCallbackData callbackData) {
         //TODO : 2017/11/23 没有加监听是否为空判断
+        WriteAndNoficeUtil.getInstantce().removeHandler();
         byte[] data = new byte[(callbackData.getData().length - 1)];
         byte[] btBoxName1;
         byte[] btBoxName;
@@ -450,6 +450,8 @@ public class LockAPI {
     private void dealtNotifyCallBackDataForFail(NoficeCallbackData callbackData) {
         //TODO : 2017/11/23 没有加监听是否为空判断
         if (callbackData.getRespondCode() == 0) return;
+        LogUtil.e(TAG, "功能：" + (callbackData.getRespondCode() & 0xFF));
+        WriteAndNoficeUtil.getInstantce().removeHandler();
         //清空写入数据，代表开始可以允许其他接口写入数据
         WriteAndNoficeUtil.getInstantce().setWriteData(null);
         byte responseCode = callbackData.getRespondCode();

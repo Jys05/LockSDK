@@ -95,6 +95,7 @@ public class WriteAndNoficeUtil {
         public void run() {
             LogUtil.e(TAG, "第二次写入后，还没有数据");
             mNoficeCallbackData.setData(null);
+            setWriteData(null);
             if (mNoficeDataListener != null) {
                 mNoficeDataListener.onNoficeFail(mNoficeCallbackData);
             }
@@ -471,6 +472,11 @@ public class WriteAndNoficeUtil {
         deviceMirror.readData();
     }
 
+    public void removeHandler() {
+        if (mTryAgainHandler != null) {
+            mTryAgainHandler.removeCallbacksAndMessages(null);
+        }
+    }
 
     public int getTryAgainCount() {
         return mTryAgainCount;
