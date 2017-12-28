@@ -318,6 +318,8 @@ public class LockApiBleUtil {
                 @Override
                 public void onScanFailed(int errorCode) {
                     super.onScanFailed(errorCode);
+                    mAllowSleepHandler.removeCallbacksAndMessages(null);
+                    mConnectErrorHandler.removeCallbacksAndMessages(null);
                     mScannerListener.onScannerFail(Constant.CODE.CODE_SCANNER_FAIL
                             , Constant.MSG.MSG_SCANNER_FAIL);
                 }
@@ -683,17 +685,15 @@ public class LockApiBleUtil {
                         mConnectErrorHandler.postDelayed(new Runnable() {
                             @Override
                             public void run() {
-                                if(!issSendConnectError){
-                                    if (mConnectListener != null) {
-                                        mConnectListener.onTimeout(Constant.SERVICE_UUID, 4000);
-                                    }
-                                    //清理Handler
-                                    closeConnection();
+                                issSendConnectError = true;
+                                if (mConnectListener != null) {
+                                    mConnectListener.onFail(Constant.SERVICE_UUID, Constant.MSG.MSG_CONNECT_FAIL4);
                                 }
+                                //清理Handler
+                                closeConnection();
                                 mConnectErrorHandler.removeCallbacksAndMessages(null);
                             }
                         }, 4000);
-                        issSendConnectError = true;
                     }
                 }
 

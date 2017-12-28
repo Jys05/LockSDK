@@ -67,6 +67,8 @@ public class Constant {
 
         public static final String MSG_CONNECT_FAIL3 = "蓝牙通信异常，自动断开";
 
+        public static final String MSG_CONNECT_FAIL4 = "连接异常，款箱可能处于休眠";
+
         public static final String MSG_DISCONNECT = "连接断开";
 
         public static final String MSG_CONNECT_DEVICE_NULL = "连接设备不存在";

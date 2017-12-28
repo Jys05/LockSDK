@@ -46,7 +46,8 @@ public class WriteAndNoficeUtil {
     private WriteCallbackData mWriteCallbackData;
 
     private WriteDataListener mWriteDataListener;
-//    private int mTryAgainCount;
+    private byte mFunCode;
+    //    private int mTryAgainCount;
     //    private boolean isWriterSecond;
 
     private WriteAndNoficeUtil() {
@@ -76,6 +77,16 @@ public class WriteAndNoficeUtil {
         this.writeData = writeData;
     }
 
+    private Handler mHandler = new Handler();
+    private Runnable mRunnable = new Runnable() {
+        @Override
+        public void run() {
+            LogUtil.e(TAG, "第二次写入");
+            writeFunctionCode(mFunCode, writeData, mWriteDataListener);
+        }
+    };
+
+
     /**
      * 根据功能码写入数据
      *
@@ -90,6 +101,7 @@ public class WriteAndNoficeUtil {
         if (LockApiBleUtil.getInstance().getConnectedBoxDevice() == null) return;
         //简单用对象保存写入数据
         this.writeData = writerData;
+        mFunCode = functionCode;
         connectedDevice = LockApiBleUtil.getInstance().getConnectedBoxDevice();
         mWriteCallbackData = new WriteCallbackData();      //写入数据的回调
         BluetoothGattService bluetoothGattService = LockApiBleUtil.getInstance().getBluetoothGattService();
@@ -117,6 +129,7 @@ public class WriteAndNoficeUtil {
         LockAPI lockAPI = LockAPI.getInstance();
         lockAPI.setWriting(true);
         deviceMirror.writeData(writerData);
+        mHandler.postDelayed(mRunnable, 3500);
 //        this.mTryAgainCount = tryAgainCount;
 //        if (tryAgainCount != 0) {          //不是第二次写入就，开始倒计时
 //            LogUtil.e(TAG, "第一次写入计时，超时进行第二次写入");
@@ -358,6 +371,7 @@ public class WriteAndNoficeUtil {
 //                }else {
 //                    LockApiBleUtil.getInstance().sendNotifyTimeoutHandler();
 //                }
+                LogUtil.e(TAG , "写入成功");
                 mWriteCallbackData.setData(data);
                 mWriteDataListener.onWirteSuccess(mWriteCallbackData);
             } else if (bluetoothGattInfo.getPropertyType() == PropertyType.PROPERTY_READ) {

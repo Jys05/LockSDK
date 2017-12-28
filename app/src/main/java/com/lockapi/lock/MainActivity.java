@@ -382,6 +382,8 @@ public class MainActivity extends FrameActivity {
         public void onSuccess(BluetoothLeDevice device, String uuid, String boxName) {
             mMsg = "连接成功";
             LoadingUtil.hidden();
+            LogUtil.e(TAG , "====1");
+//            mHandler2.sendEmptyMessageDelayed(0x00 , 12000);
             mHandler.sendEmptyMessage(0x00);
             Log.i(TAG, "连接成功");
             MainActivity.this.runOnUiThread(new Runnable() {
@@ -427,7 +429,15 @@ public class MainActivity extends FrameActivity {
             Log.i(TAG, "onClose");
         }
     };
-
+//用于证明重发机制
+//    private Handler mHandler2 = new Handler(new Handler.Callback() {
+//        @Override
+//        public boolean handleMessage(Message message) {
+//            LogUtil.e(TAG , "====2");
+//            LockAPI.getInstance().resigeterNotify();
+//            return false;
+//        }
+//    });
     private String mMsg;
     private Handler mHandler = new Handler(new Handler.Callback() {
         @Override
