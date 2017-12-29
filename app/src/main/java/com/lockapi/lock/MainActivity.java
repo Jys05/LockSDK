@@ -7,6 +7,7 @@ import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
@@ -16,6 +17,7 @@ import android.widget.Toast;
 import com.library.base.frame.FrameActivity;
 import com.library.base.util.LoadingUtil;
 import com.library.base.util.ToastUtil;
+import com.library.base.util.mainrun.MainRunUtil;
 import com.library.base.util.recyclerview.BaseAdapterHelper;
 import com.library.base.util.recyclerview.OnItemClickListener;
 import com.library.base.util.recyclerview.QuickAdapter;
@@ -67,6 +69,8 @@ public class MainActivity extends FrameActivity {
     LinearLayout mLlScanner;        //扫描界面
     @InjectView(R.id.et_password)
     EditText mEtPassword;
+    @InjectView(R.id.btn_gerRandam)
+    Button mButton;
 
     private QuickAdapter<BluetoothLeDevice> mQuickAdapter;
     private LockAPI mLockAPI;
@@ -83,7 +87,7 @@ public class MainActivity extends FrameActivity {
     protected void initComponent() {
         super.initComponent();
         mLockAPI = LockAPI.getInstance().init(MainActivity.this);
-        mLockAPI.setLogsUtil(true);
+        mLockAPI.setLogsUtil(false);
         mLockAPI.setTryAgainCount(1);
         initRecyclerView();
     }
@@ -383,7 +387,8 @@ public class MainActivity extends FrameActivity {
             mMsg = "连接成功";
             LoadingUtil.hidden();
             LogUtil.e(TAG , "====1");
-//            mHandler2.sendEmptyMessageDelayed(0x00 , 12000);
+//            mHandler3.sendEmptyMessage(0x00);
+//            mHandler2.sendEmptyMessageDelayed(0x00 , 2400);
             mHandler.sendEmptyMessage(0x00);
             Log.i(TAG, "连接成功");
             MainActivity.this.runOnUiThread(new Runnable() {
@@ -429,12 +434,20 @@ public class MainActivity extends FrameActivity {
             Log.i(TAG, "onClose");
         }
     };
-//用于证明重发机制
+////用于证明重发机制
 //    private Handler mHandler2 = new Handler(new Handler.Callback() {
 //        @Override
 //        public boolean handleMessage(Message message) {
 //            LogUtil.e(TAG , "====2");
 //            LockAPI.getInstance().resigeterNotify();
+//            return false;
+//        }
+//    });
+//    private Handler mHandler3 = new Handler(new Handler.Callback() {
+//        @Override
+//        public boolean handleMessage(Message message) {
+//            LogUtil.e(TAG , "====3");
+//            onGetRandomClick(mButton);
 //            return false;
 //        }
 //    });
